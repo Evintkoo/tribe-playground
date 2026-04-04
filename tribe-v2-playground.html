@@ -660,21 +660,26 @@ audio#audioPreview { position:absolute; bottom:12px; left:12px; right:12px; widt
 #regionLabels { position: absolute; top: 30px; left: 0; width: 100%; height: calc(100% - 30px); pointer-events: none; z-index: 2; }
 .rlabel-3d {
   position: absolute;
+  min-width: 90px;
   font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.8);
-  background: rgba(8,11,18,.82);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 2px;
-  padding: 2px 7px;
+  background: rgba(8,11,18,.88);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 4px;
+  padding: 5px 8px 4px;
   transform: translate(-50%, -50%);
   transition: opacity .35s;
   pointer-events: none;
   white-space: nowrap;
+  display: flex; flex-direction: column; gap: 3px;
 }
+.rl-head { display: flex; align-items: center; gap: 5px; }
+.rl-dot  { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.rl-name { font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.9); }
+.rl-bar-wrap { height: 3px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; }
+.rl-bar-fill { height: 100%; border-radius: 2px; transition: width .5s ease; width: 0%; }
+.rl-val { font-size: 9px; color: rgba(255,255,255,.45); letter-spacing: .03em; }
+.rl-val.pos { color: #3fb950; }
+.rl-val.neg { color: #e06c3e; }
 
 /* Colorbar */
 .colorbar {
@@ -1521,6 +1526,7 @@ audio#audioPreview { position:absolute; bottom:12px; left:12px; right:12px; widt
       </div>
 
       <canvas id="brainCanvas"></canvas>
+      <svg id="labelLines" style="position:absolute;top:30px;left:0;width:100%;height:calc(100% - 30px);pointer-events:none;z-index:1;overflow:visible"></svg>
       <div id="regionLabels"></div>
       <div id="brainLoading">
         <div class="bl-label">Loading brain surface model…</div>
@@ -2200,6 +2206,9 @@ function _applyResult(data) {
     );
   }
 
+  // Update label activation bars on 3D brain
+  if (window.updateLabelActivations) updateLabelActivations(data.region_stats);
+
   // Update educational insight panel
   _updateInsight(data);
 }
@@ -2486,11 +2495,33 @@ let vertYMin=0, vertYMax=1; // Y-range for sample index mapping
 
 // Label overlay — created immediately
 const labelCtr=document.getElementById('regionLabels');
+const labelLines=document.getElementById('labelLines');
 const labelEls={};
+const lineSvg={};  // SVG <line> per region
+const RNAMES_DISPLAY={
+  visual:'Visual Cortex', auditory:'Auditory Cortex', language:'Language',
+  prefrontal:'Prefrontal', motor:'Motor Cortex', parietal:'Parietal',
+};
 ALL_R.forEach(r=>{
-  const el=document.createElement('div');el.className='rlabel-3d';
-  el.textContent=r.toUpperCase();el.style.opacity='0';
-  labelCtr.appendChild(el);labelEls[r]=el;
+  const c=new THREE.Color(REGION_HEX[r]);
+  const rgb=`rgb(${Math.round(c.r*255)},${Math.round(c.g*255)},${Math.round(c.b*255)})`;
+
+  const el=document.createElement('div'); el.className='rlabel-3d'; el.style.opacity='0';
+  el.innerHTML=`
+    <div class="rl-head">
+      <div class="rl-dot" style="background:${rgb}"></div>
+      <span class="rl-name">${RNAMES_DISPLAY[r]||r.toUpperCase()}</span>
+    </div>
+    <div class="rl-bar-wrap"><div class="rl-bar-fill" id="rlbar-${r}" style="background:${rgb}"></div></div>
+    <div class="rl-val" id="rlval-${r}">—</div>`;
+  labelCtr.appendChild(el); labelEls[r]=el;
+
+  // SVG leader line (drawn behind labels)
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('stroke',rgb); line.setAttribute('stroke-width','1');
+  line.setAttribute('stroke-opacity','0.45'); line.setAttribute('stroke-dasharray','3 3');
+  line.style.display='none';
+  labelLines.appendChild(line); lineSvg[r]=line;
 });
 
 // ── Post-load geometry setup ─────────────────────────────────
@@ -2580,21 +2611,82 @@ function setRegionTarget(r,active){
 function updateLabels(active){
   if(!brain)return;
   const v3=new THREE.Vector3();
+  const rect=canvas.getBoundingClientRect();
+  const cx=rect.width*.5, cy=rect.height*.5;
+  // Push radius: labels sit on a ring well outside the brain silhouette
+  const pushR=Math.min(rect.width,rect.height)*0.44;
+
+  // Collect projected positions for active labels
+  const projPts={};
   ALL_R.forEach(r=>{
-    const el=labelEls[r],on=active.includes(r);
-    if(!on){el.style.opacity='0';return;}
     v3.copy(regionCentroids[r]).applyMatrix4(brain.matrixWorld);
     const pr=v3.clone().project(camera);
-    const rect=canvas.getBoundingClientRect();
-    const px=(pr.x*.5+.5)*rect.width,py=(-pr.y*.5+.5)*rect.height;
-    if(pr.z<1){
-      el.style.left=px+'px';el.style.top=py+'px';el.style.opacity='1';
-      const c=new THREE.Color(REGION_HEX[r]);
-      el.style.borderColor='rgba('+Math.round(c.r*255)+','+Math.round(c.g*255)+','+Math.round(c.b*255)+',.35)';
-      el.style.color='rgb('+Math.round(c.r*255)+','+Math.round(c.g*255)+','+Math.round(c.b*255)+')';
-    } else {el.style.opacity='0';}
+    projPts[r]={
+      ax:(pr.x*.5+.5)*rect.width,   // actual centroid screen x
+      ay:(-pr.y*.5+.5)*rect.height,  // actual centroid screen y
+      behind: pr.z>=1,
+    };
+  });
+
+  // Assign pushed positions (radially outward from brain center)
+  const pushPts={};
+  ALL_R.forEach(r=>{
+    const {ax,ay}=projPts[r];
+    let dx=ax-cx, dy=ay-cy;
+    const d=Math.sqrt(dx*dx+dy*dy)||1;
+    // Ensure minimum push distance so all labels reach the ring
+    const scale=pushR/Math.max(d,pushR*0.3);
+    pushPts[r]={lx:cx+dx*scale, ly:cy+dy*scale};
+  });
+
+  // Simple 1-pass collision spread: sort by angle, enforce min angular gap
+  const active_r=ALL_R.filter(r=>active.includes(r));
+  active_r.sort((a,b)=>{
+    const pa=pushPts[a], pb=pushPts[b];
+    return Math.atan2(pa.ly-cy,pa.lx-cx)-Math.atan2(pb.ly-cy,pb.lx-cx);
+  });
+  const minGap=0.38; // radians (~22°)
+  for(let i=1;i<active_r.length;i++){
+    const prev=active_r[i-1], cur=active_r[i];
+    const aPrev=Math.atan2(pushPts[prev].ly-cy,pushPts[prev].lx-cx);
+    let aCur =Math.atan2(pushPts[cur].ly-cy, pushPts[cur].lx-cx);
+    if(aCur-aPrev<minGap){ aCur=aPrev+minGap; }
+    pushPts[cur].lx=cx+Math.cos(aCur)*pushR;
+    pushPts[cur].ly=cy+Math.sin(aCur)*pushR;
+  }
+
+  ALL_R.forEach(r=>{
+    const el=labelEls[r], line=lineSvg[r];
+    const on=active.includes(r);
+    if(!on||projPts[r].behind){
+      el.style.opacity='0'; line.style.display='none'; return;
+    }
+    const {lx,ly}=pushPts[r];
+    const {ax,ay}=projPts[r];
+    el.style.left=lx+'px'; el.style.top=ly+'px'; el.style.opacity='1';
+    // Leader line: from label centre to actual centroid
+    line.setAttribute('x1',lx); line.setAttribute('y1',ly);
+    line.setAttribute('x2',ax); line.setAttribute('y2',ay);
+    line.style.display='';
   });
 }
+
+// Update label activation bars + values after inference
+window.updateLabelActivations=function updateLabelActivations(regionStats){
+  ALL_R.forEach(r=>{
+    const s=regionStats&&regionStats[r];
+    const rel=s?s.rel_activation??0:null;
+    const bar=document.getElementById('rlbar-'+r);
+    const val=document.getElementById('rlval-'+r);
+    if(!bar||!val)return;
+    if(rel===null){bar.style.width='0%';val.textContent='—';val.className='rl-val';return;}
+    // Map rel [-0.5, +1.0] → bar width [0, 100%]
+    const pct=Math.round(Math.max(0,Math.min(1,(rel+0.5)/1.5))*100);
+    bar.style.width=pct+'%';
+    val.textContent=(rel>=0?'+':'')+rel.toFixed(2)+'σ';
+    val.className='rl-val '+(rel>=0.15?'pos':rel<=-0.15?'neg':'');
+  });
+};
 
 // ── MNI coordinate readout ────────────────────────────────────
 const raycaster=new THREE.Raycaster();
@@ -2730,7 +2822,10 @@ window.toggleROIGlow=function(show){
   ALL_R.forEach(r=>{glowMeshes[r].visible=show;regionLights[r].visible=show;ptSystems[r].pts.visible=show;});
 };
 window.toggleBrainLabels=function(show){
-  ALL_R.forEach(r=>{labelEls[r].style.display=show?'':'none';});
+  ALL_R.forEach(r=>{
+    labelEls[r].style.display=show?'':'none';
+    lineSvg[r].style.display=show?'':'none';
+  });
 };
 
 // ── Load real brain model ─────────────────────────────────────
