@@ -1,0 +1,2832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRIBE v2 · Neural Prediction Workstation · Meta AI Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Surface */
+  --bg:      #0D1117;
+  --s1:      #161B22;
+  --s2:      #1C2128;
+  --s3:      #22272E;
+  --s4:      #2D333B;
+  /* Border */
+  --b0:      #21262D;
+  --b1:      #30363D;
+  --b2:      #3D444D;
+  /* Text */
+  --t1:      #E6EDF3;
+  --t2:      #7D8590;
+  --t3:      #484F58;
+  /* Accent */
+  --ac:      #388BFD;
+  --ac-lt:   rgba(56,139,253,0.15);
+  --green:   #3FB950;
+  --yellow:  #D29922;
+  --orange:  #DB6D28;
+  --red:     #F85149;
+  /* fMRI activation colormap anchors */
+  --r-visual:     #FF4D4D;
+  --r-auditory:   #FF8C42;
+  --r-language:   #58A6FF;
+  --r-prefrontal: #3FB950;
+  --r-motor:      #E040FB;
+  --r-parietal:   #FFCA28;
+
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --r3: 3px;
+  --r6: 6px;
+}
+
+html, body {
+  height: 100%; overflow: hidden;
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--t1);
+  -webkit-font-smoothing: antialiased;
+  font-size: 13px;
+}
+
+/* ── TITLEBAR ─────────────────────────────────────────────────── */
+.titlebar {
+  height: 42px;
+  background: var(--s1);
+  border-bottom: 1px solid var(--b0);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 0;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.tb-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.tb-logo {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--t1);
+}
+
+.tb-ver {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--ac);
+  background: var(--ac-lt);
+  border: 1px solid rgba(56,139,253,.3);
+  padding: 1px 6px;
+  border-radius: 20px;
+}
+
+.tb-sep { width: 1px; height: 16px; background: var(--b1); margin: 0 16px; }
+
+.tb-title {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--t2);
+  letter-spacing: .01em;
+}
+
+.tb-session {
+  margin-left: 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--t3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tb-session span { color: var(--t2); }
+
+.tb-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tb-btn {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: var(--r3);
+  border: 1px solid var(--b2);
+  background: var(--s3);
+  color: var(--t2);
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.tb-btn:hover { background: var(--s4); color: var(--t1); border-color: var(--b2); }
+.tb-btn.primary { background: var(--ac); color: #fff; border-color: var(--ac); }
+.tb-btn.primary:hover { background: #2f7de0; }
+
+/* ── MENUBAR ──────────────────────────────────────────────────── */
+.menubar {
+  height: 30px;
+  background: var(--s1);
+  border-bottom: 1px solid var(--b0);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.menu-item {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--t2);
+  padding: 3px 8px;
+  border-radius: var(--r3);
+  cursor: pointer;
+  transition: all .1s;
+  white-space: nowrap;
+}
+.menu-item:hover { background: var(--s3); color: var(--t1); }
+
+.menu-sep { width: 1px; height: 14px; background: var(--b1); margin: 0 4px; }
+
+.paradigm-templates {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tpl-label {
+  font-size: 11px;
+  color: var(--t3);
+  margin-right: 4px;
+  font-family: var(--mono);
+}
+
+.tpl-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--r3);
+  border: 1px solid var(--b1);
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition: all .12s;
+  letter-spacing: .03em;
+}
+.tpl-btn:hover, .tpl-btn.on {
+  border-color: var(--ac);
+  color: var(--ac);
+  background: var(--ac-lt);
+}
+
+/* ── MAIN LAYOUT ──────────────────────────────────────────────── */
+.workspace {
+  display: grid;
+  grid-template-columns: 230px 1fr 1fr;
+  flex: 1;
+  overflow: hidden;
+  height: calc(100vh - 42px - 30px - 38px - 28px); /* titlebar + menubar + query + status */
+}
+
+.body-wrap { display: flex; flex-direction: column; height: calc(100vh - 42px - 30px); }
+
+/* ── PARAMS PANEL ─────────────────────────────────────────────── */
+.params {
+  background: var(--s1);
+  border-right: 1px solid var(--b0);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.panel-header {
+  padding: 8px 12px 6px;
+  border-bottom: 1px solid var(--b0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  background: var(--s2);
+}
+
+.panel-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--t2);
+}
+
+.panel-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ac);
+  background: var(--ac-lt);
+  border: 1px solid rgba(56,139,253,.25);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+.param-section {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--b0);
+}
+
+.sec-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sec-label-count {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ac);
+}
+
+/* ROI chips */
+.roi-grid { display: flex; flex-direction: column; gap: 3px; }
+
+.roi-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 6px;
+  border-radius: var(--r3);
+  cursor: pointer;
+  transition: background .1s;
+  border: 1px solid transparent;
+}
+.roi-row:hover { background: var(--s3); }
+.roi-row.on { background: var(--s3); border-color: var(--b1); }
+
+.roi-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(255,255,255,.2); }
+.roi-name { font-size: 11px; font-weight: 500; color: var(--t2); flex: 1; }
+.roi-row.on .roi-name { color: var(--t1); }
+.roi-abbr { font-family: var(--mono); font-size: 9px; color: var(--t3); }
+.roi-check { width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--b2); background: transparent; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.roi-row.on .roi-check { background: var(--ac); border-color: var(--ac); }
+.roi-check-mark { width: 6px; height: 6px; display: none; }
+.roi-row.on .roi-check-mark { display: block; fill: white; }
+
+/* Sliders */
+.param-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.param-row:last-child { margin-bottom: 0; }
+
+.param-label { font-size: 11px; color: var(--t2); flex: 1; white-space: nowrap; }
+
+.param-value {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--t1);
+  min-width: 36px;
+  text-align: right;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--b1);
+  outline: none;
+  margin: 0;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--ac);
+  cursor: pointer;
+  border: 1px solid rgba(56,139,253,.5);
+}
+.slider-full { width: 100%; margin-top: 4px; }
+
+/* Dropdowns */
+select {
+  width: 100%;
+  background: var(--s3);
+  border: 1px solid var(--b1);
+  border-radius: var(--r3);
+  color: var(--t1);
+  font-family: var(--sans);
+  font-size: 11px;
+  padding: 5px 24px 5px 8px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color .12s;
+}
+select:focus { border-color: var(--ac); }
+.sel-wrap { position: relative; }
+.sel-wrap::after { content: '▾'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--t3); pointer-events: none; font-size: 9px; }
+
+/* Task chips */
+.task-grid { display: flex; flex-wrap: wrap; gap: 3px; }
+.task-chip {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--r3);
+  border: 1px solid var(--b1);
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition: all .1s;
+  letter-spacing: .02em;
+}
+.task-chip:hover { color: var(--t2); border-color: var(--b2); background: var(--s3); }
+.task-chip.on { border-color: var(--ac); color: var(--ac); background: var(--ac-lt); }
+
+/* Toggles */
+.tog-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.tog-row:last-child { margin-bottom: 0; }
+.tog-label { font-size: 11px; color: var(--t2); }
+.tog-tag { font-family: var(--mono); font-size: 9px; color: var(--t3); display: block; margin-top: 1px; }
+.tog {
+  width: 32px; height: 17px;
+  border-radius: 9px;
+  border: 1px solid var(--b2);
+  background: var(--s3);
+  cursor: pointer;
+  position: relative;
+  transition: background .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.tog.on { background: var(--ac); border-color: var(--ac); }
+.tog::after { content: ''; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--t3); transition: transform .14s, background .14s; }
+.tog.on::after { transform: translateX(15px); background: #fff; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--b1); border-radius: 2px; }
+
+/* ── STIMULUS PANEL ───────────────────────────────────────────── */
+.stimulus-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-right: 1px solid var(--b0);
+  overflow: hidden;
+}
+
+.modality-tabs {
+  display: flex;
+  background: var(--s1);
+  border-bottom: 1px solid var(--b0);
+  flex-shrink: 0;
+}
+
+.mod-tab {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border: none;
+  background: none;
+  color: var(--t3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .12s, border-color .12s;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.mod-tab:hover { color: var(--t2); }
+.mod-tab.on { color: var(--ac); border-bottom-color: var(--ac); }
+
+/* Input panels */
+.input-panel { flex: 1; display: none; flex-direction: column; padding: 12px; gap: 8px; overflow: hidden; min-height: 0; }
+.input-panel.on { display: flex; }
+
+.input-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--s1);
+  border: 1px solid var(--b0);
+  border-radius: var(--r3);
+  flex-shrink: 0;
+}
+.meta-item { font-family: var(--mono); font-size: 10px; color: var(--t3); }
+.meta-item span { color: var(--t2); }
+.meta-sep { width: 1px; height: 10px; background: var(--b1); }
+
+textarea#textInput {
+  flex: 1;
+  width: 100%;
+  border: 1px solid var(--b1);
+  border-radius: var(--r6);
+  background: var(--s1);
+  color: var(--t1);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  padding: 12px;
+  outline: none;
+  resize: none;
+  transition: border-color .15s;
+  min-height: 0;
+}
+textarea#textInput:focus { border-color: var(--ac); }
+textarea#textInput::placeholder { color: var(--t3); font-style: italic; }
+
+.input-footer {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+/* Drop zones */
+.dropzone {
+  flex: 1;
+  border: 1px dashed var(--b2);
+  border-radius: var(--r6);
+  background: var(--s1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+.dropzone:hover, .dropzone.drag { border-color: var(--ac); background: rgba(56,139,253,.05); }
+.dropzone.has-content { border-style: solid; border-color: var(--b1); }
+
+.drop-icon {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.drop-icon svg { width: 100%; height: 100%; }
+
+.drop-title { font-size: 12px; font-weight: 500; color: var(--t2); pointer-events: none; }
+.drop-sub { font-family: var(--mono); font-size: 10px; color: var(--t3); pointer-events: none; text-align: center; line-height: 1.6; }
+
+.browse-btn {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: var(--r3);
+  border: 1px solid var(--b2);
+  background: var(--s3);
+  color: var(--t2);
+  cursor: pointer;
+  transition: all .12s;
+}
+.browse-btn:hover { border-color: var(--ac); color: var(--ac); }
+
+.dropzone input[type=file] { display: none; }
+.img-preview { width: 100%; height: 100%; object-fit: contain; position: absolute; border-radius: var(--r6); display: none; }
+video#videoPreview { width: 100%; height: 100%; object-fit: contain; position: absolute; border-radius: var(--r6); display: none; background: #000; }
+
+.url-bar { display: flex; gap: 6px; flex-shrink: 0; }
+.url-input {
+  flex: 1;
+  border: 1px solid var(--b1);
+  border-radius: var(--r3);
+  background: var(--s2);
+  color: var(--t1);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color .12s;
+}
+.url-input:focus { border-color: var(--ac); }
+.url-input::placeholder { color: var(--t3); }
+.url-go { font-family: var(--sans); font-size: 11px; font-weight: 500; padding: 6px 12px; border-radius: var(--r3); border: none; background: var(--ac); color: #fff; cursor: pointer; transition: background .12s; white-space: nowrap; }
+.url-go:hover { background: #2f7de0; }
+
+.file-badge {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(22,27,34,.9); border: 1px solid var(--b2);
+  border-radius: var(--r3); padding: 3px 10px;
+  font-family: var(--mono); font-size: 10px; color: var(--t2);
+  white-space: nowrap; display: none; backdrop-filter: blur(8px);
+}
+.clear-btn {
+  position: absolute; top: 8px; right: 8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--s3); border: 1px solid var(--b1);
+  cursor: pointer; display: none;
+  align-items: center; justify-content: center;
+  font-size: 10px; color: var(--t2); transition: all .12s;
+}
+.clear-btn:hover { background: rgba(248,81,73,.15); color: var(--red); border-color: var(--red); }
+
+/* Audio waveform */
+.audio-waveform { display: flex; align-items: flex-end; gap: 2px; height: 32px; pointer-events: none; }
+.aw-bar { width: 3px; border-radius: 1px; background: var(--b2); animation: awBounce 1.3s ease-in-out infinite; }
+.aw-bar:nth-child(1){height:8px; animation-delay:0s}
+.aw-bar:nth-child(2){height:20px;animation-delay:.1s}
+.aw-bar:nth-child(3){height:30px;animation-delay:.2s}
+.aw-bar:nth-child(4){height:14px;animation-delay:.3s}
+.aw-bar:nth-child(5){height:26px;animation-delay:.4s}
+.aw-bar:nth-child(6){height:10px;animation-delay:.5s}
+.aw-bar:nth-child(7){height:22px;animation-delay:.6s}
+.aw-bar:nth-child(8){height:6px; animation-delay:.7s}
+@keyframes awBounce { 0%,100%{transform:scaleY(1);opacity:.3} 50%{transform:scaleY(1.5);opacity:.8} }
+.audio-waveform.active .aw-bar { background: var(--ac); }
+audio#audioPreview { position:absolute; bottom:12px; left:12px; right:12px; width:calc(100% - 24px); display:none; border-radius:var(--r3); }
+
+/* ── VISUALIZATION PANEL ──────────────────────────────────────── */
+.viz-panel {
+  background: #080B12;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.viz-toolbar {
+  height: 30px;
+  background: rgba(22,27,34,.9);
+  border-bottom: 1px solid var(--b0);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 6px;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+  position: relative;
+  z-index: 2;
+}
+
+.vt-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-right: 4px;
+}
+
+.vt-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid var(--b1);
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition: all .1s;
+}
+.vt-btn:hover, .vt-btn.on { border-color: var(--b2); color: var(--t2); background: var(--s3); }
+
+.vt-sep { width: 1px; height: 14px; background: var(--b1); margin: 0 4px; }
+
+.vt-coord {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+}
+.vt-coord span { color: var(--t2); }
+
+/* 3D canvas */
+#brainCanvas { position: absolute; top: 30px; left: 0; width: 100%; height: calc(100% - 30px); display: block; }
+
+/* Brain loading overlay */
+#brainLoading {
+  position: absolute; top: 30px; left: 0; width: 100%; height: calc(100% - 30px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; z-index: 5; background: #080B12; pointer-events: none;
+}
+.bl-label { font-family: var(--mono); font-size: 11px; color: var(--t3); letter-spacing: .08em; }
+.bl-bar { width: 140px; height: 2px; background: var(--b0); border-radius: 2px; overflow: hidden; }
+.bl-fill { height: 100%; background: var(--ac); border-radius: 2px; width: 0%; transition: width .2s; }
+
+/* Region labels overlay */
+#regionLabels { position: absolute; top: 30px; left: 0; width: 100%; height: calc(100% - 30px); pointer-events: none; z-index: 2; }
+.rlabel-3d {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.8);
+  background: rgba(8,11,18,.82);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 2px;
+  padding: 2px 7px;
+  transform: translate(-50%, -50%);
+  transition: opacity .35s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Colorbar */
+.colorbar {
+  position: absolute;
+  bottom: 18px;
+  left: 16px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cb-title { font-family: var(--mono); font-size: 9px; color: var(--t3); letter-spacing: .06em; text-transform: uppercase; }
+.cb-bar { width: 100px; height: 6px; border-radius: 2px; background: linear-gradient(90deg, #2B2D42 0%, #FF4D4D 40%, #FFCA28 75%, #ffffff 100%); border: 1px solid var(--b1); }
+.cb-scale { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--t3); width: 100px; }
+
+/* Space label */
+.space-label {
+  position: absolute;
+  top: 38px; left: 10px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--t3);
+  letter-spacing: .06em;
+  z-index: 3;
+}
+
+/* ROI Stats table */
+.roi-stats-panel {
+  position: absolute;
+  top: 38px; right: 10px;
+  z-index: 3;
+  background: rgba(22,27,34,.88);
+  border: 1px solid var(--b0);
+  border-radius: var(--r3);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  min-width: 240px;
+}
+
+.rst-head {
+  display: grid;
+  grid-template-columns: 1fr 52px 52px 38px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--b0);
+  background: rgba(34,39,46,.6);
+}
+.rst-hcell {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.rst-hcell:not(:first-child) { text-align: right; }
+
+.rst-row {
+  display: grid;
+  grid-template-columns: 1fr 52px 52px 38px;
+  padding: 4px 10px;
+  border-bottom: 1px solid rgba(48,54,61,.5);
+  transition: background .1s;
+  cursor: pointer;
+}
+.rst-row:last-child { border-bottom: none; }
+.rst-row:hover { background: rgba(56,139,253,.05); }
+
+.rst-cell {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.rst-cell:not(:first-child) { justify-content: flex-end; color: var(--t3); }
+.rst-row.on .rst-cell { color: var(--t2); }
+.rst-row.on .rst-cell:not(:first-child) { color: var(--t1); }
+
+.rst-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; opacity: .35; }
+.rst-row.on .rst-dot { opacity: 1; }
+
+.rst-status {
+  font-size: 9px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.rst-row.on .rst-status { color: var(--green); }
+
+/* ── QUERY CONSTRUCTOR ────────────────────────────────────────── */
+.query-bar {
+  height: 38px;
+  background: var(--s1);
+  border-top: 1px solid var(--b0);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  flex-shrink: 0;
+  transition: border-top-color .2s;
+}
+.query-bar.inferring { border-top-color: var(--ac); }
+.qb-spinner {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1.5px solid var(--b1); border-top-color: var(--ac);
+  animation: qbSpin .7s linear infinite;
+  display: none; flex-shrink: 0;
+}
+.query-bar.inferring .qb-spinner { display: block; }
+@keyframes qbSpin { to { transform: rotate(360deg); } }
+
+.qb-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--t3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.qb-prefix {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ac);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.qb-text {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--t2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qb-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.qb-btn {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--r3);
+  border: 1px solid var(--b1);
+  background: var(--s3);
+  color: var(--t2);
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.qb-btn:hover { border-color: var(--b2); color: var(--t1); }
+.qb-btn.copied { border-color: var(--green); color: var(--green); background: rgba(63,185,80,.1); }
+
+/* ── STATUS BAR ───────────────────────────────────────────────── */
+.statusbar {
+  height: 22px;
+  background: var(--ac);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.sb-item {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,.85);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-right: 1px solid rgba(255,255,255,.2);
+}
+.sb-item:first-child { padding-left: 0; }
+.sb-item:last-child { border-right: none; margin-left: auto; }
+
+.sb-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.6); }
+.sb-dot.ready { background: #3FB950; }
+
+.divider { border: none; border-top: 1px solid var(--b0); }
+
+/* ── DROPDOWN MENUS ─────────────────────────────────────────── */
+.menu-wrap { position: relative; }
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  min-width: 200px;
+  background: var(--s2);
+  border: 1px solid var(--b1);
+  border-radius: var(--r6);
+  box-shadow: 0 8px 24px rgba(0,0,0,.55);
+  z-index: 200;
+  padding: 4px 0;
+}
+.menu-wrap.open .menu-dropdown { display: block; }
+.md-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--t2);
+  cursor: pointer;
+  transition: background .08s, color .08s;
+  white-space: nowrap;
+}
+.md-item:hover { background: var(--s3); color: var(--t1); }
+.md-item.disabled { color: var(--t3); cursor: default; pointer-events: none; }
+.md-kbd { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--t3); }
+.md-sep { height: 1px; background: var(--b0); margin: 4px 0; }
+
+/* ── PREDICTION OVERLAY (removed) ───────────────────────────── */
+.pred-overlay {
+  position: fixed;
+  bottom: 60px; right: 16px;
+  width: 320px;
+  background: var(--s2);
+  border: 1px solid var(--b1);
+  border-radius: var(--r6);
+  box-shadow: 0 12px 32px rgba(0,0,0,.6);
+  z-index: 50;
+  display: none;
+  overflow: hidden;
+}
+.pred-overlay.visible { display: block; }
+.pred-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--s3);
+  border-bottom: 1px solid var(--b0);
+}
+.pred-title { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--t2); }
+.pred-close {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: transparent; border: 1px solid var(--b1);
+  cursor: pointer; color: var(--t3); font-size: 9px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.pred-close:hover { background: rgba(248,81,73,.15); color: var(--red); border-color: var(--red); }
+.pred-body { padding: 10px 12px; font-family: var(--mono); font-size: 11px; line-height: 1.8; min-height: 80px; }
+.pred-log-line { color: var(--t3); }
+.pred-log-line.done { color: var(--green); }
+.pred-progress { width: calc(100% - 24px); height: 3px; background: var(--b0); border-radius: 2px; margin: 0 12px 10px; overflow: hidden; }
+.pred-progress-bar { height: 100%; background: var(--ac); border-radius: 2px; width: 0%; transition: width .25s ease; }
+
+
+/* ── Inference result panel ──────────────────────────────────── */
+.pred-result {
+  margin: 4px 12px 10px;
+  padding: 10px 12px;
+  background: var(--s2);
+  border: 1px solid var(--b0);
+  border-radius: var(--r6);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px 12px;
+}
+.pred-result-row { display: flex; flex-direction: column; gap: 2px; }
+.pred-result-label { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: .04em; }
+.pred-result-val { font-family: var(--mono); font-size: 12px; color: var(--t1); }
+
+/* ── Extended RST table ──────────────────────────────────────── */
+.rst-head, .rst-row { grid-template-columns: minmax(80px,1fr) 68px 68px 52px 44px; }
+.rst-pearson { font-family: var(--mono); }
+.rst-mean    { font-family: var(--mono); font-size: 11px; color: var(--t2); }
+.rst-std     { font-family: var(--mono); font-size: 11px; color: var(--t3); }
+
+/* ── Statusbar running state ─────────────────────────────────── */
+.sb-dot.running { background: var(--yellow); animation: pulse 0.9s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+
+/* ── Demo mode banner ────────────────────────────────────────── */
+.demo-banner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  background: rgba(210,153,34,.08);
+  border-bottom: 1px solid rgba(210,153,34,.2);
+  font-size: 11px; color: var(--yellow);
+  flex-shrink: 0;
+}
+.demo-banner svg { flex-shrink: 0; }
+.demo-banner a { color: var(--ac); text-decoration: none; }
+.demo-banner a:hover { text-decoration: underline; }
+
+/* ── Column header tooltips ──────────────────────────────────── */
+.rst-hcell { position: relative; cursor: default; }
+.rst-hcell .hdr-tip {
+  display: none;
+  position: absolute; bottom: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%);
+  width: 220px; padding: 8px 10px;
+  background: var(--s4); border: 1px solid var(--b2);
+  border-radius: var(--r6); font-size: 11px; color: var(--t2);
+  line-height: 1.5; z-index: 300; pointer-events: none;
+  white-space: normal;
+}
+.rst-hcell:hover .hdr-tip { display: block; }
+
+/* ── Region tooltip ──────────────────────────────────────────── */
+.rst-cell.rst-name { position: relative; cursor: default; }
+.region-tip {
+  display: none;
+  position: absolute; top: calc(100% + 4px); left: 0;
+  width: 290px; padding: 11px 13px;
+  background: var(--s3); border: 1px solid var(--b2);
+  border-radius: var(--r6); font-size: 11px; color: var(--t2);
+  line-height: 1.5; z-index: 400; pointer-events: none;
+  box-shadow: 0 8px 28px rgba(0,0,0,.6);
+}
+.region-tip .rt-name { font-weight: 600; font-size: 12px; color: var(--t1); margin-bottom: 3px; }
+.region-tip .rt-loc  { font-size: 10px; color: var(--t3); margin-bottom: 5px; font-family: var(--mono); letter-spacing:.03em; }
+.region-tip .rt-fns  { margin-bottom: 6px; display: flex; flex-direction: column; gap: 2px; }
+.region-tip .rt-fn-item::before { content: '›'; margin-right: 5px; color: var(--ac); }
+.region-tip .rt-fn-item { color: var(--t2); }
+.region-tip .rt-high { font-size: 10px; border-top: 1px solid var(--b1); padding-top: 5px; margin-top: 2px; color: var(--t3); }
+.region-tip .rt-high strong { color: var(--green); }
+.rst-cell.rst-name:hover .region-tip { display: block; }
+
+/* ── Brain insight panel ─────────────────────────────────────── */
+.insight-panel {
+  margin: 0 12px 12px; padding: 12px;
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: var(--r6); display: none; flex-direction: column; gap: 10px;
+}
+.insight-panel.visible { display: flex; }
+.insight-hdr {
+  font-size: 9px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--t3);
+  display: flex; align-items: center; gap: 8px;
+}
+.insight-hdr::after { content: ''; flex: 1; height: 1px; background: var(--b1); }
+.insight-summary {
+  font-size: 12px; color: var(--t2); line-height: 1.6;
+  padding: 8px 10px; background: rgba(56,139,253,.06);
+  border-left: 2px solid var(--ac); border-radius: 0 4px 4px 0;
+}
+.insight-cards { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto; }
+.icard {
+  background: var(--s3); border: 1px solid var(--b0);
+  border-radius: var(--r3); overflow: hidden;
+}
+.icard-head {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px; border-bottom: 1px solid var(--b0);
+}
+.icard-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.icard-name { font-weight: 600; font-size: 12px; color: var(--t1); flex: 1; }
+.icard-rel  { font-family: var(--mono); font-size: 11px; }
+.icard-lvl  { font-size: 9px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
+.icard-lvl.high   { background: rgba(63,185,80,.15); color: var(--green); }
+.icard-lvl.mid    { background: rgba(56,139,253,.12); color: var(--ac); }
+.icard-lvl.low    { background: rgba(139,148,158,.1); color: var(--t3); }
+.icard-lvl.supp   { background: rgba(248,81,73,.1);   color: var(--orange); }
+.icard-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.icard-anatomy {
+  font-family: var(--mono); font-size: 9.5px; color: var(--t3);
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.icard-atom { padding: 1px 5px; background: var(--b0); border-radius: 3px; }
+.icard-explain { font-size: 11.5px; color: var(--t2); line-height: 1.6; }
+.icard-subs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.icard-sub {
+  font-size: 10px; padding: 2px 7px;
+  background: var(--s4); border: 1px solid var(--b1);
+  border-radius: 10px; color: var(--t3);
+}
+
+/* ── Disabled modality tabs ──────────────────────────────────── */
+.mod-tab.disabled {
+  opacity: 0.4; cursor: not-allowed; position: relative;
+}
+.mod-tab.disabled:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%);
+  width: 200px; padding: 6px 8px;
+  background: var(--s4); border: 1px solid var(--b2);
+  border-radius: var(--r3); font-size: 10px; color: var(--t2);
+  line-height: 1.4; z-index: 300; pointer-events: none;
+  white-space: normal; text-align: center;
+}
+
+/* ── Metric value colouring ──────────────────────────────────── */
+.rel-act-pos { color: var(--green); }
+.rel-act-neg { color: var(--orange); }
+
+/* ── Info modal ──────────────────────────────────────────────── */
+.info-modal-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.65); z-index: 600;
+  align-items: center; justify-content: center;
+}
+.info-modal-backdrop.open { display: flex; }
+.info-modal {
+  width: 580px; max-height: 80vh;
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 10px; overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0,0,0,.8);
+}
+.info-modal-head {
+  padding: 14px 18px; background: var(--s3);
+  border-bottom: 1px solid var(--b0);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.info-modal-title { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--t1); }
+.info-modal-close {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: transparent; border: 1px solid var(--b2);
+  cursor: pointer; color: var(--t3); font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.info-modal-close:hover { background: rgba(248,81,73,.15); color: var(--red); border-color: var(--red); }
+.info-modal-body { overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 18px; }
+.info-section-title {
+  font-size: 10px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--t3); margin-bottom: 8px;
+}
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+.info-row { display: flex; flex-direction: column; gap: 2px; }
+.info-label { font-size: 10px; color: var(--t3); }
+.info-val { font-family: var(--mono); font-size: 12px; color: var(--t1); }
+.info-encoder-row {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid var(--b0);
+  font-size: 12px;
+}
+.info-encoder-row:last-child { border-bottom: none; }
+.info-encoder-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.info-encoder-name { font-weight: 500; color: var(--t1); flex-shrink: 0; width: 44px; }
+.info-encoder-model { font-family: var(--mono); font-size: 11px; color: var(--ac); }
+.info-encoder-dims  { font-family: var(--mono); font-size: 10px; color: var(--t3); margin-left: auto; }
+.info-demo-note {
+  padding: 10px 12px; background: rgba(210,153,34,.08);
+  border: 1px solid rgba(210,153,34,.25); border-radius: var(--r6);
+  font-size: 11px; color: var(--yellow); line-height: 1.6;
+}
+.info-metrics-table { display: flex; flex-direction: column; gap: 6px; }
+.info-metric-row { display: grid; grid-template-columns: 90px 1fr; gap: 8px; font-size: 11px; }
+.info-metric-name { font-family: var(--mono); color: var(--t1); }
+.info-metric-desc { color: var(--t2); line-height: 1.5; }
+.info-datasets { display: flex; flex-wrap: wrap; gap: 6px; }
+.info-dataset-pill {
+  padding: 2px 8px; background: var(--s3); border: 1px solid var(--b1);
+  border-radius: 99px; font-family: var(--mono); font-size: 10px; color: var(--t2);
+}
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div class="titlebar">
+  <div class="tb-brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <defs><linearGradient id="mg" x1="2" y1="14" x2="26" y2="14"><stop offset="0%" stop-color="#388BFD"/><stop offset="100%" stop-color="#7B61FF"/></linearGradient></defs>
+      <ellipse cx="14" cy="14" rx="11" ry="7" fill="none" stroke="url(#mg)" stroke-width="1.5"/>
+      <ellipse cx="14" cy="14" rx="7" ry="11" fill="none" stroke="url(#mg)" stroke-width="1.5" opacity=".5"/>
+      <circle cx="14" cy="14" r="2.5" fill="url(#mg)"/>
+    </svg>
+    <span class="tb-logo">TRIBE</span>
+    <span class="tb-ver">v2.1.0-beta</span>
+  </div>
+  <div class="tb-sep"></div>
+  <span class="tb-title">Neural Prediction Workstation · Meta AI Research</span>
+  <div class="tb-session">
+    <span>session: <span id="sessionName">untitled-001</span></span>
+    <span>space: <span>MNI152NLin2009cAsym</span></span>
+    <span>TR: <span>1.49 s</span></span>
+  </div>
+  <div class="tb-right">
+    <button class="tb-btn" onclick="newSession()">New Session</button>
+    <button class="tb-btn primary" onclick="copyQuery()">Export Query</button>
+  </div>
+</div>
+
+<!-- MENUBAR -->
+<div class="menubar">
+  <div class="menu-wrap" id="menu-file">
+    <span class="menu-item" onclick="toggleMenu('file')">File</span>
+    <div class="menu-dropdown">
+      <div class="md-item" onclick="newSession();closeMenus()">New Session <span class="md-kbd">⌘N</span></div>
+      <div class="md-sep"></div>
+      <div class="md-item" onclick="exportJSON();closeMenus()">Export as JSON</div>
+      <div class="md-item" onclick="exportCSV();closeMenus()">Export as CSV</div>
+    </div>
+  </div>
+  <div class="menu-wrap" id="menu-edit">
+    <span class="menu-item" onclick="toggleMenu('edit')">Edit</span>
+    <div class="menu-dropdown">
+      <div class="md-item" onclick="newSession();closeMenus()">Reset Session</div>
+      <div class="md-item" onclick="clearAllInputs();closeMenus()">Clear Stimulus</div>
+      <div class="md-sep"></div>
+      <div class="md-item" onclick="selectAllROI();closeMenus()">Select All ROI</div>
+      <div class="md-item" onclick="clearAllROI();closeMenus()">Clear All ROI</div>
+    </div>
+  </div>
+  <div class="menu-wrap" id="menu-view">
+    <span class="menu-item" onclick="toggleMenu('view')">View</span>
+    <div class="menu-dropdown">
+      <div class="md-item" onclick="setCamView('lateral');closeMenus()">Lateral View</div>
+      <div class="md-item" onclick="setCamView('medial');closeMenus()">Medial View</div>
+      <div class="md-item" onclick="setCamView('dorsal');closeMenus()">Dorsal View</div>
+      <div class="md-sep"></div>
+      <div class="md-item" onclick="setHem('left');closeMenus()">Left Hemisphere</div>
+      <div class="md-item" onclick="setHem('right');closeMenus()">Right Hemisphere</div>
+      <div class="md-item" onclick="setHem('both');closeMenus()">Both Hemispheres</div>
+    </div>
+  </div>
+  <div class="menu-wrap" id="menu-analysis">
+    <span class="menu-item" onclick="toggleMenu('analysis')">Analysis</span>
+    <div class="menu-dropdown">
+      <div class="md-item" onclick="runPrediction();closeMenus()">Run Prediction <span class="md-kbd">⌘↵</span></div>
+      <div class="md-sep"></div>
+      <div class="md-item disabled">Compare Sessions…</div>
+      <div class="md-item disabled">Batch Predict…</div>
+    </div>
+  </div>
+  <div class="menu-wrap" id="menu-roi">
+    <span class="menu-item" onclick="toggleMenu('roi')">ROI</span>
+    <div class="menu-dropdown">
+      <div class="md-item" onclick="selectAllROI();closeMenus()">Select All</div>
+      <div class="md-item" onclick="clearAllROI();closeMenus()">Clear All</div>
+      <div class="md-sep"></div>
+      <div class="md-item" onclick="applyPreset('visual');closeMenus()">Visual Preset</div>
+      <div class="md-item" onclick="applyPreset('language');closeMenus()">Language Preset</div>
+      <div class="md-item" onclick="applyPreset('auditory');closeMenus()">Auditory Preset</div>
+    </div>
+  </div>
+  <div class="menu-wrap" id="menu-export">
+    <span class="menu-item" onclick="toggleMenu('export')">Export</span>
+    <div class="menu-dropdown">
+      <div class="md-item" onclick="exportJSON();closeMenus()">Export JSON</div>
+      <div class="md-item" onclick="exportCSV();closeMenus()">Export CSV</div>
+      <div class="md-item" onclick="copyQuery();closeMenus()">Copy API Call <span class="md-kbd">⌘C</span></div>
+      <div class="md-sep"></div>
+      <div class="md-item disabled">Export NIfTI…</div>
+    </div>
+  </div>
+  <div class="menu-sep"></div>
+  <div class="menu-wrap" id="menu-help">
+    <span class="menu-item" onclick="toggleMenu('help')">Help</span>
+    <div class="menu-dropdown">
+      <div class="md-item" onclick="window.open('https://ai.meta.com/blog/tribe-v2-brain-predictive-foundation-model/');closeMenus()">TRIBE v2 Blog Post</div>
+      <div class="md-item" onclick="window.open('https://huggingface.co/facebook/tribev2');closeMenus()">HuggingFace Repo</div>
+      <div class="md-sep"></div>
+      <div class="md-item" onclick="showAbout();closeMenus()">About</div>
+    </div>
+  </div>
+  <div class="paradigm-templates">
+    <span class="tpl-label">paradigm:</span>
+    <button class="tpl-btn" onclick="applyPreset('visual')">VISUAL</button>
+    <button class="tpl-btn" onclick="applyPreset('language')">LANGUAGE</button>
+    <button class="tpl-btn" onclick="applyPreset('auditory')">AUDITORY</button>
+    <button class="tpl-btn" onclick="applyPreset('multimodal')">MULTI-MODAL</button>
+    <button class="tpl-btn" onclick="applyPreset('zeroshot')">ZERO-SHOT</button>
+  </div>
+</div>
+
+<div class="body-wrap">
+  <div class="workspace">
+
+    <!-- PARAMS PANEL -->
+    <div class="params">
+      <div class="panel-header">
+        <span class="panel-title">Experiment Parameters</span>
+        <span class="panel-badge" id="roiBadge">1 / 6 ROI</span>
+      </div>
+
+      <!-- ROI Selection -->
+      <div class="param-section">
+        <div class="sec-label">
+          Regions of Interest (ROI)
+          <span class="sec-label-count" id="roiCount">1 active</span>
+        </div>
+        <div class="roi-grid" id="roiGrid">
+          <div class="roi-row on" data-r="visual"     onclick="toggleR('visual')">
+            <div class="roi-dot" style="background:var(--r-visual)"></div>
+            <span class="roi-name">Visual Cortex</span>
+            <span class="roi-abbr">V1–V4</span>
+            <div class="roi-check">
+              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="roi-row" data-r="auditory" onclick="toggleR('auditory')">
+            <div class="roi-dot" style="background:var(--r-auditory)"></div>
+            <span class="roi-name">Auditory Cortex</span>
+            <span class="roi-abbr">STG</span>
+            <div class="roi-check">
+              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="roi-row" data-r="language" onclick="toggleR('language')">
+            <div class="roi-dot" style="background:var(--r-language)"></div>
+            <span class="roi-name">Language Areas</span>
+            <span class="roi-abbr">BA44/22</span>
+            <div class="roi-check">
+              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="roi-row" data-r="prefrontal" onclick="toggleR('prefrontal')">
+            <div class="roi-dot" style="background:var(--r-prefrontal)"></div>
+            <span class="roi-name">Prefrontal Cortex</span>
+            <span class="roi-abbr">PFC</span>
+            <div class="roi-check">
+              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="roi-row" data-r="motor" onclick="toggleR('motor')">
+            <div class="roi-dot" style="background:var(--r-motor)"></div>
+            <span class="roi-name">Motor Cortex</span>
+            <span class="roi-abbr">M1/PMC</span>
+            <div class="roi-check">
+              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="roi-row" data-r="parietal" onclick="toggleR('parietal')">
+            <div class="roi-dot" style="background:var(--r-parietal)"></div>
+            <span class="roi-name">Parietal Cortex</span>
+            <span class="roi-abbr">IPS/SPL</span>
+            <div class="roi-check">
+              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Experimental Paradigm -->
+      <div class="param-section">
+        <div class="sec-label">Experimental Paradigm</div>
+        <div class="task-grid">
+          <button class="task-chip on" data-task="passive"       onclick="selTask('passive')">Passive Viewing</button>
+          <button class="task-chip"    data-task="attention"     onclick="selTask('attention')">Sustained Attention</button>
+          <button class="task-chip"    data-task="memory"        onclick="selTask('memory')">Working Memory</button>
+          <button class="task-chip"    data-task="comprehension" onclick="selTask('comprehension')">Semantic Comprehension</button>
+        </div>
+      </div>
+
+      <!-- Stimulus Subtype -->
+      <div class="param-section">
+        <div class="sec-label" id="subtypeLabel">Stimulus Category</div>
+        <div class="sel-wrap">
+          <select id="subtypeSelect" onchange="updateAll()"></select>
+        </div>
+      </div>
+
+      <!-- Model Configuration -->
+      <div class="param-section">
+        <div class="sec-label">Model Configuration</div>
+
+        <div class="param-row" style="flex-direction:column; align-items:stretch; gap:4px; margin-bottom:10px">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span class="param-label">Spatial Resolution</span>
+            <span class="param-value" id="resVal">70×</span>
+          </div>
+          <input class="slider-full" type="range" id="resSlider" min="1" max="70" value="70"
+                 oninput="document.getElementById('resVal').textContent=this.value+'×';ST.resolution=+this.value;updateAll()">
+        </div>
+
+        <div class="param-row" style="flex-direction:column; align-items:stretch; gap:4px; margin-bottom:10px">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span class="param-label">Prediction Confidence (min)</span>
+            <span class="param-value" id="confVal">0.85</span>
+          </div>
+          <input class="slider-full" type="range" id="confSlider" min="50" max="99" value="85"
+                 oninput="document.getElementById('confVal').textContent=(this.value/100).toFixed(2);updateAll()">
+        </div>
+
+        <div class="param-row" style="flex-direction:column; align-items:stretch; gap:4px">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span class="param-label">Sample Size (N)</span>
+            <span class="param-value" id="subjectVal">12</span>
+          </div>
+          <input class="slider-full" type="range" id="subjectSlider" min="1" max="100" value="12"
+                 oninput="document.getElementById('subjectVal').textContent=this.value;updateAll()">
+        </div>
+      </div>
+
+      <!-- Prediction Flags -->
+      <div class="param-section">
+        <div class="sec-label">Prediction Flags</div>
+        <div class="tog-row">
+          <div>
+            <div class="tog-label">Zero-Shot Generalization</div>
+            <span class="tog-tag">Predict for unseen subjects</span>
+          </div>
+          <button class="tog" id="togZS" onclick="flipTog('zeroshot')"></button>
+        </div>
+        <div class="tog-row">
+          <div>
+            <div class="tog-label">Cross-Lingual Transfer</div>
+            <span class="tog-tag">Generalize across languages</span>
+          </div>
+          <button class="tog" id="togCL" onclick="flipTog('crosslang')"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STIMULUS PARADIGM PANEL -->
+    <div class="stimulus-panel">
+      <div class="panel-header">
+        <span class="panel-title">Stimulus Paradigm</span>
+        <span class="panel-badge" id="stimBadge">TEXT</span>
+      </div>
+      <div class="demo-banner" id="demoBanner" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm8-3a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 018 5zm0 7a1 1 0 110-2 1 1 0 010 2z" fill="currentColor"/></svg>
+        <span id="demoBannerText"><strong>Demo mode</strong> — hash-based text features active. Install <a href="https://huggingface.co/meta-llama/Llama-3.2-3B" target="_blank">LLaMA-3.2-3B</a> for semantic accuracy.</span>
+      </div>
+
+      <div class="modality-tabs">
+        <button class="mod-tab on" data-stim="text"  onclick="selStim('text')">Text</button>
+        <button class="mod-tab disabled" data-stim="image" data-tip="Requires V-JEPA2 — not yet available" tabindex="-1">Image</button>
+        <button class="mod-tab disabled" data-stim="video" data-tip="Requires V-JEPA2 temporal — not yet available" tabindex="-1">Video</button>
+        <button class="mod-tab" data-stim="audio" onclick="selStim('audio')">Audio</button>
+      </div>
+
+      <!-- TEXT -->
+      <div class="input-panel on" id="panel-text">
+        <div class="input-meta">
+          <span class="meta-item">modality: <span>natural language</span></span>
+          <div class="meta-sep"></div>
+          <span class="meta-item">encoding: <span>LLaMA-3.2-3B</span></span>
+          <div class="meta-sep"></div>
+          <span class="meta-item" id="charCount">0 chars</span>
+        </div>
+        <textarea id="textInput"
+          placeholder="Enter stimulus text — prose, poetry, isolated sentences, or any natural language content. TRIBE v2 will predict the corresponding fMRI BOLD response across selected cortical regions."
+          oninput="debouncedUpdate()"></textarea>
+        <div class="input-footer">
+          <span>UTF-8 · any language · max token context: 4096</span>
+          <span id="tokenEst">~0 tokens</span>
+        </div>
+      </div>
+
+      <!-- IMAGE -->
+      <div class="input-panel" id="panel-image">
+        <div class="input-meta">
+          <span class="meta-item">encoder: <span>V-JEPA2</span></span>
+          <div class="meta-sep"></div>
+          <span class="meta-item">accepted: <span>JPG · PNG · WebP · GIF</span></span>
+        </div>
+        <div class="dropzone" id="dz-image" onclick="document.getElementById('imgFile').click()"
+             ondragover="dzDrag(event,'dz-image')" ondragleave="dzLeave('dz-image')" ondrop="dzDrop(event,'image')">
+          <img id="imgPreview" class="img-preview" alt="">
+          <div id="dz-image-inner">
+            <div class="drop-icon">
+              <svg viewBox="0 0 32 32" fill="none" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round">
+                <rect x="4" y="8" width="24" height="16" rx="2"/>
+                <circle cx="12" cy="14" r="2.5"/>
+                <path d="M4 22 L10 16 L15 21 L20 15 L28 22"/>
+              </svg>
+            </div>
+            <div class="drop-title">Drop image file or click to browse</div>
+            <div class="drop-sub">Drag from filesystem · supports all common formats<br>Max resolution: unlimited</div>
+            <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('imgFile').click()">Select File</button>
+          </div>
+          <div class="file-badge" id="img-badge"></div>
+          <button class="clear-btn" id="img-clear" onclick="event.stopPropagation();clearInput('image')" title="Remove">✕</button>
+          <input type="file" id="imgFile" accept="image/*" onchange="handleFile(this,'image')">
+        </div>
+      </div>
+
+      <!-- VIDEO -->
+      <div class="input-panel" id="panel-video">
+        <div class="input-meta">
+          <span class="meta-item">encoder: <span>V-JEPA2 (temporal)</span></span>
+          <div class="meta-sep"></div>
+          <span class="meta-item">accepted: <span>MP4 · WebM · MOV</span></span>
+        </div>
+        <div class="url-bar">
+          <input class="url-input" id="videoUrl" type="text" placeholder="Direct video URL (.mp4 / .webm / .mov)" oninput="updateAll()">
+          <button class="url-go" onclick="loadVideoUrl()">Load URL</button>
+        </div>
+        <div class="dropzone" id="dz-video" onclick="document.getElementById('videoFile').click()"
+             ondragover="dzDrag(event,'dz-video')" ondragleave="dzLeave('dz-video')" ondrop="dzDrop(event,'video')">
+          <video id="videoPreview" controls></video>
+          <div id="dz-video-inner">
+            <div class="drop-icon">
+              <svg viewBox="0 0 32 32" fill="none" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round">
+                <rect x="2" y="7" width="20" height="18" rx="2"/>
+                <path d="M22 12 L30 8 L30 24 L22 20Z"/>
+              </svg>
+            </div>
+            <div class="drop-title">Drop video file or enter URL above</div>
+            <div class="drop-sub">MP4 · WebM · MOV · AVI</div>
+            <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('videoFile').click()">Select File</button>
+          </div>
+          <div class="file-badge" id="video-badge"></div>
+          <button class="clear-btn" id="video-clear" onclick="event.stopPropagation();clearInput('video')" title="Remove">✕</button>
+          <input type="file" id="videoFile" accept="video/*" onchange="handleFile(this,'video')">
+        </div>
+      </div>
+
+      <!-- AUDIO -->
+      <div class="input-panel" id="panel-audio">
+        <div class="input-meta">
+          <span class="meta-item">encoder: <span>Wav2Vec-BERT 2.0</span></span>
+          <div class="meta-sep"></div>
+          <span class="meta-item">accepted: <span>MP3 · WAV · M4A · FLAC · OGG</span></span>
+        </div>
+        <div class="dropzone" id="dz-audio" onclick="document.getElementById('audioFile').click()"
+             ondragover="dzDrag(event,'dz-audio')" ondragleave="dzLeave('dz-audio')" ondrop="dzDrop(event,'audio')">
+          <div id="dz-audio-inner">
+            <div class="audio-waveform" id="audioWave">
+              <div class="aw-bar"></div><div class="aw-bar"></div><div class="aw-bar"></div>
+              <div class="aw-bar"></div><div class="aw-bar"></div><div class="aw-bar"></div>
+              <div class="aw-bar"></div><div class="aw-bar"></div>
+            </div>
+            <div class="drop-title" style="margin-top:10px">Drop audio file or click to browse</div>
+            <div class="drop-sub">MP3 · WAV · M4A · FLAC · OGG · podcast episodes</div>
+            <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('audioFile').click()">Select File</button>
+          </div>
+          <audio id="audioPreview" controls></audio>
+          <div class="file-badge" id="audio-badge"></div>
+          <button class="clear-btn" id="audio-clear" onclick="event.stopPropagation();clearInput('audio')" title="Remove">✕</button>
+          <input type="file" id="audioFile" accept="audio/*" onchange="handleFile(this,'audio')">
+        </div>
+      </div>
+    </div>
+
+    <!-- VISUALIZATION PANEL -->
+    <div class="viz-panel">
+      <div class="viz-toolbar">
+        <span class="vt-label">Atlas</span>
+        <button class="vt-btn on" id="vt-lateral" onclick="setCamView('lateral')">Lateral</button>
+        <button class="vt-btn" id="vt-medial" onclick="setCamView('medial')">Medial</button>
+        <button class="vt-btn" id="vt-dorsal" onclick="setCamView('dorsal')">Dorsal</button>
+        <div class="vt-sep"></div>
+        <button class="vt-btn on" id="vt-lhem" onclick="setHem('left')">L Hem</button>
+        <button class="vt-btn" id="vt-rhem" onclick="setHem('right')">R Hem</button>
+        <div class="vt-sep"></div>
+        <button class="vt-btn on" id="vt-roi" onclick="toggleROI()">ROI</button>
+        <button class="vt-btn" id="vt-labels" onclick="toggleLabels()">Labels</button>
+        <div class="vt-coord">MNI: <span id="mniCoord">— — —</span></div>
+      </div>
+
+      <canvas id="brainCanvas"></canvas>
+      <div id="regionLabels"></div>
+      <div id="brainLoading">
+        <div class="bl-label">Loading brain surface model…</div>
+        <div class="bl-bar"><div class="bl-fill" id="blFill"></div></div>
+        <div class="bl-label" id="blPct" style="color:var(--t3)">0%</div>
+      </div>
+
+      <div class="space-label">MNI152NLin2009cAsym · 2 mm isotropic</div>
+
+      <!-- Colorbar -->
+      <div class="colorbar">
+        <div class="cb-title">BOLD activation (z-score)</div>
+        <div class="cb-bar"></div>
+        <div class="cb-scale"><span>0</span><span>2</span><span>4</span><span>6+</span></div>
+      </div>
+
+      <!-- ROI Stats Table -->
+      <div class="roi-stats-panel" id="roiStatsPanel">
+        <div class="rst-head">
+          <span class="rst-hcell">Region</span>
+          <span class="rst-hcell">Rel. Act.<span class="hdr-tip">Regional z-score vs whole-brain mean. Positive = more active than brain average. Negative = suppressed.</span></span>
+          <span class="rst-hcell">Mean (z)<span class="hdr-tip">Mean predicted BOLD amplitude across vertices in this region, in model z-score units.</span></span>
+          <span class="rst-hcell">σ<span class="hdr-tip">Vertex-level standard deviation — higher values indicate spatially heterogeneous activation within the region.</span></span>
+          <span class="rst-hcell">Status</span>
+        </div>
+        <div class="rst-row on"  data-r="visual"     onclick="toggleR('visual')">    <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-visual)"></div>Visual<div class="region-tip"><div class="rt-name">Visual Cortex</div><div class="rt-loc">Occipital lobe · BA 17, 18, 19 · V1–V4/MT</div><div class="rt-fns"><span class="rt-fn-item">V1 detects edges, orientations, spatial frequency</span><span class="rt-fn-item">V4 encodes color, shape, object form</span><span class="rt-fn-item">MT/V5 processes motion and optic flow</span><span class="rt-fn-item">Ventral stream feeds into object recognition</span></div><div class="rt-high"><strong>High activation:</strong> any visual input, reading, vivid imagery</div></div></span><span class="rst-cell rst-pearson" id="pr-visual">—</span><span class="rst-cell rst-mean" id="mn-visual">—</span><span class="rst-cell rst-std" id="sd-visual">—</span><span class="rst-cell rst-status" id="st-visual">ON</span></div>
+        <div class="rst-row"     data-r="auditory"   onclick="toggleR('auditory')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-auditory)"></div>Auditory<div class="region-tip"><div class="rt-name">Auditory Cortex</div><div class="rt-loc">Superior temporal gyrus · BA 41, 42, 22 · A1 + belt</div><div class="rt-fns"><span class="rt-fn-item">A1 (Heschl's gyrus) maps tones tonotopically</span><span class="rt-fn-item">Auditory belt parses complex sounds, timbre</span><span class="rt-fn-item">Posterior STG → Wernicke's speech comprehension</span><span class="rt-fn-item">Bilateral; right hemisphere dominant for music</span></div><div class="rt-high"><strong>High activation:</strong> speech, music, environmental sounds</div></div></span><span class="rst-cell rst-pearson" id="pr-auditory">—</span><span class="rst-cell rst-mean" id="mn-auditory">—</span><span class="rst-cell rst-std" id="sd-auditory">—</span><span class="rst-cell rst-status" id="st-auditory" style="color:var(--t3)">off</span></div>
+        <div class="rst-row"     data-r="language"   onclick="toggleR('language')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-language)"></div>Language<div class="region-tip"><div class="rt-name">Language Network</div><div class="rt-loc">Left frontal + temporal · BA 44, 45, 22, 39 · Broca + Wernicke</div><div class="rt-fns"><span class="rt-fn-item">Broca's area (BA44/45): syntax, production, subvocal rehearsal</span><span class="rt-fn-item">Wernicke's area (BA22): spoken word comprehension</span><span class="rt-fn-item">Angular gyrus (BA39): reading, semantic integration</span><span class="rt-fn-item">Left-lateralized in ~95% of right-handed people</span></div><div class="rt-high"><strong>High activation:</strong> reading, listening to speech, semantic tasks</div></div></span><span class="rst-cell rst-pearson" id="pr-language">—</span><span class="rst-cell rst-mean" id="mn-language">—</span><span class="rst-cell rst-std" id="sd-language">—</span><span class="rst-cell rst-status" id="st-language" style="color:var(--t3)">off</span></div>
+        <div class="rst-row"     data-r="prefrontal" onclick="toggleR('prefrontal')"><span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-prefrontal)"></div>Prefrontal<div class="region-tip"><div class="rt-name">Prefrontal Cortex</div><div class="rt-loc">Frontal lobe (anterior) · BA 9, 10, 11, 46, 47 · dlPFC + vmPFC</div><div class="rt-fns"><span class="rt-fn-item">dlPFC (BA9/46): working memory, cognitive control</span><span class="rt-fn-item">vmPFC (BA11): reward, emotional valuation</span><span class="rt-fn-item">OFC: integrates sensory and motivational signals</span><span class="rt-fn-item">ACC monitors conflict; drives attention allocation</span></div><div class="rt-high"><strong>High activation:</strong> complex narratives, inference, attention tasks</div></div></span><span class="rst-cell rst-pearson" id="pr-prefrontal">—</span><span class="rst-cell rst-mean" id="mn-prefrontal">—</span><span class="rst-cell rst-std" id="sd-prefrontal">—</span><span class="rst-cell rst-status" id="st-prefrontal" style="color:var(--t3)">off</span></div>
+        <div class="rst-row"     data-r="motor"      onclick="toggleR('motor')">     <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-motor)"></div>Motor<div class="region-tip"><div class="rt-name">Motor Cortex</div><div class="rt-loc">Precentral gyrus · BA 4, 6 · M1 + premotor + SMA</div><div class="rt-fns"><span class="rt-fn-item">M1 (BA4): executes voluntary movements, somatotopic map</span><span class="rt-fn-item">Premotor (BA6): plans and prepares movements</span><span class="rt-fn-item">SMA: sequences multi-step actions, self-initiated movement</span><span class="rt-fn-item">Activates for motor imagery even without movement</span></div><div class="rt-high"><strong>Surprising activation:</strong> reading action verbs ("kick", "run"), imagining motion</div></div></span><span class="rst-cell rst-pearson" id="pr-motor">—</span><span class="rst-cell rst-mean" id="mn-motor">—</span><span class="rst-cell rst-std" id="sd-motor">—</span><span class="rst-cell rst-status" id="st-motor" style="color:var(--t3)">off</span></div>
+        <div class="rst-row"     data-r="parietal"   onclick="toggleR('parietal')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-parietal)"></div>Parietal<div class="region-tip"><div class="rt-name">Parietal Cortex</div><div class="rt-loc">Parietal lobe · BA 5, 7, 39, 40 · IPS + SPL + AG + SMG</div><div class="rt-fns"><span class="rt-fn-item">IPS: spatial attention, saccade targeting, numerosity</span><span class="rt-fn-item">SPL: proprioception, body-in-space representation</span><span class="rt-fn-item">Angular gyrus: reading, cross-modal integration, semantics</span><span class="rt-fn-item">Dorsal stream hub: "where/how" pathway for action</span></div><div class="rt-high"><strong>High activation:</strong> spatial tasks, attention, sentence-level comprehension</div></div></span><span class="rst-cell rst-pearson" id="pr-parietal">—</span><span class="rst-cell rst-mean" id="mn-parietal">—</span><span class="rst-cell rst-std" id="sd-parietal">—</span><span class="rst-cell rst-status" id="st-parietal" style="color:var(--t3)">off</span></div>
+      </div>
+
+      <!-- Brain Activity Insight Panel -->
+      <div class="insight-panel" id="insightPanel">
+        <div class="insight-hdr">Brain Activity Insight</div>
+        <div class="insight-summary" id="insightSummary"></div>
+        <div class="insight-cards" id="insightCards"></div>
+      </div>
+
+    </div>
+
+  </div><!-- .workspace -->
+
+  <!-- QUERY CONSTRUCTOR -->
+  <div class="query-bar">
+    <div class="qb-spinner"></div>
+    <span class="qb-label">TRIBE v2 API</span>
+    <span class="qb-prefix">predict_bold(</span>
+    <div class="qb-text" id="queryText"></div>
+    <span class="qb-prefix" style="color:var(--t3)">)</span>
+    <div class="qb-actions">
+      <button class="qb-btn" id="copyBtn" onclick="copyQuery()">Copy</button>
+    </div>
+  </div>
+
+  <!-- thin progress bar shown below query bar while inferring -->
+  <div id="inferProgress" style="height:2px;background:var(--b0);position:relative;flex-shrink:0;display:none">
+    <div id="inferBar" style="height:100%;background:var(--ac);width:0%;transition:width .2s ease"></div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <div class="sb-item"><div class="sb-dot ready"></div>Ready</div>
+    <div class="sb-item">session: untitled-001</div>
+    <div class="sb-item">space: MNI152 · 2mm</div>
+    <div class="sb-item" id="sbN">N = 12</div>
+    <div class="sb-item" id="sbRes">res = 70×</div>
+    <div class="sb-item" id="sbRois">1 / 6 ROI active</div>
+    <div class="sb-item" id="sbLastRun" style="color:rgba(255,255,255,.55)">not run yet</div>
+    <div class="sb-item">TRIBE v2 · CC BY-NC 4.0 · Meta AI Research</div>
+  </div>
+
+  <!-- MODEL INFO MODAL -->
+  <div class="info-modal-backdrop" id="infoModalBackdrop" onclick="if(event.target===this)closeInfoModal()">
+    <div class="info-modal">
+      <div class="info-modal-head">
+        <span class="info-modal-title">TRIBE v2 · Model Reference</span>
+        <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
+      </div>
+      <div class="info-modal-body">
+
+        <div>
+          <div class="info-section-title">Model</div>
+          <div class="info-grid" id="infoGridModel">
+            <div class="info-row"><span class="info-label">Class</span><span class="info-val">FmriEncoder</span></div>
+            <div class="info-row"><span class="info-label">Parameters</span><span class="info-val" id="infoNParams">loading…</span></div>
+            <div class="info-row"><span class="info-label">Checkpoint</span><span class="info-val" style="font-size:10px">facebook/tribev2</span></div>
+            <div class="info-row"><span class="info-label">Output surface</span><span class="info-val">fsaverage5</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-section-title">Architecture</div>
+          <div class="info-grid">
+            <div class="info-row"><span class="info-label">Hidden dim</span><span class="info-val">1,152</span></div>
+            <div class="info-row"><span class="info-label">Attention heads</span><span class="info-val">8</span></div>
+            <div class="info-row"><span class="info-label">Transformer layers</span><span class="info-val">16 (8 attn + 8 FF)</span></div>
+            <div class="info-row"><span class="info-label">FF multiplier</span><span class="info-val">4×</span></div>
+            <div class="info-row"><span class="info-label">Output vertices</span><span class="info-val">20,484</span></div>
+            <div class="info-row"><span class="info-label">Max sequence</span><span class="info-val">1,024 TR</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-section-title">Feature Encoders (trained on)</div>
+          <div class="info-encoder-row">
+            <div class="info-encoder-dot" style="background:#58A6FF"></div>
+            <span class="info-encoder-name">Text</span>
+            <span class="info-encoder-model">LLaMA-3.2-3B</span>
+            <span class="info-encoder-dims">2 × 3,072 → 6,144</span>
+          </div>
+          <div class="info-encoder-row">
+            <div class="info-encoder-dot" style="background:#FF8C42"></div>
+            <span class="info-encoder-name">Audio</span>
+            <span class="info-encoder-model">Wav2Vec-BERT 2.0</span>
+            <span class="info-encoder-dims">2 × 1,024 → 2,048</span>
+          </div>
+          <div class="info-encoder-row">
+            <div class="info-encoder-dot" style="background:#3FB950"></div>
+            <span class="info-encoder-name">Video</span>
+            <span class="info-encoder-model">V-JEPA2 ViT-G</span>
+            <span class="info-encoder-dims">2 × 1,408 → 2,816</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="info-section-title">Training Data</div>
+          <div class="info-datasets">
+            <span class="info-dataset-pill">Algonauts2025Bold</span>
+            <span class="info-dataset-pill">Lahner2024Bold</span>
+            <span class="info-dataset-pill">Lebel2023Bold</span>
+            <span class="info-dataset-pill">Wen2017</span>
+          </div>
+          <div style="margin-top:8px; font-size:11px; color:var(--t3)">25 subjects · 15 training epochs · fsaverage5 surface projection</div>
+        </div>
+
+        <div>
+          <div class="info-section-title">Output Metrics (ROI Table)</div>
+          <div class="info-metrics-table">
+            <div class="info-metric-row">
+              <span class="info-metric-name">Rel. Act.</span>
+              <span class="info-metric-desc">Regional z-score relative to whole-brain mean activation. Positive = more active than brain average; negative = suppressed.</span>
+            </div>
+            <div class="info-metric-row">
+              <span class="info-metric-name">Mean (z)</span>
+              <span class="info-metric-desc">Mean predicted BOLD amplitude across all vertices in the region, in model z-score units.</span>
+            </div>
+            <div class="info-metric-row">
+              <span class="info-metric-name">σ</span>
+              <span class="info-metric-desc">Vertex-level standard deviation — higher values indicate spatially heterogeneous activation within the region.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-demo-note">
+          ⚠ <strong>Demo mode</strong> — The FmriEncoder runs with real trained weights (676 MB checkpoint), but text inputs are encoded with hash-based pseudo-features rather than LLaMA-3.2-3B. Predicted activations have correct structure but are not semantically grounded. For meaningful predictions, install the full LLaMA-3.2-3B encoder.
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- .body-wrap -->
+
+<!-- STATE + UI SCRIPT -->
+<script>
+const SUBTYPES = {
+  text:  [{v:'narrative',label:'Narrative / Prose'},{v:'poetry',label:'Poetry / Literary'},{v:'technical',label:'Technical / Scientific'},{v:'sentences',label:'Isolated Sentences'}],
+  image: [{v:'natural_scenes',label:'Natural Scenes'},{v:'faces',label:'Human Faces'},{v:'objects',label:'Object Arrays'},{v:'abstract',label:'Abstract / Non-objects'},{v:'text_images',label:'Text-embedded Images'}],
+  video: [{v:'movie_clips',label:'Naturalistic Movie Clips'},{v:'nature',label:'Nature / Documentary'},{v:'social',label:'Social Interaction'},{v:'action',label:'Motor / Action Sequences'}],
+  audio: [{v:'podcast',label:'Podcast / Narrative Speech'},{v:'music',label:'Music / Tonal'},{v:'ambient',label:'Ambient / Environmental'},{v:'speech_noise',label:'Speech-in-Noise'}],
+};
+const RNAMES_FULL = {
+  visual:'visual cortex (V1-V4, occipital)', auditory:'auditory cortex (primary STG)',
+  language:"language network (BA44, BA22)", prefrontal:'prefrontal cortex (dlPFC, vmPFC)',
+  motor:'motor cortex (M1, premotor)', parietal:'parietal cortex (IPS, SPL)',
+};
+const RNAMES_SHORT = { visual:'visual', auditory:'auditory', language:'language', prefrontal:'prefrontal', motor:'motor', parietal:'parietal' };
+const TASK_LBL = { passive:'passive_viewing', attention:'sustained_attention', memory:'working_memory', comprehension:'semantic_comprehension' };
+const STIM_ENCODER = { text:'llama32_3b', image:'vjepa2', video:'vjepa2_temporal', audio:'wav2vec_bert2' };
+
+// ── Educational region descriptions ──────────────────────────
+const REGION_EDU = {
+  visual: {
+    fullName: 'Visual Cortex',
+    lobe: 'Occipital lobe',
+    ba: 'BA 17, 18, 19 · V1 → V4 · MT/V5',
+    color: 'var(--r-visual)',
+    subregions: ['V1 — orientation & edges','V2/V3 — intermediate','V4 — color & form','MT/V5 — motion'],
+    what: 'The visual cortex sits at the back of your skull and is the first cortical stop for everything your eyes see. It processes information in a strict hierarchy: V1 detects raw edges and gratings; V2 and V3 refine those into contours and surfaces; V4 combines them into colored shapes and objects; MT/V5 detects motion and optic flow. Two streams then carry information forward — the <em>ventral stream</em> ("what") toward the temporal lobe for object recognition, and the <em>dorsal stream</em> ("where/how") toward parietal cortex for spatial control.',
+    stimText:  'During naturalistic text reading, your visual cortex processes the word shapes before language areas parse their meaning. Sentences with strong visual imagery ("the red sunset over still water") produce broader activation than abstract prose.',
+    stimAudio: 'Auditory stimuli typically suppress visual cortex, but narrative speech with vivid imagery can trigger weak activation via top-down mental imagery.',
+    stimVideo: 'Visual cortex is maximally driven by video — every frame triggers the full V1→MT cascade, with MT/V5 especially active during camera movement.',
+  },
+  auditory: {
+    fullName: 'Auditory Cortex',
+    lobe: 'Superior temporal gyrus (STG)',
+    ba: 'BA 41, 42, 22 · A1 (Heschl\'s gyrus) + belt',
+    color: 'var(--r-auditory)',
+    subregions: ['Heschl\'s gyrus — pure tone map','Auditory belt — complex sounds','Posterior STG — Wernicke\'s area','Right STG — music & prosody'],
+    what: 'Tucked inside the lateral sulcus on the temporal lobe, the auditory cortex is organized as a <em>tonotopic map</em>: neurons tuned to low frequencies sit at one end, high frequencies at the other — like a piano laid across the surface of your brain. The core (A1, Heschl\'s gyrus) responds to simple tones. The surrounding belt and parabelt regions respond to complex sounds, speech phonemes, and auditory objects. The posterior part of the left STG is Wernicke\'s area, critical for understanding spoken words. The right hemisphere is dominant for music, rhythm, and emotional tone of speech (prosody).',
+    stimText:  'Pure text reading produces minimal auditory cortex activation unless you subvocalize. Inner speech (mentally "hearing" words) drives weak left STG activation.',
+    stimAudio: 'The primary driver of auditory cortex. Speech activates bilateral STG, with left dominant for phonemes; music activates bilateral with right dominance for pitch and timbre.',
+    stimVideo: 'Co-activates with visual cortex when the video has speech or music. The brain integrates lip movement (visual) with phoneme representation (auditory) in the posterior STG.',
+  },
+  language: {
+    fullName: 'Language Network',
+    lobe: 'Left frontal + temporal lobes',
+    ba: 'BA 44, 45, 22, 39, 40 · Broca + Wernicke + AG',
+    color: 'var(--r-language)',
+    subregions: ['Broca\'s (BA44) — syntax & production','Broca\'s (BA45) — semantic selection','Wernicke\'s (BA22) — speech comprehension','Angular gyrus (BA39) — reading & semantics'],
+    what: 'The language network is the most uniquely human cortical system. It spans two classical hubs connected by the arcuate fasciculus white-matter tract. <em>Broca\'s area</em> in the left inferior frontal gyrus handles syntax — the rules governing how words combine — and is also involved in subvocal rehearsal and speech production. <em>Wernicke\'s area</em> in the posterior STG decodes the meaning of spoken words. The <em>angular gyrus</em> sits at the junction of temporal, parietal, and occipital lobes and is critical for reading, cross-modal meaning integration, and metaphor. About 95% of right-handed people are left-lateralized for language.',
+    stimText:  'Text is the primary driver of the language network. Narrative prose recruits the full Broca→Wernicke→angular gyrus circuit. Poetry adds rhythmic processing in right frontal regions. The network scales with syntactic complexity: simple sentences < complex sentences < indirect speech.',
+    stimAudio: 'Spoken language strongly activates Wernicke\'s area for decoding phonemes and the left IFG for syntactic parsing. Music without lyrics activates right-hemisphere homologues but spares classical language areas.',
+    stimVideo: 'Films with dialogue activate the language network comparably to audio-only speech. Visual lip reading alone can partially activate posterior STG even with the sound off.',
+  },
+  prefrontal: {
+    fullName: 'Prefrontal Cortex',
+    lobe: 'Frontal lobe (anterior)',
+    ba: 'BA 9, 10, 11, 46, 47 · dlPFC · vmPFC · OFC · ACC',
+    color: 'var(--r-prefrontal)',
+    subregions: ['dlPFC (BA9/46) — working memory','vmPFC (BA11) — emotion & reward','OFC (BA47) — value integration','ACC (BA32) — conflict monitoring'],
+    what: 'The prefrontal cortex (PFC) is the brain\'s executive suite — the last region to mature (into your mid-20s) and the one most expanded relative to other primates. The <em>dorsolateral PFC</em> (dlPFC) is the seat of working memory: it holds information "online" while you reason about it. The <em>ventromedial PFC</em> (vmPFC) assigns emotional and reward value to outcomes. The <em>orbitofrontal cortex</em> integrates sensory signals with learned value to guide decisions. The <em>anterior cingulate cortex</em> (ACC, BA 32) detects when your brain\'s predictions conflict with reality and signals the need for cognitive control.',
+    stimText:  'Complex narratives requiring inference, perspective-taking, or tracking multiple characters heavily activate the PFC. Simple sentence lists produce much less PFC engagement than coherent stories.',
+    stimAudio: 'Music that violates harmonic expectations activates ACC. Emotional or suspenseful audio recruits vmPFC for valuation. Working memory for lyrics or rhythm activates dlPFC.',
+    stimVideo: 'Naturalistic films that require tracking characters\' mental states (Theory of Mind) strongly activate medial PFC and the temporo-parietal junction, which are part of the "social brain" network.',
+  },
+  motor: {
+    fullName: 'Motor Cortex',
+    lobe: 'Precentral gyrus (frontal lobe)',
+    ba: 'BA 4, 6 · M1 · premotor (PMC) · SMA',
+    color: 'var(--r-motor)',
+    subregions: ['M1 (BA4) — movement execution','PMC (BA6) — movement planning','SMA — action sequencing','Mirror system — action observation'],
+    what: 'The motor cortex crowns the precentral gyrus like a headband, with a full <em>somatotopic map</em> of the body: the leg area sits near the midline (on the medial surface), the hand area is a huge territory on the lateral surface, and the face/mouth area is most lateral. Primary motor cortex (M1) sends the final commands for voluntary movement. Premotor cortex and the supplementary motor area (SMA) are involved in planning, sequencing, and internally initiated actions. Crucially, the motor system also contains <em>mirror neurons</em> — cells that fire both when you perform an action AND when you watch someone else perform it — making the motor cortex central to action understanding and imitation.',
+    stimText:  'Reading action verbs ("kick", "throw", "grasp") activates somatotopic regions of motor cortex that correspond to the body part involved — a phenomenon called <em>motor embodiment</em>. Stories with physical content produce more motor activation than abstract text.',
+    stimAudio: 'Rhythmic music entrains motor and premotor cortex, explaining why you tap your foot involuntarily. Speech-rate information is tracked by SMA for temporal prediction.',
+    stimVideo: 'Videos of hand actions strongly activate hand-area M1 and PMC via the mirror system. Sports videos produce full-body motor cortex activation patterns matching the observed movements.',
+  },
+  parietal: {
+    fullName: 'Parietal Cortex',
+    lobe: 'Parietal lobe',
+    ba: 'BA 5, 7, 39, 40 · IPS · SPL · AG · SMG',
+    color: 'var(--r-parietal)',
+    subregions: ['IPS — spatial attention & numerosity','SPL — proprioception & reaching','Angular gyrus (BA39) — semantics & reading','SMG (BA40) — phonological working memory'],
+    what: 'The parietal lobe sits between the occipital lobe (vision) and the frontal lobe (action) and acts as a critical <em>multimodal integration hub</em>. The <em>intraparietal sulcus</em> (IPS) is involved in spatial attention, eye movement control, numerical magnitude (the mental number line lives here), and visuomotor coordination for reaching. The <em>superior parietal lobule</em> (SPL) maintains a body-in-space model using proprioceptive and visual signals. The <em>angular gyrus</em> (AG) is a convergence zone for semantic information from multiple modalities — damage here can cause alexia (reading loss) and Gerstmann syndrome (finger agnosia, left-right confusion, acalculia). The <em>supramarginal gyrus</em> (SMG) is critical for phonological working memory (remembering sound patterns).',
+    stimText:  'Reading sentences with complex syntax or multiple clauses activates the angular gyrus and SMG for phonological buffering. Narrative-level comprehension that requires tracking spatial scenes recruits IPS and SPL.',
+    stimAudio: 'Speech comprehension under noise loads phonological working memory in the left SMG. Music with polyrhythmic structure recruits IPS for meter tracking.',
+    stimVideo: 'Scenes with rapid camera cuts or spatial navigation (maps, exploration) strongly activate IPS. Watching people interact in social scenes recruits the temporo-parietal junction at the boundary of parietal and temporal lobes.',
+  },
+};
+
+// ── Insight level label ───────────────────────────────────────
+function _insightLevel(rel) {
+  if (rel >= 0.5)  return { cls:'high', txt:'Strongly active' };
+  if (rel >= 0.15) return { cls:'mid',  txt:'Moderately active' };
+  if (rel >= -0.15) return { cls:'low', txt:'Baseline' };
+  return { cls:'supp', txt:'Suppressed' };
+}
+
+// ── Build and show insight panel ──────────────────────────────
+function _updateInsight(data) {
+  const panel   = document.getElementById('insightPanel');
+  const summary = document.getElementById('insightSummary');
+  const cards   = document.getElementById('insightCards');
+  if (!panel) return;
+
+  const rs = data.region_stats;
+  const activeRegs = ST.regions;
+  const stim = data.modality || ST.stim;
+
+  // Rank active regions by rel_activation descending
+  const ranked = activeRegs
+    .filter(r => rs[r])
+    .map(r => ({ r, rel: rs[r].rel_activation ?? 0 }))
+    .sort((a, b) => b.rel - a.rel);
+
+  if (!ranked.length) { panel.classList.remove('visible'); return; }
+
+  const top = ranked[0];
+  const edu = REGION_EDU[top.r];
+  const topName = edu ? edu.fullName : top.r;
+  const lvl = _insightLevel(top.rel);
+  const sign = top.rel >= 0 ? '+' : '';
+
+  // Summary line
+  summary.innerHTML = `<strong>${topName}</strong> shows the strongest response (${sign}${top.rel.toFixed(2)}σ above brain mean). ` +
+    (edu
+      ? (stim === 'audio' ? edu.stimAudio : stim.includes('video') ? edu.stimVideo : edu.stimText)
+      : 'See region cards below for details.');
+
+  // Per-region cards
+  cards.innerHTML = ranked.map(({ r, rel }) => {
+    const e = REGION_EDU[r];
+    if (!e) return '';
+    const lv = _insightLevel(rel);
+    const sg = rel >= 0 ? '+' : '';
+    const stimTxt = stim === 'audio' ? e.stimAudio : stim.includes('video') ? e.stimVideo : e.stimText;
+    return `<div class="icard">
+      <div class="icard-head">
+        <div class="icard-dot" style="background:${e.color}"></div>
+        <span class="icard-name">${e.fullName}</span>
+        <span class="icard-rel" style="color:${rel>=0.15?'var(--green)':rel<-0.15?'var(--orange)':'var(--t3)'}">${sg}${rel.toFixed(2)}σ</span>
+        <span class="icard-lvl ${lv.cls}">${lv.txt}</span>
+      </div>
+      <div class="icard-body">
+        <div class="icard-anatomy">
+          <span class="icard-atom">${e.lobe}</span>
+          <span class="icard-atom">${e.ba}</span>
+        </div>
+        <div class="icard-explain">${e.what}</div>
+        <div class="icard-explain" style="border-top:1px solid var(--b0);padding-top:6px;margin-top:2px;font-size:11px;color:var(--t3)">
+          <strong style="color:var(--t2)">For this stimulus:</strong> ${stimTxt}
+        </div>
+        <div class="icard-subs">${e.subregions.map(s=>`<span class="icard-sub">${s}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  panel.classList.add('visible');
+}
+
+window.ST = {
+  stim:'text', subtype:'narrative', regions:['visual'],
+  subjects:12, zeroshot:false, crosslang:false,
+  resolution:70, confidence:0.85, task:'passive',
+  textContent:'', fileName:'', videoUrl:''
+};
+
+const _blobUrls = {};
+
+function init() { populateSubs(ST.stim); updateAll(); }
+
+function selStim(s) {
+  ST.stim = s;
+  document.querySelectorAll('.mod-tab').forEach(t => t.classList.toggle('on', t.dataset.stim===s));
+  document.querySelectorAll('.input-panel').forEach(p => p.classList.toggle('on', p.id==='panel-'+s));
+  document.getElementById('stimBadge').textContent = s.toUpperCase();
+  populateSubs(s);
+  updateAll();
+}
+
+function populateSubs(s) {
+  const sel = document.getElementById('subtypeSelect');
+  while (sel.firstChild) sel.removeChild(sel.firstChild);
+  SUBTYPES[s].forEach(o => { const e=document.createElement('option'); e.value=o.v; e.textContent=o.label; sel.appendChild(e); });
+  ST.subtype = SUBTYPES[s][0].v;
+  const T={text:'Stimulus Category (Text)',image:'Stimulus Category (Image)',video:'Stimulus Category (Video)',audio:'Stimulus Category (Audio)'};
+  document.getElementById('subtypeLabel').textContent = T[s];
+}
+
+function toggleR(r) {
+  const i=ST.regions.indexOf(r);
+  if (i===-1) ST.regions.push(r); else if (ST.regions.length>1) ST.regions.splice(i,1);
+  updateAll();
+}
+
+function selTask(t) {
+  ST.task=t;
+  document.querySelectorAll('[data-task]').forEach(c=>c.classList.toggle('on',c.dataset.task===t));
+  updateAll();
+}
+
+function flipTog(k) {
+  if (k==='zeroshot') { ST.zeroshot=!ST.zeroshot; document.getElementById('togZS').classList.toggle('on',ST.zeroshot); }
+  else               { ST.crosslang=!ST.crosslang; document.getElementById('togCL').classList.toggle('on',ST.crosslang); }
+  updateAll();
+}
+
+function handleFile(input, type) {
+  const file=input.files[0]; if (!file) return;
+  ST.fileName=file.name;
+  if (_blobUrls[type]) { URL.revokeObjectURL(_blobUrls[type]); }
+  const url = URL.createObjectURL(file);
+  _blobUrls[type] = url;
+  if (type==='image') {
+    const img=document.getElementById('imgPreview'); img.src=url; img.style.display='block';
+    document.getElementById('dz-image-inner').style.display='none'; showBadge('img',file.name);
+    document.getElementById('dz-image').classList.add('has-content');
+  } else if (type==='video') {
+    const vid=document.getElementById('videoPreview'); vid.src=url; vid.style.display='block';
+    document.getElementById('dz-video-inner').style.display='none'; showBadge('video',file.name);
+    document.getElementById('dz-video').classList.add('has-content');
+  } else if (type==='audio') {
+    const aud=document.getElementById('audioPreview'); aud.src=url; aud.style.display='block';
+    document.getElementById('audioWave').classList.add('active'); showBadge('audio',file.name);
+    document.getElementById('dz-audio').classList.add('has-content');
+  }
+  updateAll();
+  // Auto-run prediction immediately when audio is loaded
+  if (type === 'audio') setTimeout(runPrediction, 200);
+}
+
+function loadVideoUrl() {
+  const url=document.getElementById('videoUrl').value.trim(); if (!url) return;
+  ST.videoUrl=url;
+  if (!url.includes('youtube')) {
+    const vid=document.getElementById('videoPreview'); vid.src=url; vid.style.display='block';
+    document.getElementById('dz-video-inner').style.display='none';
+    document.getElementById('dz-video').classList.add('has-content');
+    showBadge('video', url.split('/').pop().substring(0,36));
+  } else { showBadge('video','[external URL]'); }
+  updateAll();
+}
+
+function showBadge(p,name) {
+  const n=name.length>36?name.substring(0,36)+'…':name;
+  const b=document.getElementById(p+'-badge'); b.textContent=n; b.style.display='block';
+  const c=document.getElementById(p+'-clear'); if(c) c.style.display='flex';
+}
+
+function clearInput(type) {
+  const p=type==='image'?'img':type; ST.fileName=''; ST.videoUrl='';
+  document.getElementById(p+'-badge').style.display='none';
+  const cb=document.getElementById(p+'-clear'); if(cb) cb.style.display='none';
+  document.getElementById('dz-'+type).classList.remove('has-content');
+  if (type==='image') { const i=document.getElementById('imgPreview');i.src='';i.style.display='none';document.getElementById('dz-image-inner').style.display='';document.getElementById('imgFile').value=''; }
+  else if (type==='video') { const v=document.getElementById('videoPreview');v.src='';v.style.display='none';document.getElementById('dz-video-inner').style.display='';document.getElementById('videoFile').value='';document.getElementById('videoUrl').value=''; }
+  else if (type==='audio') { const a=document.getElementById('audioPreview');a.src='';a.style.display='none';document.getElementById('audioWave').classList.remove('active');document.getElementById('dz-audio-inner').style.display='';document.getElementById('audioFile').value=''; }
+  updateAll();
+}
+
+function dzDrag(e,id){e.preventDefault();document.getElementById(id).classList.add('drag');}
+function dzLeave(id){document.getElementById(id).classList.remove('drag');}
+function dzDrop(e,type){e.preventDefault();dzLeave('dz-'+type);const f=e.dataTransfer.files[0];if(!f)return;handleFile({files:[f]},type);}
+
+function updateAll() {
+  ST.subjects   = +document.getElementById('subjectSlider').value;
+  ST.confidence = +document.getElementById('confSlider').value/100;
+  ST.subtype    = document.getElementById('subtypeSelect').value;
+  ST.textContent= document.getElementById('textInput').value.trim();
+
+  const len = document.getElementById('textInput').value.length;
+  document.getElementById('charCount').textContent = len.toLocaleString()+' chars';
+  document.getElementById('tokenEst').textContent  = '~'+Math.ceil(len/4)+' tokens';
+
+  // ROI rows (both panels)
+  const allRois = ['visual','auditory','language','prefrontal','motor','parietal'];
+  allRois.forEach(r => {
+    const on = ST.regions.includes(r);
+    document.querySelectorAll('[data-r="'+r+'"]').forEach(el => el.classList.toggle('on', on));
+    // Update status cell only; pearson/mean/std are set by _applyResult after inference
+    const st = document.getElementById('st-' + r);
+    if (st && st.textContent !== 'ON' && st.textContent !== 'off') return;
+    if (st) { st.textContent = on ? 'ON' : 'off'; st.style.color = on ? 'var(--green)' : 'var(--t3)'; }
+  });
+
+  const n = ST.regions.length;
+  document.getElementById('roiCount').textContent  = n+' active';
+  document.getElementById('roiBadge').textContent  = n+' / 6 ROI';
+  document.getElementById('sbN').textContent       = 'N = '+ST.subjects;
+  document.getElementById('sbRes').textContent     = 'res = '+ST.resolution+'\u00d7';
+  document.getElementById('sbRois').textContent    = n+' / 6 ROI active';
+
+  buildQuery();
+  if (window.updateBrainRegions) window.updateBrainRegions(ST.regions);
+}
+
+function buildQuery() {
+  const sub = (SUBTYPES[ST.stim].find(s=>s.v===ST.subtype)||{}).label||ST.subtype;
+  const rois = ST.regions.map(r=>RNAMES_SHORT[r]).join(', ');
+  let inp='';
+  if (ST.stim==='text'&&ST.textContent) inp=', stimulus="'+ST.textContent.substring(0,60)+(ST.textContent.length>60?'…':'')+'"';
+  else if (ST.fileName) inp=', stimulus_file="'+ST.fileName+'"';
+  else if (ST.videoUrl) inp=', stimulus_url="'+ST.videoUrl+'"';
+
+  const flags=[];
+  if (ST.zeroshot) flags.push('zero_shot=True');
+  if (ST.crosslang) flags.push('cross_lingual=True');
+
+  const parts=[
+    'modality="'+ST.stim+'"',
+    'encoder="'+STIM_ENCODER[ST.stim]+'"',
+    'category="'+sub+'"',
+    'paradigm="'+TASK_LBL[ST.task]+'"',
+    'roi=['+rois+']',
+    'n_subjects='+ST.subjects,
+    'resolution='+ST.resolution,
+    'min_confidence='+ST.confidence.toFixed(2),
+    ...flags,
+  ];
+  if (inp) parts.unshift(inp.substring(2));
+  document.getElementById('queryText').textContent = parts.join(', ');
+}
+
+function copyQuery() {
+  const full = 'predict_bold('+document.getElementById('queryText').textContent+')';
+  navigator.clipboard.writeText(full).then(()=>{
+    const b=document.getElementById('copyBtn'); b.textContent='Copied'; b.classList.add('copied');
+    setTimeout(()=>{b.textContent='Copy';b.classList.remove('copied');},1800);
+  });
+}
+
+function applyPreset(name) {
+  const P={
+    visual:     {stim:'image',sub:'natural_scenes',regions:['visual','parietal'],                       subjects:24,zeroshot:false,crosslang:false,resolution:70,confidence:.90,task:'passive'},
+    language:   {stim:'text', sub:'narrative',     regions:['language','prefrontal','auditory'],         subjects:18,zeroshot:false,crosslang:true, resolution:70,confidence:.87,task:'comprehension'},
+    auditory:   {stim:'audio',sub:'podcast',       regions:['auditory','language'],                      subjects:15,zeroshot:false,crosslang:false,resolution:65,confidence:.82,task:'passive'},
+    multimodal: {stim:'video',sub:'movie_clips',   regions:['visual','auditory','language','prefrontal'],subjects:50,zeroshot:false,crosslang:false,resolution:70,confidence:.88,task:'attention'},
+    zeroshot:   {stim:'image',sub:'faces',         regions:['visual','prefrontal','parietal'],           subjects:5, zeroshot:true, crosslang:false,resolution:55,confidence:.75,task:'passive'},
+  };
+  const p=P[name]; if(!p) return;
+  ST.regions=[...p.regions]; ST.zeroshot=p.zeroshot; ST.crosslang=p.crosslang;
+  ST.resolution=p.resolution; ST.confidence=p.confidence; ST.task=p.task;
+  selStim(p.stim);
+  setTimeout(()=>{document.getElementById('subtypeSelect').value=p.sub;ST.subtype=p.sub;},0);
+  document.getElementById('subjectSlider').value=p.subjects; document.getElementById('subjectVal').textContent=p.subjects;
+  document.getElementById('togZS').classList.toggle('on',p.zeroshot);
+  document.getElementById('togCL').classList.toggle('on',p.crosslang);
+  document.getElementById('resSlider').value=p.resolution; document.getElementById('resVal').textContent=p.resolution+'\u00d7';
+  document.getElementById('confSlider').value=Math.round(p.confidence*100); document.getElementById('confVal').textContent=p.confidence.toFixed(2);
+  selTask(p.task);
+  document.querySelectorAll('.tpl-btn').forEach(b=>b.classList.toggle('on',b.getAttribute('onclick').includes("'"+name+"'")));
+  updateAll();
+}
+
+// ── MENU SYSTEM ──────────────────────────────────────────────
+function toggleMenu(name) {
+  const wrap = document.getElementById('menu-'+name);
+  const isOpen = wrap.classList.contains('open');
+  closeMenus();
+  if (!isOpen) wrap.classList.add('open');
+}
+function closeMenus() {
+  document.querySelectorAll('.menu-wrap.open').forEach(m => m.classList.remove('open'));
+}
+document.addEventListener('click', e => { if (!e.target.closest('.menu-wrap')) closeMenus(); });
+
+let _debTimer, _predTimer;
+function debouncedUpdate() {
+  clearTimeout(_debTimer);
+  _debTimer = setTimeout(updateAll, 120);
+  // Auto-run prediction 1.5s after the user stops typing
+  clearTimeout(_predTimer);
+  _predTimer = setTimeout(() => {
+    if (ST.stim === 'text' && document.getElementById('textInput').value.trim()) {
+      runPrediction();
+    }
+  }, 1500);
+}
+
+// ── SESSION MANAGEMENT ───────────────────────────────────────
+function newSession() {
+  const num = String(Math.floor(Math.random()*998)+1).padStart(3,'0');
+  const name = 'untitled-'+num;
+  document.getElementById('sessionName').textContent = name;
+  const sbItems = document.querySelectorAll('.sb-item');
+  if (sbItems[1]) sbItems[1].textContent = 'session: '+name;
+  ST.regions=['visual']; ST.zeroshot=false; ST.crosslang=false;
+  ST.resolution=70; ST.confidence=0.85; ST.task='passive';
+  ST.textContent=''; ST.fileName=''; ST.videoUrl='';
+  document.getElementById('subjectSlider').value=12; document.getElementById('subjectVal').textContent='12';
+  document.getElementById('resSlider').value=70; document.getElementById('resVal').textContent='70×';
+  document.getElementById('confSlider').value=85; document.getElementById('confVal').textContent='0.85';
+  document.getElementById('togZS').classList.remove('on');
+  document.getElementById('togCL').classList.remove('on');
+  document.querySelectorAll('.tpl-btn').forEach(b=>b.classList.remove('on'));
+  selStim('text');
+  selTask('passive');
+  clearAllInputs();
+  updateAll();
+}
+
+// ── ROI HELPERS ──────────────────────────────────────────────
+function selectAllROI() {
+  ST.regions = ['visual','auditory','language','prefrontal','motor','parietal'];
+  updateAll();
+}
+function clearAllROI() {
+  ST.regions = ['visual'];
+  updateAll();
+}
+
+// ── INPUT HELPERS ────────────────────────────────────────────
+function clearAllInputs() {
+  document.getElementById('textInput').value = '';
+  ['image','video','audio'].forEach(t => { try { clearInput(t); } catch(e) {} });
+}
+
+// ── EXPORT ───────────────────────────────────────────────────
+function exportJSON() {
+  const data = {
+    session: document.getElementById('sessionName').textContent,
+    timestamp: new Date().toISOString(),
+    parameters: {
+      modality: ST.stim, subtype: ST.subtype, encoder: STIM_ENCODER[ST.stim],
+      paradigm: TASK_LBL[ST.task], roi: ST.regions,
+      n_subjects: ST.subjects, resolution: ST.resolution,
+      min_confidence: ST.confidence, zero_shot: ST.zeroshot, cross_lingual: ST.crosslang,
+    },
+    query: 'predict_bold('+document.getElementById('queryText').textContent+')',
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = (document.getElementById('sessionName').textContent||'session')+'.json';
+  a.click();
+}
+function exportCSV() {
+  const rows = [
+    ['parameter','value'],
+    ['modality',ST.stim],['subtype',ST.subtype],['encoder',STIM_ENCODER[ST.stim]],
+    ['paradigm',TASK_LBL[ST.task]],['roi',ST.regions.join(';')],
+    ['n_subjects',ST.subjects],['resolution',ST.resolution],
+    ['min_confidence',ST.confidence],['zero_shot',ST.zeroshot],['cross_lingual',ST.crosslang],
+  ];
+  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = (document.getElementById('sessionName').textContent||'session')+'.csv';
+  a.click();
+}
+
+// ── STATUS / PROGRESS ─────────────────────────────────────────
+function _setStatus(running) {
+  const dot = document.querySelector('.sb-dot');
+  if (dot) dot.className = 'sb-dot ' + (running ? 'running' : 'ready');
+  const qb = document.querySelector('.query-bar');
+  if (qb) qb.classList.toggle('inferring', running);
+  const prog = document.getElementById('inferProgress');
+  if (prog) prog.style.display = running ? 'block' : 'none';
+}
+
+function _animateBar(bar, targetPct, durationMs) {
+  const start = performance.now();
+  const from = parseFloat(bar.style.width) || 0;
+  function step(now) {
+    const t = Math.min((now - start) / durationMs, 1);
+    bar.style.width = (from + (targetPct - from) * t) + '%';
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ── APPLY INFERENCE RESULT ────────────────────────────────────
+function _applyResult(data) {
+  const rois = ['visual','auditory','language','prefrontal','motor','parietal'];
+  const rs = data.region_stats;
+
+  // Update ROI stats table
+  rois.forEach(r => {
+    const s   = rs[r];
+    const onR = ST.regions.includes(r);
+    const st  = document.getElementById('st-' + r);
+    const pr  = document.getElementById('pr-' + r);
+    const mn  = document.getElementById('mn-' + r);
+    const sd  = document.getElementById('sd-' + r);
+    if (!st) return;
+    if (onR && s) {
+      const rel = s.rel_activation ?? 0;
+      pr.textContent = (rel >= 0 ? '+' : '') + rel.toFixed(3);
+      pr.style.color = rel > 0.3 ? 'var(--green)' : rel < -0.3 ? 'var(--orange)' : 'var(--t2)';
+      mn.textContent = (s.mean >= 0 ? '+' : '') + s.mean.toFixed(5);
+      sd.textContent = s.std.toFixed(5);
+      st.textContent = 'ON'; st.style.color = 'var(--green)';
+    } else {
+      pr.textContent = '—'; mn.textContent = '—'; sd.textContent = '—';
+      st.textContent = 'off'; st.style.color = 'var(--t3)'; pr.style.color = '';
+    }
+  });
+
+  // Update statusbar
+  const sbTime = document.getElementById('sbLastRun');
+  if (sbTime) sbTime.textContent = data.modality + ' · ' + data.elapsed_ms + 'ms';
+
+  // Demo banner
+  const banner = document.getElementById('demoBanner');
+  if (banner) banner.style.display = data.demo_mode ? '' : 'none';
+
+  // Drive per-vertex brain coloring from the 512-sample activation vector
+  if (window.setBrainVertexSample && data.vertex_sample?.length > 0) {
+    window.setBrainVertexSample(
+      data.vertex_sample,
+      data.global_stats.global_min,
+      data.global_stats.global_max,
+      ST.regions,
+      data.region_stats
+    );
+  }
+
+  // Update educational insight panel
+  _updateInsight(data);
+}
+
+async function _getAudioB64() {
+  const file = document.getElementById('audioFile').files[0];
+  if (!file) return '';
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result.split(',')[1] || '');
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── WebSocket connection ──────────────────────────────────────
+let _ws = null;
+let _wsReady = false;
+let _predRunning = false;
+
+function _connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  _ws = new WebSocket(`${proto}://${location.host}/ws`);
+  _ws.onopen  = () => { _wsReady = true; };
+  _ws.onclose = () => { _wsReady = false; setTimeout(_connectWS, 2000); };
+  _ws.onerror = () => { _ws.close(); };
+  _ws.onmessage = e => {
+    try { _handleWSMsg(JSON.parse(e.data)); } catch(ex) { console.warn('[tribe] ws parse error', ex); }
+  };
+}
+_connectWS();
+
+function _handleWSMsg(msg) {
+  const bar = document.getElementById('inferBar');
+  if (msg.type === 'progress') {
+    if (bar) _animateBar(bar, msg.pct, 300);
+  } else if (msg.type === 'result') {
+    if (bar) _animateBar(bar, 100, 150);
+    _applyResult(msg);
+    _predRunning = false;
+    _setStatus(false);
+    setTimeout(() => { if (bar) bar.style.width = '0%'; }, 500);
+  } else if (msg.type === 'error') {
+    console.error('[tribe] server error:', msg.message);
+    _predRunning = false;
+    _setStatus(false);
+    setTimeout(() => { if (bar) bar.style.width = '0%'; }, 300);
+  }
+}
+
+async function runPrediction() {
+  if (_predRunning) return;
+  const text = document.getElementById('textInput').value.trim();
+  if (ST.stim === 'text' && !text) return;
+  if (ST.stim === 'audio' && !document.getElementById('audioFile').files[0]) return;
+
+  _predRunning = true;
+  _setStatus(true);
+  const bar = document.getElementById('inferBar');
+  if (bar) { bar.style.width = '0%'; _animateBar(bar, 8, 200); }
+
+  const payload = { seq_len: 16 };
+  if (ST.stim === 'audio') {
+    payload.audio_b64 = await _getAudioB64();
+  } else {
+    payload.text = text || ST.stim;
+  }
+
+  if (_wsReady) {
+    _ws.send(JSON.stringify(payload));
+  } else {
+    // Fallback to HTTP if WebSocket not connected
+    try {
+      const resp = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      if (bar) _animateBar(bar, 100, 150);
+      _applyResult(data);
+    } catch (err) {
+      console.error('[tribe] predict error:', err.message);
+    } finally {
+      _predRunning = false;
+      _setStatus(false);
+      setTimeout(() => { if (bar) bar.style.width = '0%'; }, 500);
+    }
+  }
+}
+
+// ── ABOUT ────────────────────────────────────────────────────
+function showAbout() { showInfoModal(); }
+
+// ── MODEL INFO MODAL ──────────────────────────────────────────
+function showInfoModal() {
+  document.getElementById('infoModalBackdrop').classList.add('open');
+  fetchModelInfo();
+}
+function closeInfoModal() {
+  document.getElementById('infoModalBackdrop').classList.remove('open');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeInfoModal();
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); runPrediction(); }
+});
+async function fetchModelInfo() {
+  try {
+    const r = await fetch('/api/info');
+    if (!r.ok) return;
+    const d = await r.json();
+    const el = document.getElementById('infoNParams');
+    if (el) el.textContent = d.n_params ? (d.n_params / 1e6).toFixed(1) + 'M' : '—';
+    const sb = document.querySelector('.statusbar .sb-item:last-child');
+    if (sb && d.n_params) sb.textContent = 'TRIBE v2 · ' + (d.n_params/1e6).toFixed(0) + 'M params · CC BY-NC 4.0';
+
+    // Hide demo banner — demo_mode only when LLaMA not loaded
+    const banner = document.getElementById('demoBanner');
+    if (banner) banner.style.display = d.demo_mode ? '' : 'none';
+
+    // Update encoder status in info modal if present
+    if (d.encoders) {
+      ['text','audio','video'].forEach(m => {
+        const el2 = document.getElementById('encoderStatus-' + m);
+        if (el2) el2.textContent = d.encoders[m] || '—';
+      });
+    }
+  } catch(_) {}
+}
+
+// ── VIZ TOOLBAR ──────────────────────────────────────────────
+function setCamView(v) {
+  ['lateral','medial','dorsal'].forEach(n => {
+    const el = document.getElementById('vt-'+n);
+    if (el) el.classList.toggle('on', n===v);
+  });
+  if (window.setCameraView) window.setCameraView(v);
+}
+
+function setHem(h) {
+  const lEl = document.getElementById('vt-lhem'), rEl = document.getElementById('vt-rhem');
+  lEl.classList.toggle('on', h==='left' || h==='both');
+  rEl.classList.toggle('on', h==='right' || h==='both');
+  if (window.setHemisphere) window.setHemisphere(h);
+}
+
+let _roiGlow = true;
+function toggleROI() {
+  _roiGlow = !_roiGlow;
+  document.getElementById('vt-roi').classList.toggle('on', _roiGlow);
+  if (window.toggleROIGlow) window.toggleROIGlow(_roiGlow);
+}
+
+let _labelsOn = false;
+function toggleLabels() {
+  _labelsOn = !_labelsOn;
+  document.getElementById('vt-labels').classList.toggle('on', _labelsOn);
+  if (window.toggleBrainLabels) window.toggleBrainLabels(_labelsOn);
+}
+
+init();
+</script>
+
+<!-- THREE.JS 3D BRAIN -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OBJLoader }     from 'three/addons/loaders/OBJLoader.js';
+
+// ── Region classification in normalised MNI space ────────────
+// brain.obj bounding box: X[-72.6,73.6] Y[-105,77.4] Z[-51.8,80.9] mm
+// After centering (cx≈0.5, cy≈-13.8, cz≈14.6) and scaling by 2.4/182.4 ≈ 1/75.97:
+//   x=right(+), y=anterior(+), z=superior(+)
+//   MNI_mm ≈ coord * 75.97 + offset
+//
+// Region boundaries in raw MNI mm (X=right, Y=anterior, Z=superior):
+//   Visual    occipital         Y < -70
+//   Prefrontal frontal         Y >  35
+//   Motor     M1/premotor/SMA  Z >  45, Y: -25 to 30
+//   Parietal  SPL/IPL/precun.  Z >  20, Y: -70 to -25
+//   Auditory  STG/HG           |X| > 30, Y:-45 to 15, Z:-10 to 20
+//   Language  IFG/Wernicke/STS (default)
+function getRegion(x,y,z){
+  // Visual cortex (V1–V5, occipital pole): Y < -70 mm
+  if (y < -0.74) return 'visual';
+  // Prefrontal (frontal pole, DLPFC, OFC): Y > 35 mm
+  if (y >  0.64) return 'prefrontal';
+  // Motor strip (M1, S1, premotor, SMA): Z > 45 mm, Y: -30 to 30 mm
+  if (z >  0.40 && y > -0.22 && y < 0.58) return 'motor';
+  // Parietal (SPL, IPL, precuneus, angular gyrus): Z > 20 mm, Y: -70 to -30 mm
+  if (z >  0.07 && y < -0.22 && y > -0.74) return 'parietal';
+  // Auditory (Heschl's gyrus, STG, planum temporale): lateral temporal, Y: -48 to 15 mm
+  if (Math.abs(x) > 0.38 && y > -0.45 && y < 0.38 && z > -0.33 && z < 0.07) return 'auditory';
+  // Language (IFG/Broca, posterior STG/Wernicke, angular, STS): default
+  return 'language';
+}
+
+const REGION_HEX={visual:0xFF4D4D,auditory:0xFF8C42,language:0x58A6FF,prefrontal:0x3FB950,motor:0xE040FB,parietal:0xFFCA28};
+const BASE_COL={r:0.56,g:0.50,b:0.48};
+const ALL_R=['visual','auditory','language','prefrontal','motor','parietal'];
+const regionVerts={}, regionCentroids={};
+
+// ── Procedural fallback (kept from original) ─────────────────
+function vnoise(x,y,z){
+  const ix=Math.floor(x),iy=Math.floor(y),iz=Math.floor(z);
+  const fx=x-ix,fy=y-iy,fz=z-iz;
+  const s=t=>t*t*(3-2*t);
+  const ux=s(fx),uy=s(fy),uz=s(fz);
+  const h=(a,b,c)=>{let n=Math.sin(a*127.1+b*311.7+c*74.7)*43758.5453;return n-Math.floor(n);};
+  return (1-uz)*((1-uy)*((1-ux)*h(ix,iy,iz)+ux*h(ix+1,iy,iz))+uy*((1-ux)*h(ix,iy+1,iz)+ux*h(ix+1,iy+1,iz)))+
+            uz*((1-uy)*((1-ux)*h(ix,iy,iz+1)+ux*h(ix+1,iy,iz+1))+uy*((1-ux)*h(ix,iy+1,iz+1)+ux*h(ix+1,iy+1,iz+1)));
+}
+function fbm(x,y,z,o=5){let v=0,a=0.5,f=1;for(let i=0;i<o;i++){v+=a*(vnoise(x*f,y*f,z*f)*2-1);a*=0.5;f*=2.15;}return v;}
+function ridgeFBM(x,y,z,o=4){let v=0,a=0.5,f=1;for(let i=0;i<o;i++){v+=a*(1-Math.abs(vnoise(x*f,y*f,z*f)*2-1));a*=0.5;f*=2.2;}return v;}
+
+function buildProceduralGeo(){
+  const geo=new THREE.IcosahedronGeometry(1,6);
+  const pos=geo.attributes.position, N=pos.count;
+  const col=new Float32Array(N*3);
+  ALL_R.forEach(r=>{regionVerts[r]=[];regionCentroids[r]=new THREE.Vector3();});
+  for(let i=0;i<N;i++){
+    let x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i);
+    const len=Math.sqrt(x*x+y*y+z*z);
+    const nx=x/len,ny=y/len,nz=z/len;
+    // map procedural normals to mni-like axes for consistent region classification
+    const region=getRegion(nx*0.96, ny*1.2, nz*0.87);
+    regionVerts[region].push(i);
+    const sx=1.25,sy=1.0,sz=1.4;
+    const bx=nx*sx,by=ny*sy,bz=nz*sz;
+    const blen=Math.sqrt(bx*bx+by*by+bz*bz);
+    const d=blen*(1+fbm(nx*2.8,ny*2.8,nz*2.8,4)*0.18+fbm(nx*6+1.3,ny*6+2.1,nz*6+0.7,3)*0.09
+      +ridgeFBM(nx*11+4.1,ny*11+3.7,nz*11+5.2,3)*0.06
+      -0.09*Math.exp(-Math.pow(nz*5.5,2))*Math.max(0,ny)
+      -0.07*Math.exp(-Math.pow((ny+0.08)*7,2))*(1-Math.abs(nz)*.5)
+      -0.04*Math.exp(-Math.pow(nx*12,2)));
+    const dx=(d/blen)*bx,dy=(d/blen)*by,dz=(d/blen)*bz;
+    pos.setXYZ(i,dx,dy,dz);
+    regionCentroids[region].add(new THREE.Vector3(dx,dy,dz));
+    col[i*3]=BASE_COL.r;col[i*3+1]=BASE_COL.g;col[i*3+2]=BASE_COL.b;
+  }
+  ALL_R.forEach(r=>{const n=regionVerts[r].length;if(n>0)regionCentroids[r].divideScalar(n);});
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+// ── Scene setup ───────────────────────────────────────────────
+const canvas   = document.getElementById('brainCanvas');
+const renderer = new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.15;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x080B12);
+scene.fog=new THREE.FogExp2(0x080B12,0.06);
+
+const camera=new THREE.PerspectiveCamera(40,1,0.1,100);
+camera.position.set(0,0.3,5.4);
+camera.lookAt(0,0,0);
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enablePan=false;controls.minDistance=3.2;controls.maxDistance=9;
+controls.autoRotate=true;controls.autoRotateSpeed=0.4;
+controls.enableDamping=true;controls.dampingFactor=0.08;
+
+scene.add(new THREE.AmbientLight(0xffeedd,0.4));
+const sun=new THREE.DirectionalLight(0xfff8f0,1.4);sun.position.set(3.5,4,5);scene.add(sun);
+const fill=new THREE.DirectionalLight(0x6699cc,0.4);fill.position.set(-3,-1,2);scene.add(fill);
+scene.add(new THREE.HemisphereLight(0x223355,0x331100,0.4));
+
+// ── State vars (populated after model loads) ──────────────────
+let brain=null, colAttr, colCur, colTgt;
+const glowMeshes={}, regionLights={}, ptSystems={};
+const PCNT=120;
+let activeRegions=['visual'];
+let brainReady=false;
+let lastInteract=Date.now();
+// Per-vertex data for inference-driven coloring
+let vertMNI=null;     // Float32Array [N*3] — MNI coords in normalised space
+let vertRegion=null;  // Array<string>[N]   — region name per vertex
+let vertYMin=0, vertYMax=1; // Y-range for sample index mapping
+
+// Label overlay — created immediately
+const labelCtr=document.getElementById('regionLabels');
+const labelEls={};
+ALL_R.forEach(r=>{
+  const el=document.createElement('div');el.className='rlabel-3d';
+  el.textContent=r.toUpperCase();el.style.opacity='0';
+  labelCtr.appendChild(el);labelEls[r]=el;
+});
+
+// ── Post-load geometry setup ─────────────────────────────────
+function resetPt(ps,i){
+  const sp=0.38;
+  ps.pos[i*3]=ps.ctr.x+(Math.random()-.5)*sp;
+  ps.pos[i*3+1]=ps.ctr.y+(Math.random()-.5)*sp;
+  ps.pos[i*3+2]=ps.ctr.z+(Math.random()-.5)*sp;
+  ps.vel[i*3]=(Math.random()-.5)*0.004;
+  ps.vel[i*3+1]=0.003+Math.random()*0.006;
+  ps.vel[i*3+2]=(Math.random()-.5)*0.004;
+  ps.life[i]=Math.random();
+}
+
+function onGeoReady(geo, isReal){
+  const pos=geo.attributes.position, N=pos.count;
+
+  // Store MNI positions + region per vertex (used by setBrainVertexSample)
+  vertMNI=new Float32Array(N*3);
+  vertRegion=new Array(N);
+  vertYMin=Infinity; vertYMax=-Infinity;
+
+  ALL_R.forEach(r=>{regionVerts[r]=[];regionCentroids[r]=new THREE.Vector3();});
+  const col=new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i);
+    vertMNI[i*3]=x; vertMNI[i*3+1]=y; vertMNI[i*3+2]=z;
+    if(y<vertYMin)vertYMin=y; if(y>vertYMax)vertYMax=y;
+    const region=getRegion(x,y,z);
+    vertRegion[i]=region;
+    regionVerts[region].push(i);
+    regionCentroids[region].add(new THREE.Vector3(x,y,z));
+    col[i*3]=BASE_COL.r;col[i*3+1]=BASE_COL.g;col[i*3+2]=BASE_COL.b;
+  }
+  ALL_R.forEach(r=>{const n=regionVerts[r].length;if(n>0)regionCentroids[r].divideScalar(n);});
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+
+  brain=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.76,metalness:0,side:THREE.DoubleSide}));
+  if(isReal){
+    // MNI: y=anterior, z=superior → rotate so anterior faces camera (+z) and superior faces up (+y)
+    brain.rotation.x=-Math.PI/2;
+  } else {
+    brain.rotation.y=Math.PI*0.1;
+  }
+  scene.add(brain);
+
+  // Convert region centroids to world space for glow + particle placement
+  const rotM=new THREE.Matrix4().makeRotationFromEuler(brain.rotation);
+  ALL_R.forEach(r=>{
+    const worldCtr=regionCentroids[r].clone().applyMatrix4(rotM);
+
+    const gm=new THREE.Mesh(new THREE.SphereGeometry(0.28,12,12),
+      new THREE.MeshBasicMaterial({color:REGION_HEX[r],transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}));
+    gm.position.copy(worldCtr);scene.add(gm);glowMeshes[r]=gm;
+
+    const rl=new THREE.PointLight(REGION_HEX[r],0,2.5);rl.position.copy(worldCtr);scene.add(rl);regionLights[r]=rl;
+
+    const ppos=new Float32Array(PCNT*3),vel=new Float32Array(PCNT*3),life=new Float32Array(PCNT);
+    const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(ppos,3));
+    const pm=new THREE.PointsMaterial({color:REGION_HEX[r],size:0.022,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending});
+    const pts=new THREE.Points(pg,pm);scene.add(pts);
+    ptSystems[r]={pts,pos:ppos,vel,life,ctr:worldCtr};
+    for(let i=0;i<PCNT;i++)resetPt(ptSystems[r],i);
+  });
+
+  colAttr=geo.attributes.color;
+  colCur=new Float32Array(N*3);colTgt=new Float32Array(N*3);
+  for(let i=0;i<N;i++){colCur[i*3]=colTgt[i*3]=BASE_COL.r;colCur[i*3+1]=colTgt[i*3+1]=BASE_COL.g;colCur[i*3+2]=colTgt[i*3+2]=BASE_COL.b;}
+
+  brainReady=true;
+  const lo=document.getElementById('brainLoading');if(lo)lo.style.display='none';
+  window.updateBrainRegions(activeRegions);
+}
+
+function setRegionTarget(r,active){
+  const c=REGION_RGB[r]||new THREE.Color(REGION_HEX[r]);
+  // Default opacity 0.55 before inference; inactive → dim surface
+  const op=active?0.55:0;
+  const dim=active?1:0.38;
+  regionVerts[r].forEach(i=>{
+    colTgt[i*3  ]=BASE_COL.r*dim*(1-op)+c.r*op;
+    colTgt[i*3+1]=BASE_COL.g*dim*(1-op)+c.g*op;
+    colTgt[i*3+2]=BASE_COL.b*dim*(1-op)+c.b*op;
+  });
+}
+
+function updateLabels(active){
+  if(!brain)return;
+  const v3=new THREE.Vector3();
+  ALL_R.forEach(r=>{
+    const el=labelEls[r],on=active.includes(r);
+    if(!on){el.style.opacity='0';return;}
+    v3.copy(regionCentroids[r]).applyMatrix4(brain.matrixWorld);
+    const pr=v3.clone().project(camera);
+    const rect=canvas.getBoundingClientRect();
+    const px=(pr.x*.5+.5)*rect.width,py=(-pr.y*.5+.5)*rect.height;
+    if(pr.z<1){
+      el.style.left=px+'px';el.style.top=py+'px';el.style.opacity='1';
+      const c=new THREE.Color(REGION_HEX[r]);
+      el.style.borderColor='rgba('+Math.round(c.r*255)+','+Math.round(c.g*255)+','+Math.round(c.b*255)+',.35)';
+      el.style.color='rgb('+Math.round(c.r*255)+','+Math.round(c.g*255)+','+Math.round(c.b*255)+')';
+    } else {el.style.opacity='0';}
+  });
+}
+
+// ── MNI coordinate readout ────────────────────────────────────
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+renderer.domElement.addEventListener('mousemove',e=>{
+  if(!brain)return;
+  const r=canvas.getBoundingClientRect();
+  mouse.x=(e.clientX-r.left)/r.width*2-1;
+  mouse.y=-((e.clientY-r.top)/r.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObject(brain);
+  if(hits.length>0){
+    // invert brain transform to get model-space coords → scale back to mm
+    const p=hits[0].point.clone().applyMatrix4(brain.matrixWorld.clone().invert());
+    const sc=182.4/2.4; // inverse of our normalisation scale
+    const mx=Math.round(p.x*sc), my=Math.round(p.y*sc), mz=Math.round(p.z*sc);
+    document.getElementById('mniCoord').textContent=mx+', '+my+', '+mz;
+  }
+});
+
+// ── Window API ────────────────────────────────────────────────
+// Activation levels per region (0-1); updated by _applyResult after inference
+const activationLevels = {visual:1,auditory:1,language:1,prefrontal:1,motor:1,parietal:1};
+
+window.updateBrainRegions=function(regions){
+  activeRegions=regions;
+  if(!brainReady)return;
+  ALL_R.forEach(r=>setRegionTarget(r,regions.includes(r)));
+  ALL_R.forEach(r=>{ptSystems[r].pts.material.opacity=regions.includes(r)?.9:0;});
+};
+
+window.setBrainActivations=function(levels){
+  // levels: {region: 0-1 normalised activation}
+  Object.assign(activationLevels, levels);
+  if(!brainReady) return;
+  ALL_R.forEach(r=>{
+    const lv = activationLevels[r] ?? 1;
+    const c  = new THREE.Color(REGION_HEX[r]);
+    if(activeRegions.includes(r)){
+      regionVerts[r].forEach(i=>{
+        colTgt[i*3]   = BASE_COL.r + (c.r - BASE_COL.r) * lv;
+        colTgt[i*3+1] = BASE_COL.g + (c.g - BASE_COL.g) * lv;
+        colTgt[i*3+2] = BASE_COL.b + (c.b - BASE_COL.b) * lv;
+      });
+    } else {
+      regionVerts[r].forEach(i=>{
+        colTgt[i*3]=BASE_COL.r; colTgt[i*3+1]=BASE_COL.g; colTgt[i*3+2]=BASE_COL.b;
+      });
+    }
+  });
+};
+
+// Per-vertex activation from vertex_sample (512 evenly-spaced samples over the surface).
+// Each mesh vertex is assigned a sample index via its MNI Y-position (posterior→anterior),
+// giving a spatially-varying activation heatmap within each region.
+// Pre-computed region RGB values (avoids per-vertex THREE.Color allocation)
+const REGION_RGB={};
+ALL_R.forEach(r=>{const c=new THREE.Color(REGION_HEX[r]);REGION_RGB[r]={r:c.r,g:c.g,b:c.b};});
+
+// Per-vertex activation heatmap — opacity-based blending.
+//
+// Active regions:
+//   opacity = gamma(normalised_vertex_activation) * regionOpacityCap
+//   finalColor = lerp(BASE_COL, regionColor, opacity)
+//
+//   Low score  → opacity≈0  → vertex shows BASE_COL (brain surface visible)
+//   High score → opacity≈1  → vertex shows full region colour
+//
+// regionOpacityCap is derived from rel_activation:
+//   rel ≥ +0.5σ → cap = 1.0   (fully opaque at peak vertices)
+//   rel ≈  0    → cap = 0.55  (region colour visible but muted)
+//   rel ≤ −0.3σ → cap = 0.18  (suppressed: barely colours the surface)
+//
+// Inactive regions → dimmed BASE_COL (visual cue that they're excluded).
+window.setBrainVertexSample=function(samples, gMin, gMax, activeRegs, regionStats){
+  if(!brainReady||!vertMNI||!vertRegion)return;
+  const N=colTgt.length/3;
+  const yRange=vertYMax-vertYMin||1;
+  const valRange=gMax-gMin||1;
+  const nSamples=samples.length;
+  const activeSet=new Set(activeRegs);
+
+  // Per-region opacity ceiling from rel_activation
+  const opacityCap={};
+  ALL_R.forEach(r=>{
+    const s=regionStats&&regionStats[r];
+    const rel=s?s.rel_activation??0:0;
+    // map rel [-0.5, +0.5] → cap [0.18, 1.0]
+    opacityCap[r]=Math.min(1.0, Math.max(0.18, 0.55 + rel * 0.9));
+  });
+
+  for(let i=0;i<N;i++){
+    const r=vertRegion[i];
+    if(!activeSet.has(r)){
+      // Inactive: dim the brain surface to push focus toward active regions
+      colTgt[i*3  ]=BASE_COL.r*0.38;
+      colTgt[i*3+1]=BASE_COL.g*0.38;
+      colTgt[i*3+2]=BASE_COL.b*0.38;
+      continue;
+    }
+    // Map vertex to sample by MNI-Y (posterior→anterior)
+    const yNorm=(vertMNI[i*3+1]-vertYMin)/yRange;
+    const sIdx=Math.min(Math.floor(yNorm*(nSamples-1)),nSamples-1);
+    // Normalise to [0,1], gamma-curve to spread mid-range values
+    const raw=Math.max(0,Math.min(1,(samples[sIdx]-gMin)/valRange));
+    const t=Math.pow(raw,0.5);   // γ=0.5 pulls mid-values up for visibility
+    // Final opacity = per-vertex t × region ceiling
+    const opacity=t*opacityCap[r];
+    // Lerp: BASE_COL → regionColor by opacity  (true opacity compositing)
+    const c=REGION_RGB[r];
+    colTgt[i*3  ]=BASE_COL.r*(1-opacity)+c.r*opacity;
+    colTgt[i*3+1]=BASE_COL.g*(1-opacity)+c.g*opacity;
+    colTgt[i*3+2]=BASE_COL.b*(1-opacity)+c.b*opacity;
+  }
+};
+
+window.setCameraView=function(view){
+  const d=5.4;
+  const P={lateral:[0,.3,d],medial:[0,.3,-d],dorsal:[0,d,.5]};
+  const p=P[view];if(!p)return;
+  camera.position.set(p[0],p[1],p[2]);camera.lookAt(0,0,0);
+  controls.target.set(0,0,0);controls.update();lastInteract=Date.now();
+};
+window.setHemisphere=function(hem){
+  const d=5.4;
+  if(hem==='left')       camera.position.set( d,.3,1.2);
+  else if(hem==='right') camera.position.set(-d,.3,1.2);
+  else                   camera.position.set( 0,.3, d);
+  camera.lookAt(0,0,0);controls.target.set(0,0,0);controls.update();lastInteract=Date.now();
+};
+window.toggleROIGlow=function(show){
+  if(!brainReady)return;
+  ALL_R.forEach(r=>{glowMeshes[r].visible=show;regionLights[r].visible=show;ptSystems[r].pts.visible=show;});
+};
+window.toggleBrainLabels=function(show){
+  ALL_R.forEach(r=>{labelEls[r].style.display=show?'':'none';});
+};
+
+// ── Load real brain model ─────────────────────────────────────
+controls.addEventListener('start',()=>{controls.autoRotate=false;lastInteract=Date.now();});
+controls.addEventListener('end',()=>{lastInteract=Date.now();});
+
+const clock=new THREE.Clock();
+const LERP=0.04;
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=clock.getDelta(),t=clock.elapsedTime;
+  if(!controls.autoRotate&&Date.now()-lastInteract>4000)controls.autoRotate=true;
+  controls.update();
+
+  if(brainReady){
+    // Lerp vertex colors
+    let dirty=false;
+    for(let i=0;i<colAttr.count;i++){
+      const dr=colTgt[i*3]-colCur[i*3],dg=colTgt[i*3+1]-colCur[i*3+1],db=colTgt[i*3+2]-colCur[i*3+2];
+      if(Math.abs(dr)>.0008||Math.abs(dg)>.0008||Math.abs(db)>.0008){
+        colCur[i*3]+=dr*LERP;colCur[i*3+1]+=dg*LERP;colCur[i*3+2]+=db*LERP;
+        colAttr.array[i*3]=colCur[i*3];colAttr.array[i*3+1]=colCur[i*3+1];colAttr.array[i*3+2]=colCur[i*3+2];
+        dirty=true;
+      }
+    }
+    if(dirty)colAttr.needsUpdate=true;
+
+    ALL_R.forEach((r,idx)=>{
+      const on=activeRegions.includes(r);
+      const gm=glowMeshes[r].material;
+      gm.opacity+=(on?(0.14+0.06*Math.sin(t*2.1+idx)):0-gm.opacity)*0.07;
+      glowMeshes[r].scale.setScalar(1+0.1*Math.sin(t*1.9+idx*1.2));
+      const rl=regionLights[r];
+      rl.intensity+=((on?(1.6+0.5*Math.sin(t*2.3+idx*.8)):0)-rl.intensity)*0.06;
+    });
+
+    ALL_R.forEach(r=>{
+      if(!activeRegions.includes(r))return;
+      const ps=ptSystems[r];
+      for(let i=0;i<PCNT;i++){
+        ps.life[i]+=dt*.65;if(ps.life[i]>1)resetPt(ps,i);
+        ps.pos[i*3]+=ps.vel[i*3];ps.pos[i*3+1]+=ps.vel[i*3+1];ps.pos[i*3+2]+=ps.vel[i*3+2];
+      }
+      ps.pts.geometry.attributes.position.array.set(ps.pos);
+      ps.pts.geometry.attributes.position.needsUpdate=true;
+    });
+
+    updateLabels(activeRegions);
+  }
+
+  renderer.render(scene,camera);
+}
+
+function resize(){
+  const p=canvas.parentElement,w=p.clientWidth,h=p.clientHeight;
+  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+}
+window.addEventListener('resize',resize);
+new ResizeObserver(resize).observe(canvas.parentElement);
+resize();
+animate();
+
+// ── OBJLoader — load real brain, fallback to procedural ───────
+const blFill=document.getElementById('blFill');
+const blPct =document.getElementById('blPct');
+
+new OBJLoader().load('/static/brain.obj',
+  (obj)=>{
+    const child=obj.children.find(c=>c.isMesh)||obj.children[0];
+    if(!child?.geometry){onGeoReady(buildProceduralGeo(),false);return;}
+    const geo=child.geometry;
+    geo.computeBoundingBox();
+    const box=geo.boundingBox;
+    const ctr=box.getCenter(new THREE.Vector3());
+    const sz=box.getSize(new THREE.Vector3());
+    const sc=2.4/Math.max(sz.x,sz.y,sz.z);
+    geo.translate(-ctr.x,-ctr.y,-ctr.z);
+    geo.scale(sc,sc,sc);
+    geo.computeVertexNormals();
+    onGeoReady(geo,true);
+  },
+  (xhr)=>{
+    if(xhr.total>0){
+      const pct=Math.round(xhr.loaded/xhr.total*100);
+      if(blFill)blFill.style.width=pct+'%';
+      if(blPct)blPct.textContent=pct+'%';
+    }
+  },
+  (err)=>{
+    console.warn('brain.obj load failed (serve via HTTP server), using procedural fallback.',err);
+    const lo=document.getElementById('brainLoading');
+    if(lo){const lbl=lo.querySelector('.bl-label');if(lbl)lbl.textContent='Using procedural model (serve via HTTP for real brain)';}
+    onGeoReady(buildProceduralGeo(),false);
+  }
+);
+</script>
+</body>
+</html>

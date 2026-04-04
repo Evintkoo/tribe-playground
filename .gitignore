@@ -1,0 +1,17 @@
+# Rust build output
+target/
+tribe-downloader/target/
+
+# Large model weights (download separately)
+tribe-v2-weights/*.ckpt
+tribe-v2-weights/*.safetensors
+tribe-v2-weights/llama/
+
+# Large mesh files (served from static dir, check in if needed)
+brain.obj
+brain-surface.obj
+brain-surface.obj.gz
+left-mesh.obj.gz
+
+# macOS
+.DS_Store

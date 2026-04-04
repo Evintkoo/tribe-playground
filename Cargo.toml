@@ -1,0 +1,3 @@
+[workspace]
+members = ["tribe-downloader"]
+resolver = "2"
