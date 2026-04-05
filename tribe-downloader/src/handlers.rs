@@ -18,7 +18,7 @@ use candle_core::{DType, Device, Tensor};
 use crate::{
     audio::{decode_audio, MelSpec},
     features::{
-        region_stats, temporal_pool, text_to_features_demo, tribe_group_mean,
+        region_stats, temporal_pool, text_to_features_demo, tribe_group_mean, visual_features_demo,
     },
     wav2vec2bert::Wav2Vec2Bert,
     AppState,
@@ -28,9 +28,11 @@ use crate::{
 
 #[derive(Debug, Deserialize)]
 pub struct PredictReq {
-    pub text:      Option<String>,
-    pub audio_b64: Option<String>,
-    pub seq_len:   Option<usize>,
+    pub text:       Option<String>,
+    pub audio_b64:  Option<String>,
+    pub image_b64:  Option<String>,
+    pub video_b64:  Option<String>,
+    pub seq_len:    Option<usize>,
 }
 
 #[derive(Serialize, Clone)]
@@ -58,11 +60,13 @@ where
 {
     let t0 = Instant::now();
 
-    let text      = req.text.as_deref().map(|s| s.trim().to_owned()).filter(|s| !s.is_empty());
-    let audio_b64 = req.audio_b64.filter(|s| !s.is_empty());
+    let text       = req.text.as_deref().map(|s| s.trim().to_owned()).filter(|s| !s.is_empty());
+    let audio_b64  = req.audio_b64.filter(|s| !s.is_empty());
+    let image_b64  = req.image_b64.filter(|s| !s.is_empty());
+    let video_b64  = req.video_b64.filter(|s| !s.is_empty());
 
-    if text.is_none() && audio_b64.is_none() {
-        return Err("Provide 'text' or 'audio_b64'".into());
+    if text.is_none() && audio_b64.is_none() && image_b64.is_none() && video_b64.is_none() {
+        return Err("Provide 'text', 'audio_b64', 'image_b64', or 'video_b64'".into());
     }
 
     let seq = req.seq_len.unwrap_or(16).clamp(1, 100);
@@ -108,13 +112,29 @@ where
         None
     };
 
-    if text_feat.is_none() && audio_feat.is_none() {
+    // ── Visual features (image / video) ──────────────────────────────────────
+    let is_video_modality = video_b64.is_some();
+    let visual_feat: Option<Tensor> = if let Some(ref b64) = image_b64.or(video_b64) {
+        modalities.push(if is_video_modality { "video" } else { "image" });
+        progress(35, if is_video_modality { "Encoding video…" } else { "Encoding image…" });
+        demo_mode = true;
+        let bytes = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, b64)
+            .map_err(|e| format!("base64 decode: {e}"))?;
+        match visual_features_demo(&bytes, seq, device) {
+            Ok(t)  => Some(t),
+            Err(e) => return Err(format!("visual demo: {e}")),
+        }
+    } else {
+        None
+    };
+
+    if text_feat.is_none() && audio_feat.is_none() && visual_feat.is_none() {
         return Err("Feature extraction produced no tensors".into());
     }
 
     // ── FmriEncoder forward ───────────────────────────────────────────────────
     progress(55, "Running FmriEncoder…");
-    let out = st.fmri.forward(text_feat.as_ref(), audio_feat.as_ref(), None)
+    let out = st.fmri.forward(text_feat.as_ref(), audio_feat.as_ref(), visual_feat.as_ref())
         .map_err(|e| e.to_string())?;
 
     // out: [1, seq, 20484]

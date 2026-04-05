@@ -109,6 +109,34 @@ pub fn region_stats(act: &[f32], n_vertices: usize) -> (std::collections::HashMa
     })
 }
 
+// ── Hash-based demo visual features (no V-JEPA2 required) ───────────────────
+
+const VISUAL_FEAT_DIM: usize = 2816;
+
+/// Deterministic pseudo-V-JEPA2 visual features from raw bytes.
+/// Returns a [1, seq_len, 2816] tensor.
+pub fn visual_features_demo(bytes: &[u8], seq_len: usize, device: &Device) -> Result<Tensor> {
+    let chunk_size = (bytes.len() / seq_len.max(1)).max(1);
+    let mut feats: Vec<Vec<f32>> = Vec::with_capacity(seq_len);
+    for fi in 0..seq_len {
+        let start = (fi * chunk_size).min(bytes.len().saturating_sub(1));
+        let end   = ((fi + 1) * chunk_size).min(bytes.len());
+        let slice = if start < end { &bytes[start..end] } else { &bytes[..bytes.len().min(16)] };
+        let mut hasher = Sha256::new();
+        hasher.update(&(fi as u32).to_le_bytes());
+        hasher.update(slice);
+        let hash = hasher.finalize();
+        let seed = u32::from_le_bytes([hash[0], hash[1], hash[2], hash[3]]);
+        let raw = lcg_normal_n(seed, VISUAL_FEAT_DIM);
+        // z-score normalise
+        let mean = raw.iter().sum::<f32>() / raw.len() as f32;
+        let std  = (raw.iter().map(|x| (x - mean).powi(2)).sum::<f32>() / raw.len() as f32).sqrt() + 1e-8;
+        feats.push(raw.into_iter().map(|x| ((x - mean) / std).clamp(-5.0, 5.0)).collect());
+    }
+    let flat: Vec<f32> = feats.into_iter().flatten().collect();
+    Tensor::from_vec(flat, (1, seq_len, VISUAL_FEAT_DIM), device)?.to_dtype(DType::F32)
+}
+
 // ── Hash-based demo text features (no LLaMA required) ────────────────────────
 
 const TEXT_FEAT_DIM: usize = 6144;
@@ -179,6 +207,22 @@ fn build_projection_matrix() -> Vec<f32> {
         let u2 = (state >> 33) as f32 / (u32::MAX as f32);
         let z = (-2.0 * (u1.max(1e-7).ln())).sqrt() * (2.0 * std::f32::consts::PI * u2).cos();
         out.push(z * scale);
+    }
+    out
+}
+
+fn lcg_normal_n(seed: u32, n: usize) -> Vec<f32> {
+    let mut state: u64 = seed as u64 | 1;
+    let mut out = Vec::with_capacity(n);
+    while out.len() < n {
+        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        let u1 = (state >> 33) as f32 / (u32::MAX as f32);
+        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        let u2 = (state >> 33) as f32 / (u32::MAX as f32);
+        let r = (-2.0 * u1.max(1e-7).ln()).sqrt();
+        let theta = 2.0 * std::f32::consts::PI * u2;
+        out.push((r * theta.cos()).clamp(-3.0, 3.0));
+        if out.len() < n { out.push((r * theta.sin()).clamp(-3.0, 3.0)); }
     }
     out
 }

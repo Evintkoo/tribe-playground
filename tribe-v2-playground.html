@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TRIBE v2 · Neural Prediction Workstation · Meta AI Research</title>
+<title>TRIBE v2 · Neural Prediction Workstation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <script type="importmap">
 {
@@ -21,39 +21,50 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Surface */
-  --bg:      #0D1117;
-  --s1:      #161B22;
-  --s2:      #1C2128;
-  --s3:      #22272E;
-  --s4:      #2D333B;
-  /* Border */
-  --b0:      #21262D;
-  --b1:      #30363D;
-  --b2:      #3D444D;
-  /* Text */
-  --t1:      #E6EDF3;
-  --t2:      #7D8590;
-  --t3:      #484F58;
-  /* Accent */
-  --ac:      #388BFD;
-  --ac-lt:   rgba(56,139,253,0.15);
-  --green:   #3FB950;
-  --yellow:  #D29922;
-  --orange:  #DB6D28;
-  --red:     #F85149;
-  /* fMRI activation colormap anchors */
-  --r-visual:     #FF4D4D;
-  --r-auditory:   #FF8C42;
-  --r-language:   #58A6FF;
-  --r-prefrontal: #3FB950;
-  --r-motor:      #E040FB;
-  --r-parietal:   #FFCA28;
+  --bg:       #050709;
+  --bg-brain: #06080e;
+  --p-bg:     rgba(8, 11, 22, 0.92);
+  --p-border: rgba(255,255,255,0.068);
+  --surface:  rgba(255,255,255,0.038);
+  --surface-h:rgba(255,255,255,0.068);
+  --surface-a:rgba(255,255,255,0.10);
 
-  --mono: 'IBM Plex Mono', monospace;
-  --sans: 'IBM Plex Sans', system-ui, sans-serif;
-  --r3: 3px;
-  --r6: 6px;
+  /* text — kept compatible with JS inline-style refs */
+  --t1: #e3e7f4;
+  --t2: #7880a8;
+  --t3: #3c4268;
+
+  /* borders — b0 used in JS inline styles for icard */
+  --b0: rgba(255,255,255,0.07);
+  --b1: rgba(255,255,255,0.10);
+  --b2: rgba(255,255,255,0.15);
+
+  /* accent */
+  --ac:      #4f7aff;
+  --ac-lt:   rgba(79,122,255,0.12);
+  --ac-bdr:  rgba(79,122,255,0.28);
+
+  /* semantic — green/orange used in JS inline-style refs */
+  --green:   #3ecf70;
+  --green-d: rgba(62,207,112,0.12);
+  --yellow:  #f5cb40;
+  --orange:  #f59440;
+  --red:     #f55050;
+  --purple:  #b860ff;
+
+  /* region colors */
+  --r-visual:     #ff5252;
+  --r-auditory:   #ff9142;
+  --r-language:   #4f8eff;
+  --r-prefrontal: #3ecf70;
+  --r-motor:      #cc5cff;
+  --r-parietal:   #ffd042;
+
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --r4: 4px;
+  --r8: 8px;
+  --r12: 12px;
 }
 
 html, body {
@@ -63,1634 +74,1575 @@ html, body {
   color: var(--t1);
   -webkit-font-smoothing: antialiased;
   font-size: 13px;
+  line-height: 1.5;
 }
 
-/* ── TITLEBAR ─────────────────────────────────────────────────── */
-.titlebar {
-  height: 42px;
-  background: var(--s1);
-  border-bottom: 1px solid var(--b0);
+/* ── SCROLLBAR ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+/* ── TOP BAR ─────────────────────────────────────────────────── */
+.topbar {
+  height: 48px;
+  background: rgba(5, 7, 12, 0.98);
+  border-bottom: 1px solid var(--p-border);
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  gap: 0;
+  padding: 0 14px;
+  gap: 10px;
   flex-shrink: 0;
   user-select: none;
+  backdrop-filter: blur(20px);
+  position: relative;
+  z-index: 100;
 }
 
 .tb-brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
-
 .tb-logo {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: .06em;
+  letter-spacing: .1em;
   color: var(--t1);
 }
-
-.tb-ver {
+.tb-badge {
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--ac);
   background: var(--ac-lt);
-  border: 1px solid rgba(56,139,253,.3);
-  padding: 1px 6px;
+  border: 1px solid var(--ac-bdr);
+  padding: 1px 7px;
   border-radius: 20px;
+  letter-spacing: .04em;
 }
-
-.tb-sep { width: 1px; height: 16px; background: var(--b1); margin: 0 16px; }
-
-.tb-title {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--t2);
-  letter-spacing: .01em;
+.tb-div {
+  width: 1px; height: 18px;
+  background: var(--p-border);
+  flex-shrink: 0;
+  margin: 0 4px;
 }
-
 .tb-session {
-  margin-left: 24px;
   font-family: var(--mono);
   font-size: 11px;
   color: var(--t3);
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  cursor: default;
 }
-
 .tb-session span { color: var(--t2); }
 
+/* menu buttons in topbar */
+.tb-menus {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+.menu-wrap { position: relative; }
+.tb-menu-btn {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--t2);
+  padding: 4px 9px;
+  border-radius: var(--r4);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background .1s, color .1s;
+}
+.tb-menu-btn:hover, .menu-wrap.open .tb-menu-btn {
+  background: var(--surface-h);
+  color: var(--t1);
+}
+
+/* dropdown */
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 200px;
+  background: rgba(10, 13, 26, 0.98);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r8);
+  box-shadow: 0 16px 48px rgba(0,0,0,.7), 0 0 0 0.5px rgba(255,255,255,0.05);
+  z-index: 500;
+  padding: 5px;
+  backdrop-filter: blur(24px);
+}
+.menu-wrap.open .menu-dropdown { display: block; }
+.md-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: var(--r4);
+  font-size: 12px;
+  color: var(--t2);
+  cursor: pointer;
+  transition: background .1s, color .1s;
+}
+.md-item:hover { background: var(--surface-h); color: var(--t1); }
+.md-item.disabled { opacity: 0.32; cursor: not-allowed; pointer-events: none; }
+.md-kbd { font-family: var(--mono); font-size: 10px; color: var(--t3); }
+.md-sep { height: 1px; background: var(--p-border); margin: 4px 2px; }
+
+/* paradigm presets */
+.tb-presets {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
+}
+.preset-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--p-border);
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition: all .15s;
+}
+.preset-chip:hover { border-color: var(--b2); color: var(--t2); background: var(--surface); }
+.preset-chip.on { border-color: var(--ac-bdr); color: var(--ac); background: var(--ac-lt); }
+
+/* right side of topbar */
 .tb-right {
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.tb-btn {
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 12px;
-  border-radius: var(--r3);
-  border: 1px solid var(--b2);
-  background: var(--s3);
-  color: var(--t2);
-  cursor: pointer;
-  transition: all .12s;
-  white-space: nowrap;
-}
-.tb-btn:hover { background: var(--s4); color: var(--t1); border-color: var(--b2); }
-.tb-btn.primary { background: var(--ac); color: #fff; border-color: var(--ac); }
-.tb-btn.primary:hover { background: #2f7de0; }
-
-/* ── MENUBAR ──────────────────────────────────────────────────── */
-.menubar {
-  height: 30px;
-  background: var(--s1);
-  border-bottom: 1px solid var(--b0);
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  gap: 2px;
   flex-shrink: 0;
 }
-
-.menu-item {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--t2);
-  padding: 3px 8px;
-  border-radius: var(--r3);
-  cursor: pointer;
-  transition: all .1s;
-  white-space: nowrap;
-}
-.menu-item:hover { background: var(--s3); color: var(--t1); }
-
-.menu-sep { width: 1px; height: 14px; background: var(--b1); margin: 0 4px; }
-
-.paradigm-templates {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.tpl-label {
-  font-size: 11px;
-  color: var(--t3);
-  margin-right: 4px;
-  font-family: var(--mono);
-}
-
-.tpl-btn {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: var(--r3);
-  border: 1px solid var(--b1);
+.tb-icon-btn {
+  width: 30px; height: 30px;
+  border-radius: var(--r8);
+  border: 1px solid var(--p-border);
   background: transparent;
   color: var(--t3);
   cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
   transition: all .12s;
-  letter-spacing: .03em;
+  font-size: 13px;
 }
-.tpl-btn:hover, .tpl-btn.on {
-  border-color: var(--ac);
-  color: var(--ac);
-  background: var(--ac-lt);
-}
+.tb-icon-btn:hover { background: var(--surface-h); color: var(--t1); border-color: var(--b1); }
 
-/* ── MAIN LAYOUT ──────────────────────────────────────────────── */
-.workspace {
-  display: grid;
-  grid-template-columns: 230px 1fr 1fr;
-  flex: 1;
+.run-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 16px;
+  height: 32px;
+  border-radius: 20px;
+  border: none;
+  background: linear-gradient(135deg, #4f7aff 0%, #7c55ff 100%);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s, box-shadow .15s;
+  box-shadow: 0 2px 12px rgba(79,122,255,0.35);
+}
+.run-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79,122,255,0.45); }
+.run-btn:active { transform: translateY(0); }
+.run-btn.inferring {
+  background: linear-gradient(135deg, #3a5fcc 0%, #5f3fd4 100%);
+  box-shadow: 0 2px 12px rgba(79,122,255,0.2);
+  cursor: wait;
+}
+.run-btn svg { flex-shrink: 0; }
+
+/* ── APP LAYOUT ──────────────────────────────────────────────── */
+.app-layout {
+  display: flex;
+  height: calc(100vh - 48px);
   overflow: hidden;
-  height: calc(100vh - 42px - 30px - 38px - 28px); /* titlebar + menubar + query + status */
 }
 
-.body-wrap { display: flex; flex-direction: column; height: calc(100vh - 42px - 30px); }
-
-/* ── PARAMS PANEL ─────────────────────────────────────────────── */
-.params {
-  background: var(--s1);
-  border-right: 1px solid var(--b0);
+/* ── SIDE PANELS ─────────────────────────────────────────────── */
+.side-panel {
+  width: 252px;
+  background: var(--p-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid var(--p-border);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-}
-
-.panel-header {
-  padding: 8px 12px 6px;
-  border-bottom: 1px solid var(--b0);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   flex-shrink: 0;
-  background: var(--s2);
+  z-index: 10;
+}
+.panel-right {
+  width: 276px;
+  border-right: none;
+  border-left: 1px solid var(--p-border);
 }
 
-.panel-title {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--t2);
+/* panel section */
+.p-sect {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--p-border);
 }
+.p-sect:last-child { border-bottom: none; }
 
-.panel-badge {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--ac);
-  background: var(--ac-lt);
-  border: 1px solid rgba(56,139,253,.25);
-  padding: 1px 6px;
-  border-radius: 2px;
-}
-
-.param-section {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--b0);
-}
-
-.sec-label {
+.sect-label {
   font-family: var(--mono);
   font-size: 9px;
   font-weight: 600;
   letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--t3);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
-.sec-label-count {
+.sect-badge {
   font-family: var(--mono);
   font-size: 9px;
   color: var(--ac);
+  background: var(--ac-lt);
+  border: 1px solid var(--ac-bdr);
+  padding: 1px 6px;
+  border-radius: 3px;
 }
 
-/* ROI chips */
-.roi-grid { display: flex; flex-direction: column; gap: 3px; }
-
+/* ── ROI ROWS ────────────────────────────────────────────────── */
+.roi-list { display: flex; flex-direction: column; gap: 2px; }
 .roi-row {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 4px 6px;
-  border-radius: var(--r3);
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: var(--r8);
   cursor: pointer;
-  transition: background .1s;
+  transition: background .12s;
   border: 1px solid transparent;
+  position: relative;
 }
-.roi-row:hover { background: var(--s3); }
-.roi-row.on { background: var(--s3); border-color: var(--b1); }
-
-.roi-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(255,255,255,.2); }
-.roi-name { font-size: 11px; font-weight: 500; color: var(--t2); flex: 1; }
+.roi-row:hover { background: var(--surface-h); }
+.roi-row.on { background: var(--surface); border-color: var(--p-border); }
+.roi-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+.roi-info { flex: 1; min-width: 0; }
+.roi-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--t2);
+  display: block;
+  transition: color .12s;
+}
 .roi-row.on .roi-name { color: var(--t1); }
-.roi-abbr { font-family: var(--mono); font-size: 9px; color: var(--t3); }
-.roi-check { width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--b2); background: transparent; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.roi-abbr {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--t3);
+  display: block;
+  margin-top: 1px;
+}
+.roi-check {
+  width: 14px; height: 14px;
+  border-radius: 4px;
+  border: 1.5px solid var(--b1);
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all .12s;
+}
 .roi-row.on .roi-check { background: var(--ac); border-color: var(--ac); }
-.roi-check-mark { width: 6px; height: 6px; display: none; }
-.roi-row.on .roi-check-mark { display: block; fill: white; }
+.roi-check-mark { width: 7px; height: 7px; display: none; }
+.roi-row.on .roi-check-mark { display: block; }
 
-/* Sliders */
+/* region tooltip on hover */
+.region-tip {
+  display: none;
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 0;
+  width: 260px;
+  background: rgba(8, 11, 22, 0.97);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r8);
+  padding: 12px;
+  font-size: 11px;
+  color: var(--t2);
+  z-index: 200;
+  box-shadow: 0 8px 32px rgba(0,0,0,.7);
+  pointer-events: none;
+}
+.roi-row:hover .region-tip { display: block; }
+.rt-name { font-size: 12px; font-weight: 600; color: var(--t1); margin-bottom: 3px; }
+.rt-loc { font-family: var(--mono); font-size: 9px; color: var(--t3); margin-bottom: 8px; }
+.rt-fns { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+.rt-fn-item { font-size: 10px; color: var(--t3); padding-left: 10px; position: relative; }
+.rt-fn-item::before { content: '·'; position: absolute; left: 2px; color: var(--t3); }
+.rt-high { font-size: 10px; color: var(--t2); border-top: 1px solid var(--p-border); padding-top: 6px; }
+.rt-high strong { color: var(--t1); }
+
+/* ── TASK CHIPS ──────────────────────────────────────────────── */
+.task-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+.task-chip {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 4px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--p-border);
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition: all .12s;
+}
+.task-chip:hover { color: var(--t2); border-color: var(--b1); background: var(--surface); }
+.task-chip.on { border-color: var(--ac-bdr); color: var(--ac); background: var(--ac-lt); }
+
+/* ── SLIDERS ─────────────────────────────────────────────────── */
 .param-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 .param-row:last-child { margin-bottom: 0; }
-
-.param-label { font-size: 11px; color: var(--t2); flex: 1; white-space: nowrap; }
-
+.param-label { font-size: 11px; color: var(--t2); flex: 1; }
 .param-value {
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 500;
   color: var(--t1);
-  min-width: 36px;
+  min-width: 38px;
   text-align: right;
 }
-
+.slider-wrap { margin-top: 2px; }
 input[type=range] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 3px;
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 3px;
   border-radius: 2px;
-  background: var(--b1);
+  background: var(--surface-a);
   outline: none;
-  margin: 0;
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px; height: 12px;
+  width: 13px; height: 13px;
   border-radius: 50%;
   background: var(--ac);
   cursor: pointer;
-  border: 1px solid rgba(56,139,253,.5);
+  border: 1.5px solid rgba(79,122,255,.4);
+  box-shadow: 0 0 0 3px var(--ac-lt);
 }
-.slider-full { width: 100%; margin-top: 4px; }
 
-/* Dropdowns */
+/* ── SELECT ──────────────────────────────────────────────────── */
+.sel-wrap { position: relative; }
+.sel-wrap::after {
+  content: '▾'; position: absolute;
+  right: 9px; top: 50%; transform: translateY(-50%);
+  color: var(--t3); pointer-events: none; font-size: 10px;
+}
 select {
   width: 100%;
-  background: var(--s3);
-  border: 1px solid var(--b1);
-  border-radius: var(--r3);
+  background: var(--surface);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r8);
   color: var(--t1);
   font-family: var(--sans);
   font-size: 11px;
-  padding: 5px 24px 5px 8px;
+  padding: 7px 28px 7px 10px;
   outline: none;
   cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
+  -webkit-appearance: none; appearance: none;
   transition: border-color .12s;
 }
 select:focus { border-color: var(--ac); }
-.sel-wrap { position: relative; }
-.sel-wrap::after { content: '▾'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--t3); pointer-events: none; font-size: 9px; }
 
-/* Task chips */
-.task-grid { display: flex; flex-wrap: wrap; gap: 3px; }
-.task-chip {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 500;
-  padding: 3px 8px;
-  border-radius: var(--r3);
-  border: 1px solid var(--b1);
-  background: transparent;
-  color: var(--t3);
-  cursor: pointer;
-  transition: all .1s;
-  letter-spacing: .02em;
+/* ── TOGGLES ─────────────────────────────────────────────────── */
+.tog-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  gap: 10px; margin-bottom: 8px;
 }
-.task-chip:hover { color: var(--t2); border-color: var(--b2); background: var(--s3); }
-.task-chip.on { border-color: var(--ac); color: var(--ac); background: var(--ac-lt); }
-
-/* Toggles */
-.tog-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
 .tog-row:last-child { margin-bottom: 0; }
 .tog-label { font-size: 11px; color: var(--t2); }
 .tog-tag { font-family: var(--mono); font-size: 9px; color: var(--t3); display: block; margin-top: 1px; }
 .tog {
-  width: 32px; height: 17px;
-  border-radius: 9px;
-  border: 1px solid var(--b2);
-  background: var(--s3);
+  width: 34px; height: 18px; border-radius: 9px;
+  border: 1px solid var(--b1);
+  background: var(--surface-a);
   cursor: pointer;
   position: relative;
   transition: background .15s, border-color .15s;
   flex-shrink: 0;
 }
 .tog.on { background: var(--ac); border-color: var(--ac); }
-.tog::after { content: ''; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--t3); transition: transform .14s, background .14s; }
-.tog.on::after { transform: translateX(15px); background: #fff; }
+.tog::after {
+  content: ''; position: absolute;
+  top: 2px; left: 2px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  transition: transform .14s, background .14s;
+}
+.tog.on::after { transform: translateX(16px); background: #fff; }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--b1); border-radius: 2px; }
-
-/* ── STIMULUS PANEL ───────────────────────────────────────────── */
-.stimulus-panel {
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  border-right: 1px solid var(--b0);
+/* ── BRAIN VIEW ──────────────────────────────────────────────── */
+.brain-view {
+  flex: 1;
+  position: relative;
   overflow: hidden;
+  background: var(--bg-brain);
+  min-width: 0;
 }
 
-.modality-tabs {
+#brainCanvas {
+  width: 100%; height: 100%;
+  display: block;
+}
+
+/* Brain loading */
+#brainLoading {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px;
+  background: var(--bg-brain);
+  z-index: 20;
+}
+.bl-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--t3);
+  letter-spacing: .06em;
+}
+.bl-bar {
+  width: 160px; height: 2px;
+  background: var(--surface-a);
+  border-radius: 1px;
+}
+.bl-fill {
+  height: 100%; width: 0%;
+  background: var(--ac);
+  border-radius: 1px;
+  transition: width .3s;
+}
+
+/* Viz toolbar */
+.viz-toolbar {
+  position: absolute;
+  top: 12px; left: 12px;
   display: flex;
-  background: var(--s1);
-  border-bottom: 1px solid var(--b0);
-  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  background: rgba(6, 8, 18, 0.82);
+  border: 1px solid var(--p-border);
+  border-radius: 24px;
+  padding: 4px 8px;
+  backdrop-filter: blur(16px);
+  z-index: 10;
 }
-
-.mod-tab {
+.vt-btn {
   font-family: var(--sans);
   font-size: 11px;
   font-weight: 500;
-  padding: 8px 14px;
+  padding: 4px 10px;
+  border-radius: 16px;
   border: none;
-  background: none;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.vt-btn:hover { color: var(--t2); background: var(--surface-h); }
+.vt-btn.on { color: var(--t1); background: var(--surface-a); }
+.vt-sep { width: 1px; height: 14px; background: var(--p-border); margin: 0 4px; }
+.vt-coord {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+  margin-left: 6px;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+
+/* Labels overlay */
+#labelLines {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 2; overflow: visible;
+}
+#regionLabels {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 3;
+}
+
+/* 3D labels */
+.rlabel-3d {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: opacity .3s;
+  background: rgba(5, 7, 14, 0.82);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r8);
+  padding: 6px 10px;
+  min-width: 90px;
+  backdrop-filter: blur(12px);
+}
+.rl-head {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 4px;
+}
+.rl-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.rl-name {
+  font-family: var(--mono);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--t1);
+}
+.rl-bar-wrap {
+  height: 2px; border-radius: 1px;
+  background: var(--surface-a);
+  overflow: hidden; margin-bottom: 3px;
+}
+.rl-bar-fill { height: 100%; width: 0%; border-radius: 1px; transition: width .5s; }
+.rl-val {
+  font-family: var(--mono); font-size: 9px; color: var(--t3);
+}
+.rl-val.pos { color: var(--green); }
+.rl-val.neg { color: var(--orange); }
+
+/* ROI Stats overlay */
+.roi-stats-panel {
+  position: absolute;
+  top: 12px; right: 12px;
+  z-index: 10;
+  background: rgba(6, 8, 18, 0.88);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r12);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  min-width: 340px;
+}
+.rst-head {
+  display: grid;
+  grid-template-columns: 1fr 70px 80px 72px 40px;
+  padding: 7px 12px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--p-border);
+}
+.rst-hcell {
+  font-family: var(--mono);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: .10em; text-transform: uppercase;
+  color: var(--t3);
+  position: relative;
+}
+.hdr-tip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px); left: 0;
+  width: 220px;
+  background: rgba(8,11,22,.97);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r8);
+  padding: 8px 10px;
+  font-size: 10px; font-weight: 400;
+  color: var(--t2);
+  letter-spacing: .01em; text-transform: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,.6);
+  z-index: 300;
+  white-space: normal;
+}
+.rst-hcell:hover .hdr-tip { display: block; }
+.rst-row {
+  display: grid;
+  grid-template-columns: 1fr 70px 80px 72px 40px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--p-border);
+  cursor: pointer;
+  transition: background .1s;
+  align-items: center;
+}
+.rst-row:last-child { border-bottom: none; }
+.rst-row:hover { background: var(--surface); }
+.rst-row.on { }
+.rst-cell {
+  font-size: 12px; color: var(--t2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rst-name { display: flex; align-items: center; gap: 7px; font-weight: 500; color: var(--t2); }
+.rst-row.on .rst-name { color: var(--t1); }
+.rst-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.rst-pearson { font-family: var(--mono); font-size: 11px; color: var(--t2); }
+.rst-mean    { font-family: var(--mono); font-size: 11px; color: var(--t2); }
+.rst-std     { font-family: var(--mono); font-size: 11px; color: var(--t3); }
+.rst-status  { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .06em; }
+
+/* region tooltip */
+.region-tip {
+  display: none; position: absolute;
+  left: calc(100% + 10px); top: 0;
+  width: 260px;
+  background: rgba(8, 11, 22, 0.97);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r8);
+  padding: 12px;
+  z-index: 400;
+  box-shadow: 0 12px 40px rgba(0,0,0,.7);
+  pointer-events: none;
+}
+.rst-row:hover .region-tip { display: block; }
+
+/* insight panel */
+.insight-panel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  max-height: 0;
+  overflow: hidden;
+  background: rgba(6, 8, 18, 0.94);
+  border-top: 1px solid var(--p-border);
+  backdrop-filter: blur(20px);
+  z-index: 10;
+  transition: max-height .4s cubic-bezier(.4,0,.2,1);
+}
+.insight-panel.visible { max-height: 360px; }
+.insight-inner {
+  padding: 14px 16px;
+  overflow-y: auto;
+  max-height: 360px;
+}
+.insight-hdr {
+  font-family: var(--mono);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--t3); margin-bottom: 10px;
+}
+.insight-summary {
+  font-size: 12px; color: var(--t2);
+  line-height: 1.6; margin-bottom: 12px;
+}
+.insight-summary strong { color: var(--t1); }
+.insight-cards { display: flex; flex-direction: column; gap: 8px; }
+
+/* insight cards */
+.icard {
+  background: var(--surface);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r8);
+  overflow: hidden;
+}
+.icard-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--p-border);
+  background: rgba(255,255,255,0.02);
+}
+.icard-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.icard-name { font-size: 12px; font-weight: 600; color: var(--t1); flex: 1; }
+.icard-rel { font-family: var(--mono); font-size: 11px; font-weight: 500; }
+.icard-lvl {
+  font-family: var(--mono); font-size: 9px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 10px;
+  border: 1px solid currentColor;
+}
+.icard-lvl.high { color: var(--green); background: var(--green-d); }
+.icard-lvl.mid  { color: var(--yellow); background: rgba(245,203,64,.1); }
+.icard-lvl.low  { color: var(--t3); background: transparent; }
+.icard-lvl.supp { color: var(--orange); background: rgba(245,148,64,.1); }
+.icard-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.icard-anatomy { display: flex; gap: 6px; flex-wrap: wrap; }
+.icard-atom {
+  font-family: var(--mono); font-size: 9px;
+  color: var(--t3); background: var(--surface-a);
+  padding: 2px 7px; border-radius: 4px;
+}
+.icard-explain { font-size: 11px; color: var(--t2); line-height: 1.65; }
+.icard-explain em { color: var(--t1); font-style: normal; font-weight: 500; }
+.icard-subs { display: flex; flex-wrap: wrap; gap: 4px; }
+.icard-sub {
+  font-family: var(--mono); font-size: 9px; color: var(--t3);
+  background: var(--surface); border: 1px solid var(--p-border);
+  padding: 2px 7px; border-radius: 4px;
+}
+
+/* Progress bar at bottom of brain */
+#inferProgress {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: transparent;
+  z-index: 20;
+  display: none;
+}
+#inferBar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ac) 0%, var(--purple) 100%);
+  width: 0%; transition: width .2s ease;
+}
+
+/* ── RIGHT PANEL — STIMULUS ──────────────────────────────────── */
+.modality-tabs {
+  display: flex;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--p-border);
+  flex-shrink: 0;
+}
+.mod-tab {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 11px; font-weight: 500;
+  padding: 10px 4px;
+  border: none; background: none;
   color: var(--t3);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: color .12s, border-color .12s;
   letter-spacing: .03em;
   text-transform: uppercase;
+  text-align: center;
 }
 .mod-tab:hover { color: var(--t2); }
-.mod-tab.on { color: var(--ac); border-bottom-color: var(--ac); }
+.mod-tab.on { color: var(--t1); border-bottom-color: var(--ac); }
 
-/* Input panels */
+/* input panels */
 .input-panel { flex: 1; display: none; flex-direction: column; padding: 12px; gap: 8px; overflow: hidden; min-height: 0; }
 .input-panel.on { display: flex; }
-
 .input-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  background: var(--s1);
-  border: 1px solid var(--b0);
-  border-radius: var(--r3);
-  flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--p-border);
+  margin-bottom: 2px;
 }
-.meta-item { font-family: var(--mono); font-size: 10px; color: var(--t3); }
+.meta-item { font-family: var(--mono); font-size: 9px; color: var(--t3); }
 .meta-item span { color: var(--t2); }
-.meta-sep { width: 1px; height: 10px; background: var(--b1); }
+.meta-sep { width: 1px; height: 10px; background: var(--p-border); }
 
 textarea#textInput {
   flex: 1;
-  width: 100%;
-  border: 1px solid var(--b1);
-  border-radius: var(--r6);
-  background: var(--s1);
+  background: var(--surface);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r8);
   color: var(--t1);
-  font-family: var(--mono);
-  font-size: 12.5px;
-  line-height: 1.7;
-  padding: 12px;
-  outline: none;
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 10px 12px;
   resize: none;
-  transition: border-color .15s;
+  outline: none;
+  transition: border-color .12s;
   min-height: 0;
 }
-textarea#textInput:focus { border-color: var(--ac); }
-textarea#textInput::placeholder { color: var(--t3); font-style: italic; }
-
+textarea#textInput:focus { border-color: rgba(79,122,255,.4); }
+textarea#textInput::placeholder { color: var(--t3); }
 .input-footer {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--t3);
-  flex-shrink: 0;
-  padding: 0 2px;
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 9px; color: var(--t3);
 }
 
-/* Drop zones */
+/* dropzones */
 .dropzone {
   flex: 1;
-  border: 1px dashed var(--b2);
-  border-radius: var(--r6);
-  background: var(--s1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  border: 1.5px dashed var(--p-border);
+  border-radius: var(--r12);
   cursor: pointer;
-  transition: border-color .15s, background .15s;
   position: relative;
   overflow: hidden;
+  transition: border-color .15s, background .15s;
+  display: flex; align-items: center; justify-content: center;
   min-height: 0;
 }
-.dropzone:hover, .dropzone.drag { border-color: var(--ac); background: rgba(56,139,253,.05); }
-.dropzone.has-content { border-style: solid; border-color: var(--b1); }
-
-.drop-icon {
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: none;
+.dropzone:hover, .dropzone.drag { border-color: var(--ac-bdr); background: var(--ac-lt); }
+.dropzone.has-content { border-style: solid; border-color: var(--p-border); }
+.dz-inner {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 10px;
+  padding: 20px;
+  text-align: center;
 }
-.drop-icon svg { width: 100%; height: 100%; }
-
-.drop-title { font-size: 12px; font-weight: 500; color: var(--t2); pointer-events: none; }
-.drop-sub { font-family: var(--mono); font-size: 10px; color: var(--t3); pointer-events: none; text-align: center; line-height: 1.6; }
-
+.dz-icon { width: 36px; height: 36px; color: var(--t3); }
+.dz-title { font-size: 12px; font-weight: 500; color: var(--t2); }
+.dz-sub { font-size: 10px; color: var(--t3); line-height: 1.5; }
 .browse-btn {
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 500;
-  padding: 5px 12px;
-  border-radius: var(--r3);
-  border: 1px solid var(--b2);
-  background: var(--s3);
-  color: var(--t2);
-  cursor: pointer;
-  transition: all .12s;
+  font-family: var(--sans); font-size: 11px; font-weight: 500;
+  padding: 5px 14px; border-radius: 20px;
+  border: 1px solid var(--b1); background: var(--surface-a);
+  color: var(--t2); cursor: pointer; transition: all .12s;
 }
-.browse-btn:hover { border-color: var(--ac); color: var(--ac); }
+.browse-btn:hover { border-color: var(--b2); color: var(--t1); }
 
-.dropzone input[type=file] { display: none; }
-.img-preview { width: 100%; height: 100%; object-fit: contain; position: absolute; border-radius: var(--r6); display: none; }
-video#videoPreview { width: 100%; height: 100%; object-fit: contain; position: absolute; border-radius: var(--r6); display: none; background: #000; }
+.img-preview { width: 100%; height: 100%; object-fit: contain; position: absolute; border-radius: 10px; display: none; }
+video#videoPreview { width: 100%; height: 100%; object-fit: contain; position: absolute; border-radius: 10px; display: none; background: #000; }
 
 .url-bar { display: flex; gap: 6px; flex-shrink: 0; }
 .url-input {
-  flex: 1;
-  border: 1px solid var(--b1);
-  border-radius: var(--r3);
-  background: var(--s2);
-  color: var(--t1);
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 6px 10px;
-  outline: none;
-  transition: border-color .12s;
+  flex: 1; background: var(--surface);
+  border: 1px solid var(--p-border); border-radius: var(--r8);
+  color: var(--t1); font-family: var(--sans); font-size: 11px;
+  padding: 6px 10px; outline: none; transition: border-color .12s;
 }
 .url-input:focus { border-color: var(--ac); }
 .url-input::placeholder { color: var(--t3); }
-.url-go { font-family: var(--sans); font-size: 11px; font-weight: 500; padding: 6px 12px; border-radius: var(--r3); border: none; background: var(--ac); color: #fff; cursor: pointer; transition: background .12s; white-space: nowrap; }
-.url-go:hover { background: #2f7de0; }
+.url-go {
+  font-family: var(--sans); font-size: 11px; font-weight: 500;
+  padding: 6px 12px; border-radius: var(--r8);
+  border: 1px solid var(--p-border); background: var(--surface-a);
+  color: var(--t2); cursor: pointer; transition: all .12s;
+  white-space: nowrap;
+}
+.url-go:hover { border-color: var(--b1); color: var(--t1); }
 
+/* file badge */
 .file-badge {
-  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-  background: rgba(22,27,34,.9); border: 1px solid var(--b2);
-  border-radius: var(--r3); padding: 3px 10px;
-  font-family: var(--mono); font-size: 10px; color: var(--t2);
-  white-space: nowrap; display: none; backdrop-filter: blur(8px);
+  position: absolute; bottom: 8px; left: 8px; right: 8px;
+  display: none;
+  background: rgba(6,8,18,.9); border: 1px solid var(--p-border);
+  border-radius: var(--r4); padding: 3px 8px;
+  font-family: var(--mono); font-size: 9px; color: var(--t2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .clear-btn {
-  position: absolute; top: 8px; right: 8px;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--s3); border: 1px solid var(--b1);
-  cursor: pointer; display: none;
-  align-items: center; justify-content: center;
-  font-size: 10px; color: var(--t2); transition: all .12s;
+  position: absolute; top: 6px; right: 6px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(6,8,18,.85); border: 1px solid var(--p-border);
+  color: var(--t3); cursor: pointer; font-size: 10px;
+  display: none; align-items: center; justify-content: center;
+  transition: all .12s;
 }
-.clear-btn:hover { background: rgba(248,81,73,.15); color: var(--red); border-color: var(--red); }
+.clear-btn:hover { background: rgba(245,80,80,.15); color: var(--red); border-color: var(--red); }
 
-/* Audio waveform */
-.audio-waveform { display: flex; align-items: flex-end; gap: 2px; height: 32px; pointer-events: none; }
-.aw-bar { width: 3px; border-radius: 1px; background: var(--b2); animation: awBounce 1.3s ease-in-out infinite; }
-.aw-bar:nth-child(1){height:8px; animation-delay:0s}
-.aw-bar:nth-child(2){height:20px;animation-delay:.1s}
-.aw-bar:nth-child(3){height:30px;animation-delay:.2s}
-.aw-bar:nth-child(4){height:14px;animation-delay:.3s}
-.aw-bar:nth-child(5){height:26px;animation-delay:.4s}
-.aw-bar:nth-child(6){height:10px;animation-delay:.5s}
-.aw-bar:nth-child(7){height:22px;animation-delay:.6s}
-.aw-bar:nth-child(8){height:6px; animation-delay:.7s}
-@keyframes awBounce { 0%,100%{transform:scaleY(1);opacity:.3} 50%{transform:scaleY(1.5);opacity:.8} }
+/* audio waveform */
+.audio-waveform {
+  display: flex; gap: 3px; align-items: flex-end; height: 28px;
+  margin-bottom: 4px;
+}
+.aw-bar {
+  width: 3px; border-radius: 2px;
+  background: var(--t3);
+  animation: awBounce 1.2s ease-in-out infinite;
+}
+.aw-bar:nth-child(1){height:40%;animation-delay:0s}
+.aw-bar:nth-child(2){height:70%;animation-delay:.15s}
+.aw-bar:nth-child(3){height:55%;animation-delay:.30s}
+@keyframes awBounce {
+  0%,100%{transform:scaleY(1);opacity:.3}
+  50%{transform:scaleY(1.5);opacity:.8}
+}
 .audio-waveform.active .aw-bar { background: var(--ac); }
-audio#audioPreview { position:absolute; bottom:12px; left:12px; right:12px; width:calc(100% - 24px); display:none; border-radius:var(--r3); }
-
-/* ── VISUALIZATION PANEL ──────────────────────────────────────── */
-.viz-panel {
-  background: #080B12;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
+audio#audioPreview {
+  position: absolute; bottom: 10px; left: 10px; right: 10px;
+  width: calc(100% - 20px); display: none;
 }
 
-.viz-toolbar {
-  height: 30px;
-  background: rgba(22,27,34,.9);
-  border-bottom: 1px solid var(--b0);
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  gap: 6px;
-  flex-shrink: 0;
-  backdrop-filter: blur(4px);
-  position: relative;
-  z-index: 2;
-}
-
-.vt-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--t3);
-  margin-right: 4px;
-}
-
-.vt-btn {
-  font-family: var(--mono);
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 2px;
-  border: 1px solid var(--b1);
-  background: transparent;
-  color: var(--t3);
-  cursor: pointer;
-  transition: all .1s;
-}
-.vt-btn:hover, .vt-btn.on { border-color: var(--b2); color: var(--t2); background: var(--s3); }
-
-.vt-sep { width: 1px; height: 14px; background: var(--b1); margin: 0 4px; }
-
-.vt-coord {
-  margin-left: auto;
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--t3);
-}
-.vt-coord span { color: var(--t2); }
-
-/* 3D canvas */
-#brainCanvas { position: absolute; top: 30px; left: 0; width: 100%; height: calc(100% - 30px); display: block; }
-
-/* Brain loading overlay */
-#brainLoading {
-  position: absolute; top: 30px; left: 0; width: 100%; height: calc(100% - 30px);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 12px; z-index: 5; background: #080B12; pointer-events: none;
-}
-.bl-label { font-family: var(--mono); font-size: 11px; color: var(--t3); letter-spacing: .08em; }
-.bl-bar { width: 140px; height: 2px; background: var(--b0); border-radius: 2px; overflow: hidden; }
-.bl-fill { height: 100%; background: var(--ac); border-radius: 2px; width: 0%; transition: width .2s; }
-
-/* Region labels overlay */
-#regionLabels { position: absolute; top: 30px; left: 0; width: 100%; height: calc(100% - 30px); pointer-events: none; z-index: 2; }
-.rlabel-3d {
-  position: absolute;
-  min-width: 90px;
-  font-family: var(--mono);
-  background: rgba(8,11,18,.88);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 4px;
-  padding: 5px 8px 4px;
-  transform: translate(-50%, -50%);
-  transition: opacity .35s;
-  pointer-events: none;
-  white-space: nowrap;
-  display: flex; flex-direction: column; gap: 3px;
-}
-.rl-head { display: flex; align-items: center; gap: 5px; }
-.rl-dot  { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.rl-name { font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.9); }
-.rl-bar-wrap { height: 3px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; }
-.rl-bar-fill { height: 100%; border-radius: 2px; transition: width .5s ease; width: 0%; }
-.rl-val { font-size: 9px; color: rgba(255,255,255,.45); letter-spacing: .03em; }
-.rl-val.pos { color: #3fb950; }
-.rl-val.neg { color: #e06c3e; }
-
-/* Colorbar */
-.colorbar {
-  position: absolute;
-  bottom: 18px;
-  left: 16px;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.cb-title { font-family: var(--mono); font-size: 9px; color: var(--t3); letter-spacing: .06em; text-transform: uppercase; }
-.cb-bar { width: 100px; height: 6px; border-radius: 2px; background: linear-gradient(90deg, #2B2D42 0%, #FF4D4D 40%, #FFCA28 75%, #ffffff 100%); border: 1px solid var(--b1); }
-.cb-scale { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--t3); width: 100px; }
-
-/* Space label */
-.space-label {
-  position: absolute;
-  top: 38px; left: 10px;
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--t3);
-  letter-spacing: .06em;
-  z-index: 3;
-}
-
-/* ROI Stats table */
-.roi-stats-panel {
-  position: absolute;
-  top: 38px; right: 10px;
-  z-index: 3;
-  background: rgba(22,27,34,.88);
-  border: 1px solid var(--b0);
-  border-radius: var(--r3);
-  overflow: hidden;
-  backdrop-filter: blur(8px);
-  min-width: 240px;
-}
-
-.rst-head {
-  display: grid;
-  grid-template-columns: 1fr 52px 52px 38px;
-  padding: 5px 10px;
-  border-bottom: 1px solid var(--b0);
-  background: rgba(34,39,46,.6);
-}
-.rst-hcell {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--t3);
-}
-.rst-hcell:not(:first-child) { text-align: right; }
-
-.rst-row {
-  display: grid;
-  grid-template-columns: 1fr 52px 52px 38px;
-  padding: 4px 10px;
-  border-bottom: 1px solid rgba(48,54,61,.5);
-  transition: background .1s;
-  cursor: pointer;
-}
-.rst-row:last-child { border-bottom: none; }
-.rst-row:hover { background: rgba(56,139,253,.05); }
-
-.rst-cell {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--t3);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.rst-cell:not(:first-child) { justify-content: flex-end; color: var(--t3); }
-.rst-row.on .rst-cell { color: var(--t2); }
-.rst-row.on .rst-cell:not(:first-child) { color: var(--t1); }
-
-.rst-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; opacity: .35; }
-.rst-row.on .rst-dot { opacity: 1; }
-
-.rst-status {
-  font-size: 9px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-}
-.rst-row.on .rst-status { color: var(--green); }
-
-/* ── QUERY CONSTRUCTOR ────────────────────────────────────────── */
-.query-bar {
-  height: 38px;
-  background: var(--s1);
-  border-top: 1px solid var(--b0);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 14px;
-  flex-shrink: 0;
-  transition: border-top-color .2s;
-}
-.query-bar.inferring { border-top-color: var(--ac); }
-.qb-spinner {
-  width: 8px; height: 8px; border-radius: 50%;
-  border: 1.5px solid var(--b1); border-top-color: var(--ac);
-  animation: qbSpin .7s linear infinite;
-  display: none; flex-shrink: 0;
-}
-.query-bar.inferring .qb-spinner { display: block; }
-@keyframes qbSpin { to { transform: rotate(360deg); } }
-
-.qb-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--t3);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.qb-prefix {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--ac);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.qb-text {
-  flex: 1;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--t2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.qb-actions { display: flex; gap: 6px; flex-shrink: 0; }
-
-.qb-btn {
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: var(--r3);
-  border: 1px solid var(--b1);
-  background: var(--s3);
-  color: var(--t2);
-  cursor: pointer;
-  transition: all .12s;
-  white-space: nowrap;
-}
-.qb-btn:hover { border-color: var(--b2); color: var(--t1); }
-.qb-btn.copied { border-color: var(--green); color: var(--green); background: rgba(63,185,80,.1); }
-
-/* ── STATUS BAR ───────────────────────────────────────────────── */
-.statusbar {
-  height: 22px;
-  background: var(--ac);
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  gap: 0;
-  flex-shrink: 0;
-}
-
-.sb-item {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: rgba(255,255,255,.85);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 10px;
-  border-right: 1px solid rgba(255,255,255,.2);
-}
-.sb-item:first-child { padding-left: 0; }
-.sb-item:last-child { border-right: none; margin-left: auto; }
-
-.sb-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.6); }
-.sb-dot.ready { background: #3FB950; }
-
-.divider { border: none; border-top: 1px solid var(--b0); }
-
-/* ── DROPDOWN MENUS ─────────────────────────────────────────── */
-.menu-wrap { position: relative; }
-.menu-dropdown {
-  display: none;
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
-  min-width: 200px;
-  background: var(--s2);
-  border: 1px solid var(--b1);
-  border-radius: var(--r6);
-  box-shadow: 0 8px 24px rgba(0,0,0,.55);
-  z-index: 200;
-  padding: 4px 0;
-}
-.menu-wrap.open .menu-dropdown { display: block; }
-.md-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  font-size: 12px;
-  color: var(--t2);
-  cursor: pointer;
-  transition: background .08s, color .08s;
-  white-space: nowrap;
-}
-.md-item:hover { background: var(--s3); color: var(--t1); }
-.md-item.disabled { color: var(--t3); cursor: default; pointer-events: none; }
-.md-kbd { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--t3); }
-.md-sep { height: 1px; background: var(--b0); margin: 4px 0; }
-
-/* ── PREDICTION OVERLAY (removed) ───────────────────────────── */
-.pred-overlay {
-  position: fixed;
-  bottom: 60px; right: 16px;
-  width: 320px;
-  background: var(--s2);
-  border: 1px solid var(--b1);
-  border-radius: var(--r6);
-  box-shadow: 0 12px 32px rgba(0,0,0,.6);
-  z-index: 50;
-  display: none;
-  overflow: hidden;
-}
-.pred-overlay.visible { display: block; }
-.pred-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 12px;
-  background: var(--s3);
-  border-bottom: 1px solid var(--b0);
-}
-.pred-title { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--t2); }
-.pred-close {
-  width: 18px; height: 18px; border-radius: 50%;
-  background: transparent; border: 1px solid var(--b1);
-  cursor: pointer; color: var(--t3); font-size: 9px;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .12s;
-}
-.pred-close:hover { background: rgba(248,81,73,.15); color: var(--red); border-color: var(--red); }
-.pred-body { padding: 10px 12px; font-family: var(--mono); font-size: 11px; line-height: 1.8; min-height: 80px; }
-.pred-log-line { color: var(--t3); }
-.pred-log-line.done { color: var(--green); }
-.pred-progress { width: calc(100% - 24px); height: 3px; background: var(--b0); border-radius: 2px; margin: 0 12px 10px; overflow: hidden; }
-.pred-progress-bar { height: 100%; background: var(--ac); border-radius: 2px; width: 0%; transition: width .25s ease; }
-
-
-/* ── Inference result panel ──────────────────────────────────── */
-.pred-result {
-  margin: 4px 12px 10px;
-  padding: 10px 12px;
-  background: var(--s2);
-  border: 1px solid var(--b0);
-  border-radius: var(--r6);
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px 12px;
-}
-.pred-result-row { display: flex; flex-direction: column; gap: 2px; }
-.pred-result-label { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: .04em; }
-.pred-result-val { font-family: var(--mono); font-size: 12px; color: var(--t1); }
-
-/* ── Extended RST table ──────────────────────────────────────── */
-.rst-head, .rst-row { grid-template-columns: minmax(80px,1fr) 68px 68px 52px 44px; }
-.rst-pearson { font-family: var(--mono); }
-.rst-mean    { font-family: var(--mono); font-size: 11px; color: var(--t2); }
-.rst-std     { font-family: var(--mono); font-size: 11px; color: var(--t3); }
-
-/* ── Statusbar running state ─────────────────────────────────── */
-.sb-dot.running { background: var(--yellow); animation: pulse 0.9s infinite; }
-@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
-
-/* ── Demo mode banner ────────────────────────────────────────── */
+/* demo banner */
 .demo-banner {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 12px;
-  background: rgba(210,153,34,.08);
-  border-bottom: 1px solid rgba(210,153,34,.2);
-  font-size: 11px; color: var(--yellow);
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 9px 12px; margin: 0 0 2px;
+  background: rgba(245,148,64,.08);
+  border: 1px solid rgba(245,148,64,.2);
+  border-radius: var(--r8);
+  font-size: 11px; color: var(--orange); line-height: 1.5;
   flex-shrink: 0;
 }
-.demo-banner svg { flex-shrink: 0; }
-.demo-banner a { color: var(--ac); text-decoration: none; }
-.demo-banner a:hover { text-decoration: underline; }
+.demo-banner svg { flex-shrink: 0; margin-top: 1px; }
+.demo-banner a { color: var(--ac); text-decoration: underline; }
 
-/* ── Column header tooltips ──────────────────────────────────── */
-.rst-hcell { position: relative; cursor: default; }
-.rst-hcell .hdr-tip {
-  display: none;
-  position: absolute; bottom: calc(100% + 6px); left: 50%;
-  transform: translateX(-50%);
-  width: 220px; padding: 8px 10px;
-  background: var(--s4); border: 1px solid var(--b2);
-  border-radius: var(--r6); font-size: 11px; color: var(--t2);
-  line-height: 1.5; z-index: 300; pointer-events: none;
-  white-space: normal;
-}
-.rst-hcell:hover .hdr-tip { display: block; }
-
-/* ── Region tooltip ──────────────────────────────────────────── */
-.rst-cell.rst-name { position: relative; cursor: default; }
-.region-tip {
-  display: none;
-  position: absolute; top: calc(100% + 4px); left: 0;
-  width: 290px; padding: 11px 13px;
-  background: var(--s3); border: 1px solid var(--b2);
-  border-radius: var(--r6); font-size: 11px; color: var(--t2);
-  line-height: 1.5; z-index: 400; pointer-events: none;
-  box-shadow: 0 8px 28px rgba(0,0,0,.6);
-}
-.region-tip .rt-name { font-weight: 600; font-size: 12px; color: var(--t1); margin-bottom: 3px; }
-.region-tip .rt-loc  { font-size: 10px; color: var(--t3); margin-bottom: 5px; font-family: var(--mono); letter-spacing:.03em; }
-.region-tip .rt-fns  { margin-bottom: 6px; display: flex; flex-direction: column; gap: 2px; }
-.region-tip .rt-fn-item::before { content: '›'; margin-right: 5px; color: var(--ac); }
-.region-tip .rt-fn-item { color: var(--t2); }
-.region-tip .rt-high { font-size: 10px; border-top: 1px solid var(--b1); padding-top: 5px; margin-top: 2px; color: var(--t3); }
-.region-tip .rt-high strong { color: var(--green); }
-.rst-cell.rst-name:hover .region-tip { display: block; }
-
-/* ── Brain insight panel ─────────────────────────────────────── */
-.insight-panel {
-  margin: 0 12px 12px; padding: 12px;
-  background: var(--s2); border: 1px solid var(--b1);
-  border-radius: var(--r6); display: none; flex-direction: column; gap: 10px;
-}
-.insight-panel.visible { display: flex; }
-.insight-hdr {
-  font-size: 9px; font-weight: 700; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--t3);
-  display: flex; align-items: center; gap: 8px;
-}
-.insight-hdr::after { content: ''; flex: 1; height: 1px; background: var(--b1); }
-.insight-summary {
-  font-size: 12px; color: var(--t2); line-height: 1.6;
-  padding: 8px 10px; background: rgba(56,139,253,.06);
-  border-left: 2px solid var(--ac); border-radius: 0 4px 4px 0;
-}
-.insight-cards { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto; }
-.icard {
-  background: var(--s3); border: 1px solid var(--b0);
-  border-radius: var(--r3); overflow: hidden;
-}
-.icard-head {
-  display: flex; align-items: center; gap: 7px;
-  padding: 7px 10px; border-bottom: 1px solid var(--b0);
-}
-.icard-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.icard-name { font-weight: 600; font-size: 12px; color: var(--t1); flex: 1; }
-.icard-rel  { font-family: var(--mono); font-size: 11px; }
-.icard-lvl  { font-size: 9px; font-weight: 700; letter-spacing: .09em;
-  text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
-.icard-lvl.high   { background: rgba(63,185,80,.15); color: var(--green); }
-.icard-lvl.mid    { background: rgba(56,139,253,.12); color: var(--ac); }
-.icard-lvl.low    { background: rgba(139,148,158,.1); color: var(--t3); }
-.icard-lvl.supp   { background: rgba(248,81,73,.1);   color: var(--orange); }
-.icard-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
-.icard-anatomy {
-  font-family: var(--mono); font-size: 9.5px; color: var(--t3);
-  display: flex; flex-wrap: wrap; gap: 4px;
-}
-.icard-atom { padding: 1px 5px; background: var(--b0); border-radius: 3px; }
-.icard-explain { font-size: 11.5px; color: var(--t2); line-height: 1.6; }
-.icard-subs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
-.icard-sub {
-  font-size: 10px; padding: 2px 7px;
-  background: var(--s4); border: 1px solid var(--b1);
-  border-radius: 10px; color: var(--t3);
-}
-
-/* ── Disabled modality tabs ──────────────────────────────────── */
-.mod-tab.disabled {
-  opacity: 0.4; cursor: not-allowed; position: relative;
-}
-.mod-tab.disabled:hover::after {
-  content: attr(data-tip);
-  position: absolute; bottom: calc(100% + 6px); left: 50%;
-  transform: translateX(-50%);
-  width: 200px; padding: 6px 8px;
-  background: var(--s4); border: 1px solid var(--b2);
-  border-radius: var(--r3); font-size: 10px; color: var(--t2);
-  line-height: 1.4; z-index: 300; pointer-events: none;
-  white-space: normal; text-align: center;
-}
-
-/* ── Metric value colouring ──────────────────────────────────── */
-.rel-act-pos { color: var(--green); }
-.rel-act-neg { color: var(--orange); }
-
-/* ── Info modal ──────────────────────────────────────────────── */
+/* ── INFO MODAL ──────────────────────────────────────────────── */
 .info-modal-backdrop {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,.65); z-index: 600;
   align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
 }
 .info-modal-backdrop.open { display: flex; }
 .info-modal {
-  width: 580px; max-height: 80vh;
-  background: var(--s2); border: 1px solid var(--b1);
-  border-radius: 10px; overflow: hidden;
+  width: 560px; max-height: 82vh;
+  background: rgba(8, 11, 22, 0.98);
+  border: 1px solid var(--p-border);
+  border-radius: 16px; overflow: hidden;
   display: flex; flex-direction: column;
-  box-shadow: 0 24px 64px rgba(0,0,0,.8);
+  box-shadow: 0 32px 80px rgba(0,0,0,.85);
 }
 .info-modal-head {
-  padding: 14px 18px; background: var(--s3);
-  border-bottom: 1px solid var(--b0);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--p-border);
   display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,0.02);
 }
-.info-modal-title { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--t1); }
+.info-modal-title {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--t1);
+}
 .info-modal-close {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: transparent; border: 1px solid var(--b2);
-  cursor: pointer; color: var(--t3); font-size: 10px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: transparent; border: 1px solid var(--p-border);
+  cursor: pointer; color: var(--t3); font-size: 11px;
   display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
 }
-.info-modal-close:hover { background: rgba(248,81,73,.15); color: var(--red); border-color: var(--red); }
-.info-modal-body { overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 18px; }
+.info-modal-close:hover { background: rgba(245,80,80,.15); color: var(--red); border-color: var(--red); }
+.info-modal-body { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 .info-section-title {
-  font-size: 10px; font-weight: 600; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--t3); margin-bottom: 8px;
+  font-family: var(--mono); font-size: 9px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--t3); margin-bottom: 10px;
 }
-.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
-.info-row { display: flex; flex-direction: column; gap: 2px; }
-.info-label { font-size: 10px; color: var(--t3); }
-.info-val { font-family: var(--mono); font-size: 12px; color: var(--t1); }
+.info-grid { display: flex; flex-direction: column; gap: 2px; }
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 10px; border-radius: var(--r4);
+  background: var(--surface);
+}
+.info-label { font-size: 11px; color: var(--t3); }
+.info-val { font-family: var(--mono); font-size: 11px; color: var(--t1); }
 .info-encoder-row {
-  display: flex; align-items: baseline; gap: 8px;
-  padding: 6px 0; border-bottom: 1px solid var(--b0);
-  font-size: 12px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px; border-radius: var(--r4);
+  background: var(--surface); margin-bottom: 2px;
 }
-.info-encoder-row:last-child { border-bottom: none; }
 .info-encoder-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.info-encoder-name { font-weight: 500; color: var(--t1); flex-shrink: 0; width: 44px; }
-.info-encoder-model { font-family: var(--mono); font-size: 11px; color: var(--ac); }
-.info-encoder-dims  { font-family: var(--mono); font-size: 10px; color: var(--t3); margin-left: auto; }
-.info-demo-note {
-  padding: 10px 12px; background: rgba(210,153,34,.08);
-  border: 1px solid rgba(210,153,34,.25); border-radius: var(--r6);
-  font-size: 11px; color: var(--yellow); line-height: 1.6;
-}
-.info-metrics-table { display: flex; flex-direction: column; gap: 6px; }
-.info-metric-row { display: grid; grid-template-columns: 90px 1fr; gap: 8px; font-size: 11px; }
-.info-metric-name { font-family: var(--mono); color: var(--t1); }
-.info-metric-desc { color: var(--t2); line-height: 1.5; }
-.info-datasets { display: flex; flex-wrap: wrap; gap: 6px; }
+.info-encoder-name { font-size: 11px; font-weight: 500; color: var(--t1); width: 44px; }
+.info-encoder-model { font-size: 11px; color: var(--t2); flex: 1; }
+.info-encoder-dims { font-family: var(--mono); font-size: 10px; color: var(--t3); }
+.info-datasets { display: flex; flex-wrap: wrap; gap: 5px; }
 .info-dataset-pill {
-  padding: 2px 8px; background: var(--s3); border: 1px solid var(--b1);
-  border-radius: 99px; font-family: var(--mono); font-size: 10px; color: var(--t2);
+  font-family: var(--mono); font-size: 10px; color: var(--t2);
+  background: var(--surface); border: 1px solid var(--p-border);
+  padding: 3px 9px; border-radius: 20px;
 }
+.info-metrics-table { display: flex; flex-direction: column; gap: 2px; }
+.info-metric-row {
+  display: flex; gap: 12px; padding: 7px 10px;
+  border-radius: var(--r4); background: var(--surface);
+}
+.info-metric-name { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--t1); min-width: 50px; }
+.info-metric-desc { font-size: 11px; color: var(--t3); line-height: 1.55; }
+.info-demo-note {
+  font-size: 11px; color: var(--t2); line-height: 1.6;
+  background: rgba(245,148,64,.07); border: 1px solid rgba(245,148,64,.18);
+  border-radius: var(--r8); padding: 12px 14px;
+}
+.info-demo-note strong { color: var(--orange); }
+
+/* ── DISABLED MOD TAB ────────────────────────────────────────── */
+.mod-tab.disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Relative activation labels ──────────────────────────────── */
+.rel-act-pos { color: var(--green); }
+.rel-act-neg { color: var(--orange); }
 </style>
 </head>
 <body>
 
-<!-- TITLEBAR -->
-<div class="titlebar">
+<!-- TOP BAR -->
+<header class="topbar">
   <div class="tb-brand">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <defs><linearGradient id="mg" x1="2" y1="14" x2="26" y2="14"><stop offset="0%" stop-color="#388BFD"/><stop offset="100%" stop-color="#7B61FF"/></linearGradient></defs>
-      <ellipse cx="14" cy="14" rx="11" ry="7" fill="none" stroke="url(#mg)" stroke-width="1.5"/>
-      <ellipse cx="14" cy="14" rx="7" ry="11" fill="none" stroke="url(#mg)" stroke-width="1.5" opacity=".5"/>
-      <circle cx="14" cy="14" r="2.5" fill="url(#mg)"/>
-    </svg>
     <span class="tb-logo">TRIBE</span>
-    <span class="tb-ver">v2.1.0-beta</span>
+    <span class="tb-badge">v2</span>
   </div>
-  <div class="tb-sep"></div>
-  <span class="tb-title">Neural Prediction Workstation · Meta AI Research</span>
-  <div class="tb-session">
-    <span>session: <span id="sessionName">untitled-001</span></span>
-    <span>space: <span>MNI152NLin2009cAsym</span></span>
-    <span>TR: <span>1.49 s</span></span>
+  <div class="tb-div"></div>
+  <span class="tb-session">session: <span id="sessionName">untitled-001</span></span>
+
+  <div class="tb-menus">
+    <div class="menu-wrap" id="menu-file">
+      <button class="tb-menu-btn" onclick="toggleMenu('file')">File</button>
+      <div class="menu-dropdown">
+        <div class="md-item" onclick="newSession();closeMenus()">New Session <span class="md-kbd">⌘N</span></div>
+        <div class="md-sep"></div>
+        <div class="md-item" onclick="exportJSON();closeMenus()">Export JSON</div>
+        <div class="md-item" onclick="exportCSV();closeMenus()">Export CSV</div>
+      </div>
+    </div>
+    <div class="menu-wrap" id="menu-edit">
+      <button class="tb-menu-btn" onclick="toggleMenu('edit')">Edit</button>
+      <div class="menu-dropdown">
+        <div class="md-item" onclick="newSession();closeMenus()">Reset Session</div>
+        <div class="md-item" onclick="clearAllInputs();closeMenus()">Clear Stimulus</div>
+        <div class="md-sep"></div>
+        <div class="md-item" onclick="selectAllROI();closeMenus()">Select All ROI</div>
+        <div class="md-item" onclick="clearAllROI();closeMenus()">Clear All ROI</div>
+      </div>
+    </div>
+    <div class="menu-wrap" id="menu-view">
+      <button class="tb-menu-btn" onclick="toggleMenu('view')">View</button>
+      <div class="menu-dropdown">
+        <div class="md-item" onclick="setCamView('lateral');closeMenus()">Lateral</div>
+        <div class="md-item" onclick="setCamView('medial');closeMenus()">Medial</div>
+        <div class="md-item" onclick="setCamView('dorsal');closeMenus()">Dorsal</div>
+        <div class="md-sep"></div>
+        <div class="md-item" onclick="setHem('left');closeMenus()">Left Hemisphere</div>
+        <div class="md-item" onclick="setHem('right');closeMenus()">Right Hemisphere</div>
+        <div class="md-item" onclick="setHem('both');closeMenus()">Both Hemispheres</div>
+      </div>
+    </div>
+    <div class="menu-wrap" id="menu-analysis">
+      <button class="tb-menu-btn" onclick="toggleMenu('analysis')">Analysis</button>
+      <div class="menu-dropdown">
+        <div class="md-item" onclick="runPrediction();closeMenus()">Run Prediction <span class="md-kbd">⌘↵</span></div>
+        <div class="md-sep"></div>
+        <div class="md-item disabled">Compare Sessions…</div>
+        <div class="md-item disabled">Batch Predict…</div>
+      </div>
+    </div>
+    <div class="menu-wrap" id="menu-roi">
+      <button class="tb-menu-btn" onclick="toggleMenu('roi')">ROI</button>
+      <div class="menu-dropdown">
+        <div class="md-item" onclick="selectAllROI();closeMenus()">Select All</div>
+        <div class="md-item" onclick="clearAllROI();closeMenus()">Clear All</div>
+        <div class="md-sep"></div>
+        <div class="md-item" onclick="applyPreset('visual');closeMenus()">Visual Preset</div>
+        <div class="md-item" onclick="applyPreset('language');closeMenus()">Language Preset</div>
+        <div class="md-item" onclick="applyPreset('auditory');closeMenus()">Auditory Preset</div>
+      </div>
+    </div>
+    <div class="menu-wrap" id="menu-export">
+      <button class="tb-menu-btn" onclick="toggleMenu('export')">Export</button>
+      <div class="menu-dropdown">
+        <div class="md-item" onclick="exportJSON();closeMenus()">Export JSON</div>
+        <div class="md-item" onclick="exportCSV();closeMenus()">Export CSV</div>
+        <div class="md-sep"></div>
+        <div class="md-item disabled">Export NIfTI…</div>
+      </div>
+    </div>
+    <div class="menu-wrap" id="menu-help">
+      <button class="tb-menu-btn" onclick="toggleMenu('help')">Help</button>
+      <div class="menu-dropdown">
+        <div class="md-item" onclick="window.open('https://ai.meta.com/blog/tribe-v2-brain-predictive-foundation-model/');closeMenus()">TRIBE v2 Blog Post</div>
+        <div class="md-item" onclick="window.open('https://huggingface.co/facebook/tribev2');closeMenus()">HuggingFace Repo</div>
+        <div class="md-sep"></div>
+        <div class="md-item" onclick="showAbout();closeMenus()">About</div>
+      </div>
+    </div>
   </div>
+
+  <div class="tb-presets">
+    <button class="preset-chip tpl-btn" onclick="applyPreset('visual')">VISUAL</button>
+    <button class="preset-chip tpl-btn" onclick="applyPreset('language')">LANGUAGE</button>
+    <button class="preset-chip tpl-btn" onclick="applyPreset('auditory')">AUDITORY</button>
+    <button class="preset-chip tpl-btn" onclick="applyPreset('multimodal')">MULTI</button>
+    <button class="preset-chip tpl-btn" onclick="applyPreset('zeroshot')">ZERO-SHOT</button>
+  </div>
+
   <div class="tb-right">
-    <button class="tb-btn" onclick="newSession()">New Session</button>
-    <button class="tb-btn primary" onclick="copyQuery()">Export Query</button>
+    <button class="tb-icon-btn" onclick="showAbout()" title="Model info">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zm0 4.5a.75.75 0 010 1.5A.75.75 0 018 6zm0 2.25a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0V9A.75.75 0 018 8.25z" fill="currentColor"/></svg>
+    </button>
+    <button class="run-btn" onclick="runPrediction()">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+        <path d="M2.5 1.5L9 5.5L2.5 9.5V1.5Z" fill="white"/>
+      </svg>
+      Run Prediction
+    </button>
   </div>
-</div>
+</header>
 
-<!-- MENUBAR -->
-<div class="menubar">
-  <div class="menu-wrap" id="menu-file">
-    <span class="menu-item" onclick="toggleMenu('file')">File</span>
-    <div class="menu-dropdown">
-      <div class="md-item" onclick="newSession();closeMenus()">New Session <span class="md-kbd">⌘N</span></div>
-      <div class="md-sep"></div>
-      <div class="md-item" onclick="exportJSON();closeMenus()">Export as JSON</div>
-      <div class="md-item" onclick="exportCSV();closeMenus()">Export as CSV</div>
-    </div>
-  </div>
-  <div class="menu-wrap" id="menu-edit">
-    <span class="menu-item" onclick="toggleMenu('edit')">Edit</span>
-    <div class="menu-dropdown">
-      <div class="md-item" onclick="newSession();closeMenus()">Reset Session</div>
-      <div class="md-item" onclick="clearAllInputs();closeMenus()">Clear Stimulus</div>
-      <div class="md-sep"></div>
-      <div class="md-item" onclick="selectAllROI();closeMenus()">Select All ROI</div>
-      <div class="md-item" onclick="clearAllROI();closeMenus()">Clear All ROI</div>
-    </div>
-  </div>
-  <div class="menu-wrap" id="menu-view">
-    <span class="menu-item" onclick="toggleMenu('view')">View</span>
-    <div class="menu-dropdown">
-      <div class="md-item" onclick="setCamView('lateral');closeMenus()">Lateral View</div>
-      <div class="md-item" onclick="setCamView('medial');closeMenus()">Medial View</div>
-      <div class="md-item" onclick="setCamView('dorsal');closeMenus()">Dorsal View</div>
-      <div class="md-sep"></div>
-      <div class="md-item" onclick="setHem('left');closeMenus()">Left Hemisphere</div>
-      <div class="md-item" onclick="setHem('right');closeMenus()">Right Hemisphere</div>
-      <div class="md-item" onclick="setHem('both');closeMenus()">Both Hemispheres</div>
-    </div>
-  </div>
-  <div class="menu-wrap" id="menu-analysis">
-    <span class="menu-item" onclick="toggleMenu('analysis')">Analysis</span>
-    <div class="menu-dropdown">
-      <div class="md-item" onclick="runPrediction();closeMenus()">Run Prediction <span class="md-kbd">⌘↵</span></div>
-      <div class="md-sep"></div>
-      <div class="md-item disabled">Compare Sessions…</div>
-      <div class="md-item disabled">Batch Predict…</div>
-    </div>
-  </div>
-  <div class="menu-wrap" id="menu-roi">
-    <span class="menu-item" onclick="toggleMenu('roi')">ROI</span>
-    <div class="menu-dropdown">
-      <div class="md-item" onclick="selectAllROI();closeMenus()">Select All</div>
-      <div class="md-item" onclick="clearAllROI();closeMenus()">Clear All</div>
-      <div class="md-sep"></div>
-      <div class="md-item" onclick="applyPreset('visual');closeMenus()">Visual Preset</div>
-      <div class="md-item" onclick="applyPreset('language');closeMenus()">Language Preset</div>
-      <div class="md-item" onclick="applyPreset('auditory');closeMenus()">Auditory Preset</div>
-    </div>
-  </div>
-  <div class="menu-wrap" id="menu-export">
-    <span class="menu-item" onclick="toggleMenu('export')">Export</span>
-    <div class="menu-dropdown">
-      <div class="md-item" onclick="exportJSON();closeMenus()">Export JSON</div>
-      <div class="md-item" onclick="exportCSV();closeMenus()">Export CSV</div>
-      <div class="md-item" onclick="copyQuery();closeMenus()">Copy API Call <span class="md-kbd">⌘C</span></div>
-      <div class="md-sep"></div>
-      <div class="md-item disabled">Export NIfTI…</div>
-    </div>
-  </div>
-  <div class="menu-sep"></div>
-  <div class="menu-wrap" id="menu-help">
-    <span class="menu-item" onclick="toggleMenu('help')">Help</span>
-    <div class="menu-dropdown">
-      <div class="md-item" onclick="window.open('https://ai.meta.com/blog/tribe-v2-brain-predictive-foundation-model/');closeMenus()">TRIBE v2 Blog Post</div>
-      <div class="md-item" onclick="window.open('https://huggingface.co/facebook/tribev2');closeMenus()">HuggingFace Repo</div>
-      <div class="md-sep"></div>
-      <div class="md-item" onclick="showAbout();closeMenus()">About</div>
-    </div>
-  </div>
-  <div class="paradigm-templates">
-    <span class="tpl-label">paradigm:</span>
-    <button class="tpl-btn" onclick="applyPreset('visual')">VISUAL</button>
-    <button class="tpl-btn" onclick="applyPreset('language')">LANGUAGE</button>
-    <button class="tpl-btn" onclick="applyPreset('auditory')">AUDITORY</button>
-    <button class="tpl-btn" onclick="applyPreset('multimodal')">MULTI-MODAL</button>
-    <button class="tpl-btn" onclick="applyPreset('zeroshot')">ZERO-SHOT</button>
-  </div>
-</div>
+<!-- APP LAYOUT -->
+<div class="app-layout">
 
-<div class="body-wrap">
-  <div class="workspace">
+  <!-- LEFT PANEL: Controls -->
+  <aside class="side-panel">
 
-    <!-- PARAMS PANEL -->
-    <div class="params">
-      <div class="panel-header">
-        <span class="panel-title">Experiment Parameters</span>
-        <span class="panel-badge" id="roiBadge">1 / 6 ROI</span>
+    <!-- ROI -->
+    <div class="p-sect">
+      <div class="sect-label">
+        Regions of Interest
+        <span class="sect-badge" id="roiBadge">1 / 6</span>
       </div>
+      <div class="roi-list" id="roiGrid">
 
-      <!-- ROI Selection -->
-      <div class="param-section">
-        <div class="sec-label">
-          Regions of Interest (ROI)
-          <span class="sec-label-count" id="roiCount">1 active</span>
-        </div>
-        <div class="roi-grid" id="roiGrid">
-          <div class="roi-row on" data-r="visual"     onclick="toggleR('visual')">
-            <div class="roi-dot" style="background:var(--r-visual)"></div>
+        <div class="roi-row on" data-r="visual" onclick="toggleR('visual')">
+          <div class="roi-dot" style="background:var(--r-visual);color:var(--r-visual)"></div>
+          <div class="roi-info">
             <span class="roi-name">Visual Cortex</span>
-            <span class="roi-abbr">V1–V4</span>
-            <div class="roi-check">
-              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
-            </div>
+            <span class="roi-abbr">V1–V4 · Occipital</span>
           </div>
-          <div class="roi-row" data-r="auditory" onclick="toggleR('auditory')">
-            <div class="roi-dot" style="background:var(--r-auditory)"></div>
+          <div class="roi-check">
+            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="region-tip">
+            <div class="rt-name">Visual Cortex</div>
+            <div class="rt-loc">Occipital lobe · BA 17, 18, 19 · V1–V4/MT</div>
+            <div class="rt-fns">
+              <span class="rt-fn-item">V1 detects edges, orientations, spatial frequency</span>
+              <span class="rt-fn-item">V4 encodes color, shape, object form</span>
+              <span class="rt-fn-item">MT/V5 processes motion and optic flow</span>
+            </div>
+            <div class="rt-high"><strong>High activation:</strong> visual input, reading, vivid imagery</div>
+          </div>
+        </div>
+
+        <div class="roi-row" data-r="auditory" onclick="toggleR('auditory')">
+          <div class="roi-dot" style="background:var(--r-auditory);color:var(--r-auditory)"></div>
+          <div class="roi-info">
             <span class="roi-name">Auditory Cortex</span>
-            <span class="roi-abbr">STG</span>
-            <div class="roi-check">
-              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
-            </div>
+            <span class="roi-abbr">STG · BA 41, 42</span>
           </div>
-          <div class="roi-row" data-r="language" onclick="toggleR('language')">
-            <div class="roi-dot" style="background:var(--r-language)"></div>
-            <span class="roi-name">Language Areas</span>
-            <span class="roi-abbr">BA44/22</span>
-            <div class="roi-check">
-              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
-            </div>
+          <div class="roi-check">
+            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <div class="roi-row" data-r="prefrontal" onclick="toggleR('prefrontal')">
-            <div class="roi-dot" style="background:var(--r-prefrontal)"></div>
+          <div class="region-tip">
+            <div class="rt-name">Auditory Cortex</div>
+            <div class="rt-loc">Superior temporal gyrus · BA 41, 42, 22</div>
+            <div class="rt-fns">
+              <span class="rt-fn-item">A1 (Heschl's) maps tones tonotopically</span>
+              <span class="rt-fn-item">Belt parses complex sounds and timbre</span>
+              <span class="rt-fn-item">Posterior STG → Wernicke's area</span>
+            </div>
+            <div class="rt-high"><strong>High activation:</strong> speech, music, environmental sounds</div>
+          </div>
+        </div>
+
+        <div class="roi-row" data-r="language" onclick="toggleR('language')">
+          <div class="roi-dot" style="background:var(--r-language);color:var(--r-language)"></div>
+          <div class="roi-info">
+            <span class="roi-name">Language Network</span>
+            <span class="roi-abbr">Broca + Wernicke</span>
+          </div>
+          <div class="roi-check">
+            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="region-tip">
+            <div class="rt-name">Language Network</div>
+            <div class="rt-loc">Left frontal + temporal · BA 44, 45, 22, 39</div>
+            <div class="rt-fns">
+              <span class="rt-fn-item">Broca's (BA44/45): syntax & production</span>
+              <span class="rt-fn-item">Wernicke's (BA22): speech comprehension</span>
+              <span class="rt-fn-item">Angular gyrus (BA39): reading & semantics</span>
+            </div>
+            <div class="rt-high"><strong>High activation:</strong> reading, speech, semantic tasks</div>
+          </div>
+        </div>
+
+        <div class="roi-row" data-r="prefrontal" onclick="toggleR('prefrontal')">
+          <div class="roi-dot" style="background:var(--r-prefrontal);color:var(--r-prefrontal)"></div>
+          <div class="roi-info">
             <span class="roi-name">Prefrontal Cortex</span>
-            <span class="roi-abbr">PFC</span>
-            <div class="roi-check">
-              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
-            </div>
+            <span class="roi-abbr">dlPFC · vmPFC</span>
           </div>
-          <div class="roi-row" data-r="motor" onclick="toggleR('motor')">
-            <div class="roi-dot" style="background:var(--r-motor)"></div>
+          <div class="roi-check">
+            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="region-tip">
+            <div class="rt-name">Prefrontal Cortex</div>
+            <div class="rt-loc">Frontal lobe · BA 9, 10, 11, 46, 47</div>
+            <div class="rt-fns">
+              <span class="rt-fn-item">dlPFC (BA9/46): working memory, control</span>
+              <span class="rt-fn-item">vmPFC (BA11): reward, emotional valuation</span>
+              <span class="rt-fn-item">ACC: conflict monitoring, attention</span>
+            </div>
+            <div class="rt-high"><strong>High activation:</strong> complex narratives, inference, attention</div>
+          </div>
+        </div>
+
+        <div class="roi-row" data-r="motor" onclick="toggleR('motor')">
+          <div class="roi-dot" style="background:var(--r-motor);color:var(--r-motor)"></div>
+          <div class="roi-info">
             <span class="roi-name">Motor Cortex</span>
-            <span class="roi-abbr">M1/PMC</span>
-            <div class="roi-check">
-              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
-            </div>
+            <span class="roi-abbr">M1 · PMC · BA 4, 6</span>
           </div>
-          <div class="roi-row" data-r="parietal" onclick="toggleR('parietal')">
-            <div class="roi-dot" style="background:var(--r-parietal)"></div>
+          <div class="roi-check">
+            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="region-tip">
+            <div class="rt-name">Motor Cortex</div>
+            <div class="rt-loc">Precentral gyrus · BA 4, 6 · M1 + premotor</div>
+            <div class="rt-fns">
+              <span class="rt-fn-item">M1 (BA4): executes voluntary movement</span>
+              <span class="rt-fn-item">Premotor (BA6): plans movements</span>
+              <span class="rt-fn-item">Mirror neurons: action observation</span>
+            </div>
+            <div class="rt-high"><strong>Surprising:</strong> reading action verbs ("kick", "run")</div>
+          </div>
+        </div>
+
+        <div class="roi-row" data-r="parietal" onclick="toggleR('parietal')">
+          <div class="roi-dot" style="background:var(--r-parietal);color:var(--r-parietal)"></div>
+          <div class="roi-info">
             <span class="roi-name">Parietal Cortex</span>
-            <span class="roi-abbr">IPS/SPL</span>
-            <div class="roi-check">
-              <svg class="roi-check-mark" viewBox="0 0 6 6"><path d="M1 3 L2.5 4.5 L5 1.5" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+            <span class="roi-abbr">IPS · SPL · BA 5, 7</span>
+          </div>
+          <div class="roi-check">
+            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="region-tip">
+            <div class="rt-name">Parietal Cortex</div>
+            <div class="rt-loc">Parietal lobe · BA 5, 7, 39, 40</div>
+            <div class="rt-fns">
+              <span class="rt-fn-item">IPS: spatial attention & numerosity</span>
+              <span class="rt-fn-item">SPL: proprioception, body-in-space</span>
+              <span class="rt-fn-item">Angular gyrus: reading, semantics</span>
             </div>
+            <div class="rt-high"><strong>High activation:</strong> spatial tasks, sentence comprehension</div>
           </div>
         </div>
+
       </div>
-
-      <!-- Experimental Paradigm -->
-      <div class="param-section">
-        <div class="sec-label">Experimental Paradigm</div>
-        <div class="task-grid">
-          <button class="task-chip on" data-task="passive"       onclick="selTask('passive')">Passive Viewing</button>
-          <button class="task-chip"    data-task="attention"     onclick="selTask('attention')">Sustained Attention</button>
-          <button class="task-chip"    data-task="memory"        onclick="selTask('memory')">Working Memory</button>
-          <button class="task-chip"    data-task="comprehension" onclick="selTask('comprehension')">Semantic Comprehension</button>
-        </div>
-      </div>
-
-      <!-- Stimulus Subtype -->
-      <div class="param-section">
-        <div class="sec-label" id="subtypeLabel">Stimulus Category</div>
-        <div class="sel-wrap">
-          <select id="subtypeSelect" onchange="updateAll()"></select>
-        </div>
-      </div>
-
-      <!-- Model Configuration -->
-      <div class="param-section">
-        <div class="sec-label">Model Configuration</div>
-
-        <div class="param-row" style="flex-direction:column; align-items:stretch; gap:4px; margin-bottom:10px">
-          <div style="display:flex; justify-content:space-between; align-items:center">
-            <span class="param-label">Spatial Resolution</span>
-            <span class="param-value" id="resVal">70×</span>
-          </div>
-          <input class="slider-full" type="range" id="resSlider" min="1" max="70" value="70"
-                 oninput="document.getElementById('resVal').textContent=this.value+'×';ST.resolution=+this.value;updateAll()">
-        </div>
-
-        <div class="param-row" style="flex-direction:column; align-items:stretch; gap:4px; margin-bottom:10px">
-          <div style="display:flex; justify-content:space-between; align-items:center">
-            <span class="param-label">Prediction Confidence (min)</span>
-            <span class="param-value" id="confVal">0.85</span>
-          </div>
-          <input class="slider-full" type="range" id="confSlider" min="50" max="99" value="85"
-                 oninput="document.getElementById('confVal').textContent=(this.value/100).toFixed(2);updateAll()">
-        </div>
-
-        <div class="param-row" style="flex-direction:column; align-items:stretch; gap:4px">
-          <div style="display:flex; justify-content:space-between; align-items:center">
-            <span class="param-label">Sample Size (N)</span>
-            <span class="param-value" id="subjectVal">12</span>
-          </div>
-          <input class="slider-full" type="range" id="subjectSlider" min="1" max="100" value="12"
-                 oninput="document.getElementById('subjectVal').textContent=this.value;updateAll()">
-        </div>
-      </div>
-
-      <!-- Prediction Flags -->
-      <div class="param-section">
-        <div class="sec-label">Prediction Flags</div>
-        <div class="tog-row">
-          <div>
-            <div class="tog-label">Zero-Shot Generalization</div>
-            <span class="tog-tag">Predict for unseen subjects</span>
-          </div>
-          <button class="tog" id="togZS" onclick="flipTog('zeroshot')"></button>
-        </div>
-        <div class="tog-row">
-          <div>
-            <div class="tog-label">Cross-Lingual Transfer</div>
-            <span class="tog-tag">Generalize across languages</span>
-          </div>
-          <button class="tog" id="togCL" onclick="flipTog('crosslang')"></button>
-        </div>
+      <div style="margin-top:6px; font-family:var(--mono); font-size:9px; color:var(--t3); text-align:right">
+        <span id="roiCount">1 active</span>
       </div>
     </div>
 
-    <!-- STIMULUS PARADIGM PANEL -->
-    <div class="stimulus-panel">
-      <div class="panel-header">
-        <span class="panel-title">Stimulus Paradigm</span>
-        <span class="panel-badge" id="stimBadge">TEXT</span>
-      </div>
-      <div class="demo-banner" id="demoBanner" style="display:none">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm8-3a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 018 5zm0 7a1 1 0 110-2 1 1 0 010 2z" fill="currentColor"/></svg>
-        <span id="demoBannerText"><strong>Demo mode</strong> — hash-based text features active. Install <a href="https://huggingface.co/meta-llama/Llama-3.2-3B" target="_blank">LLaMA-3.2-3B</a> for semantic accuracy.</span>
-      </div>
-
-      <div class="modality-tabs">
-        <button class="mod-tab on" data-stim="text"  onclick="selStim('text')">Text</button>
-        <button class="mod-tab disabled" data-stim="image" data-tip="Requires V-JEPA2 — not yet available" tabindex="-1">Image</button>
-        <button class="mod-tab disabled" data-stim="video" data-tip="Requires V-JEPA2 temporal — not yet available" tabindex="-1">Video</button>
-        <button class="mod-tab" data-stim="audio" onclick="selStim('audio')">Audio</button>
-      </div>
-
-      <!-- TEXT -->
-      <div class="input-panel on" id="panel-text">
-        <div class="input-meta">
-          <span class="meta-item">modality: <span>natural language</span></span>
-          <div class="meta-sep"></div>
-          <span class="meta-item">encoding: <span>LLaMA-3.2-3B</span></span>
-          <div class="meta-sep"></div>
-          <span class="meta-item" id="charCount">0 chars</span>
-        </div>
-        <textarea id="textInput"
-          placeholder="Enter stimulus text — prose, poetry, isolated sentences, or any natural language content. TRIBE v2 will predict the corresponding fMRI BOLD response across selected cortical regions."
-          oninput="debouncedUpdate()"></textarea>
-        <div class="input-footer">
-          <span>UTF-8 · any language · max token context: 4096</span>
-          <span id="tokenEst">~0 tokens</span>
-        </div>
-      </div>
-
-      <!-- IMAGE -->
-      <div class="input-panel" id="panel-image">
-        <div class="input-meta">
-          <span class="meta-item">encoder: <span>V-JEPA2</span></span>
-          <div class="meta-sep"></div>
-          <span class="meta-item">accepted: <span>JPG · PNG · WebP · GIF</span></span>
-        </div>
-        <div class="dropzone" id="dz-image" onclick="document.getElementById('imgFile').click()"
-             ondragover="dzDrag(event,'dz-image')" ondragleave="dzLeave('dz-image')" ondrop="dzDrop(event,'image')">
-          <img id="imgPreview" class="img-preview" alt="">
-          <div id="dz-image-inner">
-            <div class="drop-icon">
-              <svg viewBox="0 0 32 32" fill="none" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round">
-                <rect x="4" y="8" width="24" height="16" rx="2"/>
-                <circle cx="12" cy="14" r="2.5"/>
-                <path d="M4 22 L10 16 L15 21 L20 15 L28 22"/>
-              </svg>
-            </div>
-            <div class="drop-title">Drop image file or click to browse</div>
-            <div class="drop-sub">Drag from filesystem · supports all common formats<br>Max resolution: unlimited</div>
-            <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('imgFile').click()">Select File</button>
-          </div>
-          <div class="file-badge" id="img-badge"></div>
-          <button class="clear-btn" id="img-clear" onclick="event.stopPropagation();clearInput('image')" title="Remove">✕</button>
-          <input type="file" id="imgFile" accept="image/*" onchange="handleFile(this,'image')">
-        </div>
-      </div>
-
-      <!-- VIDEO -->
-      <div class="input-panel" id="panel-video">
-        <div class="input-meta">
-          <span class="meta-item">encoder: <span>V-JEPA2 (temporal)</span></span>
-          <div class="meta-sep"></div>
-          <span class="meta-item">accepted: <span>MP4 · WebM · MOV</span></span>
-        </div>
-        <div class="url-bar">
-          <input class="url-input" id="videoUrl" type="text" placeholder="Direct video URL (.mp4 / .webm / .mov)" oninput="updateAll()">
-          <button class="url-go" onclick="loadVideoUrl()">Load URL</button>
-        </div>
-        <div class="dropzone" id="dz-video" onclick="document.getElementById('videoFile').click()"
-             ondragover="dzDrag(event,'dz-video')" ondragleave="dzLeave('dz-video')" ondrop="dzDrop(event,'video')">
-          <video id="videoPreview" controls></video>
-          <div id="dz-video-inner">
-            <div class="drop-icon">
-              <svg viewBox="0 0 32 32" fill="none" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round">
-                <rect x="2" y="7" width="20" height="18" rx="2"/>
-                <path d="M22 12 L30 8 L30 24 L22 20Z"/>
-              </svg>
-            </div>
-            <div class="drop-title">Drop video file or enter URL above</div>
-            <div class="drop-sub">MP4 · WebM · MOV · AVI</div>
-            <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('videoFile').click()">Select File</button>
-          </div>
-          <div class="file-badge" id="video-badge"></div>
-          <button class="clear-btn" id="video-clear" onclick="event.stopPropagation();clearInput('video')" title="Remove">✕</button>
-          <input type="file" id="videoFile" accept="video/*" onchange="handleFile(this,'video')">
-        </div>
-      </div>
-
-      <!-- AUDIO -->
-      <div class="input-panel" id="panel-audio">
-        <div class="input-meta">
-          <span class="meta-item">encoder: <span>Wav2Vec-BERT 2.0</span></span>
-          <div class="meta-sep"></div>
-          <span class="meta-item">accepted: <span>MP3 · WAV · M4A · FLAC · OGG</span></span>
-        </div>
-        <div class="dropzone" id="dz-audio" onclick="document.getElementById('audioFile').click()"
-             ondragover="dzDrag(event,'dz-audio')" ondragleave="dzLeave('dz-audio')" ondrop="dzDrop(event,'audio')">
-          <div id="dz-audio-inner">
-            <div class="audio-waveform" id="audioWave">
-              <div class="aw-bar"></div><div class="aw-bar"></div><div class="aw-bar"></div>
-              <div class="aw-bar"></div><div class="aw-bar"></div><div class="aw-bar"></div>
-              <div class="aw-bar"></div><div class="aw-bar"></div>
-            </div>
-            <div class="drop-title" style="margin-top:10px">Drop audio file or click to browse</div>
-            <div class="drop-sub">MP3 · WAV · M4A · FLAC · OGG · podcast episodes</div>
-            <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('audioFile').click()">Select File</button>
-          </div>
-          <audio id="audioPreview" controls></audio>
-          <div class="file-badge" id="audio-badge"></div>
-          <button class="clear-btn" id="audio-clear" onclick="event.stopPropagation();clearInput('audio')" title="Remove">✕</button>
-          <input type="file" id="audioFile" accept="audio/*" onchange="handleFile(this,'audio')">
-        </div>
+    <!-- Paradigm -->
+    <div class="p-sect">
+      <div class="sect-label">Paradigm</div>
+      <div class="task-grid">
+        <button class="task-chip on" data-task="passive"       onclick="selTask('passive')">Passive</button>
+        <button class="task-chip"    data-task="attention"     onclick="selTask('attention')">Attention</button>
+        <button class="task-chip"    data-task="memory"        onclick="selTask('memory')">Memory</button>
+        <button class="task-chip"    data-task="comprehension" onclick="selTask('comprehension')">Comprehension</button>
       </div>
     </div>
 
-    <!-- VISUALIZATION PANEL -->
-    <div class="viz-panel">
-      <div class="viz-toolbar">
-        <span class="vt-label">Atlas</span>
-        <button class="vt-btn on" id="vt-lateral" onclick="setCamView('lateral')">Lateral</button>
-        <button class="vt-btn" id="vt-medial" onclick="setCamView('medial')">Medial</button>
-        <button class="vt-btn" id="vt-dorsal" onclick="setCamView('dorsal')">Dorsal</button>
-        <div class="vt-sep"></div>
-        <button class="vt-btn on" id="vt-lhem" onclick="setHem('left')">L Hem</button>
-        <button class="vt-btn" id="vt-rhem" onclick="setHem('right')">R Hem</button>
-        <div class="vt-sep"></div>
-        <button class="vt-btn on" id="vt-roi" onclick="toggleROI()">ROI</button>
-        <button class="vt-btn" id="vt-labels" onclick="toggleLabels()">Labels</button>
-        <div class="vt-coord">MNI: <span id="mniCoord">— — —</span></div>
+    <!-- Stimulus Category -->
+    <div class="p-sect">
+      <div class="sect-label" id="subtypeLabel">Stimulus Category</div>
+      <div class="sel-wrap">
+        <select id="subtypeSelect" onchange="updateAll()"></select>
+      </div>
+    </div>
+
+    <!-- Model Config -->
+    <div class="p-sect">
+      <div class="sect-label">Model Config</div>
+
+      <div class="param-row">
+        <span class="param-label">Subjects (N)</span>
+        <span class="param-value" id="subjectVal">12</span>
+      </div>
+      <div class="slider-wrap" style="margin-bottom:12px">
+        <input class="slider-full" type="range" id="subjectSlider" min="1" max="72" value="12"
+               oninput="document.getElementById('subjectVal').textContent=this.value;updateAll()">
       </div>
 
-      <canvas id="brainCanvas"></canvas>
-      <svg id="labelLines" style="position:absolute;top:30px;left:0;width:100%;height:calc(100% - 30px);pointer-events:none;z-index:1;overflow:visible"></svg>
-      <div id="regionLabels"></div>
-      <div id="brainLoading">
-        <div class="bl-label">Loading brain surface model…</div>
-        <div class="bl-bar"><div class="bl-fill" id="blFill"></div></div>
-        <div class="bl-label" id="blPct" style="color:var(--t3)">0%</div>
+      <div class="param-row">
+        <span class="param-label">Confidence</span>
+        <span class="param-value" id="confVal">0.85</span>
+      </div>
+      <div class="slider-wrap" style="margin-bottom:12px">
+        <input class="slider-full" type="range" id="confSlider" min="50" max="100" value="85"
+               oninput="document.getElementById('confVal').textContent=(this.value/100).toFixed(2);updateAll()">
       </div>
 
-      <div class="space-label">MNI152NLin2009cAsym · 2 mm isotropic</div>
-
-      <!-- Colorbar -->
-      <div class="colorbar">
-        <div class="cb-title">BOLD activation (z-score)</div>
-        <div class="cb-bar"></div>
-        <div class="cb-scale"><span>0</span><span>2</span><span>4</span><span>6+</span></div>
+      <div class="param-row">
+        <span class="param-label">Resolution</span>
+        <span class="param-value" id="resVal">70×</span>
       </div>
+      <div class="slider-wrap">
+        <input class="slider-full" type="range" id="resSlider" min="1" max="70" value="70"
+               oninput="document.getElementById('resVal').textContent=this.value+'×';ST.resolution=+this.value;updateAll()">
+      </div>
+    </div>
 
-      <!-- ROI Stats Table -->
-      <div class="roi-stats-panel" id="roiStatsPanel">
-        <div class="rst-head">
-          <span class="rst-hcell">Region</span>
-          <span class="rst-hcell">Rel. Act.<span class="hdr-tip">Regional z-score vs whole-brain mean. Positive = more active than brain average. Negative = suppressed.</span></span>
-          <span class="rst-hcell">Mean (z)<span class="hdr-tip">Mean predicted BOLD amplitude across vertices in this region, in model z-score units.</span></span>
-          <span class="rst-hcell">σ<span class="hdr-tip">Vertex-level standard deviation — higher values indicate spatially heterogeneous activation within the region.</span></span>
-          <span class="rst-hcell">Status</span>
+    <!-- Toggles -->
+    <div class="p-sect">
+      <div class="sect-label">Advanced</div>
+      <div class="tog-row">
+        <div>
+          <span class="tog-label">Zero-shot</span>
+          <span class="tog-tag">no fine-tuning</span>
         </div>
-        <div class="rst-row on"  data-r="visual"     onclick="toggleR('visual')">    <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-visual)"></div>Visual<div class="region-tip"><div class="rt-name">Visual Cortex</div><div class="rt-loc">Occipital lobe · BA 17, 18, 19 · V1–V4/MT</div><div class="rt-fns"><span class="rt-fn-item">V1 detects edges, orientations, spatial frequency</span><span class="rt-fn-item">V4 encodes color, shape, object form</span><span class="rt-fn-item">MT/V5 processes motion and optic flow</span><span class="rt-fn-item">Ventral stream feeds into object recognition</span></div><div class="rt-high"><strong>High activation:</strong> any visual input, reading, vivid imagery</div></div></span><span class="rst-cell rst-pearson" id="pr-visual">—</span><span class="rst-cell rst-mean" id="mn-visual">—</span><span class="rst-cell rst-std" id="sd-visual">—</span><span class="rst-cell rst-status" id="st-visual">ON</span></div>
-        <div class="rst-row"     data-r="auditory"   onclick="toggleR('auditory')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-auditory)"></div>Auditory<div class="region-tip"><div class="rt-name">Auditory Cortex</div><div class="rt-loc">Superior temporal gyrus · BA 41, 42, 22 · A1 + belt</div><div class="rt-fns"><span class="rt-fn-item">A1 (Heschl's gyrus) maps tones tonotopically</span><span class="rt-fn-item">Auditory belt parses complex sounds, timbre</span><span class="rt-fn-item">Posterior STG → Wernicke's speech comprehension</span><span class="rt-fn-item">Bilateral; right hemisphere dominant for music</span></div><div class="rt-high"><strong>High activation:</strong> speech, music, environmental sounds</div></div></span><span class="rst-cell rst-pearson" id="pr-auditory">—</span><span class="rst-cell rst-mean" id="mn-auditory">—</span><span class="rst-cell rst-std" id="sd-auditory">—</span><span class="rst-cell rst-status" id="st-auditory" style="color:var(--t3)">off</span></div>
-        <div class="rst-row"     data-r="language"   onclick="toggleR('language')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-language)"></div>Language<div class="region-tip"><div class="rt-name">Language Network</div><div class="rt-loc">Left frontal + temporal · BA 44, 45, 22, 39 · Broca + Wernicke</div><div class="rt-fns"><span class="rt-fn-item">Broca's area (BA44/45): syntax, production, subvocal rehearsal</span><span class="rt-fn-item">Wernicke's area (BA22): spoken word comprehension</span><span class="rt-fn-item">Angular gyrus (BA39): reading, semantic integration</span><span class="rt-fn-item">Left-lateralized in ~95% of right-handed people</span></div><div class="rt-high"><strong>High activation:</strong> reading, listening to speech, semantic tasks</div></div></span><span class="rst-cell rst-pearson" id="pr-language">—</span><span class="rst-cell rst-mean" id="mn-language">—</span><span class="rst-cell rst-std" id="sd-language">—</span><span class="rst-cell rst-status" id="st-language" style="color:var(--t3)">off</span></div>
-        <div class="rst-row"     data-r="prefrontal" onclick="toggleR('prefrontal')"><span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-prefrontal)"></div>Prefrontal<div class="region-tip"><div class="rt-name">Prefrontal Cortex</div><div class="rt-loc">Frontal lobe (anterior) · BA 9, 10, 11, 46, 47 · dlPFC + vmPFC</div><div class="rt-fns"><span class="rt-fn-item">dlPFC (BA9/46): working memory, cognitive control</span><span class="rt-fn-item">vmPFC (BA11): reward, emotional valuation</span><span class="rt-fn-item">OFC: integrates sensory and motivational signals</span><span class="rt-fn-item">ACC monitors conflict; drives attention allocation</span></div><div class="rt-high"><strong>High activation:</strong> complex narratives, inference, attention tasks</div></div></span><span class="rst-cell rst-pearson" id="pr-prefrontal">—</span><span class="rst-cell rst-mean" id="mn-prefrontal">—</span><span class="rst-cell rst-std" id="sd-prefrontal">—</span><span class="rst-cell rst-status" id="st-prefrontal" style="color:var(--t3)">off</span></div>
-        <div class="rst-row"     data-r="motor"      onclick="toggleR('motor')">     <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-motor)"></div>Motor<div class="region-tip"><div class="rt-name">Motor Cortex</div><div class="rt-loc">Precentral gyrus · BA 4, 6 · M1 + premotor + SMA</div><div class="rt-fns"><span class="rt-fn-item">M1 (BA4): executes voluntary movements, somatotopic map</span><span class="rt-fn-item">Premotor (BA6): plans and prepares movements</span><span class="rt-fn-item">SMA: sequences multi-step actions, self-initiated movement</span><span class="rt-fn-item">Activates for motor imagery even without movement</span></div><div class="rt-high"><strong>Surprising activation:</strong> reading action verbs ("kick", "run"), imagining motion</div></div></span><span class="rst-cell rst-pearson" id="pr-motor">—</span><span class="rst-cell rst-mean" id="mn-motor">—</span><span class="rst-cell rst-std" id="sd-motor">—</span><span class="rst-cell rst-status" id="st-motor" style="color:var(--t3)">off</span></div>
-        <div class="rst-row"     data-r="parietal"   onclick="toggleR('parietal')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-parietal)"></div>Parietal<div class="region-tip"><div class="rt-name">Parietal Cortex</div><div class="rt-loc">Parietal lobe · BA 5, 7, 39, 40 · IPS + SPL + AG + SMG</div><div class="rt-fns"><span class="rt-fn-item">IPS: spatial attention, saccade targeting, numerosity</span><span class="rt-fn-item">SPL: proprioception, body-in-space representation</span><span class="rt-fn-item">Angular gyrus: reading, cross-modal integration, semantics</span><span class="rt-fn-item">Dorsal stream hub: "where/how" pathway for action</span></div><div class="rt-high"><strong>High activation:</strong> spatial tasks, attention, sentence-level comprehension</div></div></span><span class="rst-cell rst-pearson" id="pr-parietal">—</span><span class="rst-cell rst-mean" id="mn-parietal">—</span><span class="rst-cell rst-std" id="sd-parietal">—</span><span class="rst-cell rst-status" id="st-parietal" style="color:var(--t3)">off</span></div>
+        <div class="tog" id="togZS" onclick="flipTog('zeroshot')"></div>
       </div>
+      <div class="tog-row">
+        <div>
+          <span class="tog-label">Cross-lingual</span>
+          <span class="tog-tag">non-English text</span>
+        </div>
+        <div class="tog" id="togCL" onclick="flipTog('crosslang')"></div>
+      </div>
+    </div>
 
-      <!-- Brain Activity Insight Panel -->
-      <div class="insight-panel" id="insightPanel">
+  </aside>
+
+  <!-- BRAIN VIEW -->
+  <main class="brain-view">
+
+    <!-- Viz toolbar -->
+    <div class="viz-toolbar">
+      <button class="vt-btn on" id="vt-lateral" onclick="setCamView('lateral')">Lateral</button>
+      <button class="vt-btn" id="vt-medial" onclick="setCamView('medial')">Medial</button>
+      <button class="vt-btn" id="vt-dorsal" onclick="setCamView('dorsal')">Dorsal</button>
+      <div class="vt-sep"></div>
+      <button class="vt-btn on" id="vt-lhem" onclick="setHem('left')">L</button>
+      <button class="vt-btn" id="vt-rhem" onclick="setHem('right')">R</button>
+      <div class="vt-sep"></div>
+      <button class="vt-btn on" id="vt-roi" onclick="toggleROI()">Glow</button>
+      <button class="vt-btn" id="vt-labels" onclick="toggleLabels()">Labels</button>
+      <div class="vt-sep"></div>
+      <span class="vt-coord">MNI: <span id="mniCoord">— — —</span></span>
+    </div>
+
+    <canvas id="brainCanvas"></canvas>
+
+    <svg id="labelLines" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:visible"></svg>
+    <div id="regionLabels"></div>
+
+    <!-- Loading -->
+    <div id="brainLoading">
+      <div class="bl-label">Loading brain surface…</div>
+      <div class="bl-bar"><div class="bl-fill" id="blFill"></div></div>
+      <div class="bl-label" id="blPct" style="color:var(--t3)">0%</div>
+    </div>
+
+    <!-- ROI Stats overlay -->
+    <div class="roi-stats-panel" id="roiStatsPanel">
+      <div class="rst-head">
+        <span class="rst-hcell">Region</span>
+        <span class="rst-hcell">Rel. Act.<span class="hdr-tip">Regional z-score vs whole-brain mean. Positive = more active than average.</span></span>
+        <span class="rst-hcell">Mean (z)<span class="hdr-tip">Mean predicted BOLD amplitude across vertices in this region.</span></span>
+        <span class="rst-hcell">σ<span class="hdr-tip">Vertex-level standard deviation — higher = more heterogeneous.</span></span>
+        <span class="rst-hcell">Status</span>
+      </div>
+      <div class="rst-row on"  data-r="visual"     onclick="toggleR('visual')">    <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-visual)"></div>Visual<div class="region-tip"><div class="rt-name">Visual Cortex</div><div class="rt-loc">Occipital lobe · BA 17, 18, 19 · V1–V4/MT</div><div class="rt-fns"><span class="rt-fn-item">V1 detects edges, orientations, spatial frequency</span><span class="rt-fn-item">V4 encodes color, shape, object form</span><span class="rt-fn-item">MT/V5 processes motion and optic flow</span></div><div class="rt-high"><strong>High activation:</strong> visual input, reading, vivid imagery</div></div></span><span class="rst-cell rst-pearson" id="pr-visual">—</span><span class="rst-cell rst-mean" id="mn-visual">—</span><span class="rst-cell rst-std" id="sd-visual">—</span><span class="rst-cell rst-status" id="st-visual">ON</span></div>
+      <div class="rst-row"     data-r="auditory"   onclick="toggleR('auditory')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-auditory)"></div>Auditory<div class="region-tip"><div class="rt-name">Auditory Cortex</div><div class="rt-loc">Superior temporal gyrus · BA 41, 42, 22</div><div class="rt-fns"><span class="rt-fn-item">A1 (Heschl's gyrus) maps tones tonotopically</span><span class="rt-fn-item">Auditory belt parses complex sounds, timbre</span><span class="rt-fn-item">Posterior STG → Wernicke's area</span></div><div class="rt-high"><strong>High activation:</strong> speech, music, environmental sounds</div></div></span><span class="rst-cell rst-pearson" id="pr-auditory">—</span><span class="rst-cell rst-mean" id="mn-auditory">—</span><span class="rst-cell rst-std" id="sd-auditory">—</span><span class="rst-cell rst-status" id="st-auditory" style="color:var(--t3)">off</span></div>
+      <div class="rst-row"     data-r="language"   onclick="toggleR('language')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-language)"></div>Language<div class="region-tip"><div class="rt-name">Language Network</div><div class="rt-loc">Left frontal + temporal · BA 44, 45, 22, 39</div><div class="rt-fns"><span class="rt-fn-item">Broca's area (BA44/45): syntax, production</span><span class="rt-fn-item">Wernicke's area (BA22): speech comprehension</span><span class="rt-fn-item">Angular gyrus (BA39): reading, semantics</span></div><div class="rt-high"><strong>High activation:</strong> reading, speech, semantic tasks</div></div></span><span class="rst-cell rst-pearson" id="pr-language">—</span><span class="rst-cell rst-mean" id="mn-language">—</span><span class="rst-cell rst-std" id="sd-language">—</span><span class="rst-cell rst-status" id="st-language" style="color:var(--t3)">off</span></div>
+      <div class="rst-row"     data-r="prefrontal" onclick="toggleR('prefrontal')"><span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-prefrontal)"></div>Prefrontal<div class="region-tip"><div class="rt-name">Prefrontal Cortex</div><div class="rt-loc">Frontal lobe · BA 9, 10, 11, 46, 47</div><div class="rt-fns"><span class="rt-fn-item">dlPFC (BA9/46): working memory, cognitive control</span><span class="rt-fn-item">vmPFC (BA11): reward, emotional valuation</span><span class="rt-fn-item">ACC monitors conflict, drives attention</span></div><div class="rt-high"><strong>High activation:</strong> complex narratives, inference, attention</div></div></span><span class="rst-cell rst-pearson" id="pr-prefrontal">—</span><span class="rst-cell rst-mean" id="mn-prefrontal">—</span><span class="rst-cell rst-std" id="sd-prefrontal">—</span><span class="rst-cell rst-status" id="st-prefrontal" style="color:var(--t3)">off</span></div>
+      <div class="rst-row"     data-r="motor"      onclick="toggleR('motor')">     <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-motor)"></div>Motor<div class="region-tip"><div class="rt-name">Motor Cortex</div><div class="rt-loc">Precentral gyrus · BA 4, 6 · M1 + premotor + SMA</div><div class="rt-fns"><span class="rt-fn-item">M1 (BA4): executes voluntary movements</span><span class="rt-fn-item">Premotor (BA6): plans movements</span><span class="rt-fn-item">SMA: action sequences, self-initiated movement</span></div><div class="rt-high"><strong>Surprising:</strong> reading action verbs ("kick", "run", "grasp")</div></div></span><span class="rst-cell rst-pearson" id="pr-motor">—</span><span class="rst-cell rst-mean" id="mn-motor">—</span><span class="rst-cell rst-std" id="sd-motor">—</span><span class="rst-cell rst-status" id="st-motor" style="color:var(--t3)">off</span></div>
+      <div class="rst-row"     data-r="parietal"   onclick="toggleR('parietal')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-parietal)"></div>Parietal<div class="region-tip"><div class="rt-name">Parietal Cortex</div><div class="rt-loc">Parietal lobe · BA 5, 7, 39, 40 · IPS + SPL</div><div class="rt-fns"><span class="rt-fn-item">IPS: spatial attention, saccades, numerosity</span><span class="rt-fn-item">SPL: proprioception, body-in-space</span><span class="rt-fn-item">Angular gyrus: reading, semantics</span></div><div class="rt-high"><strong>High activation:</strong> spatial tasks, sentence comprehension</div></div></span><span class="rst-cell rst-pearson" id="pr-parietal">—</span><span class="rst-cell rst-mean" id="mn-parietal">—</span><span class="rst-cell rst-std" id="sd-parietal">—</span><span class="rst-cell rst-status" id="st-parietal" style="color:var(--t3)">off</span></div>
+    </div>
+
+    <!-- Insight panel -->
+    <div class="insight-panel" id="insightPanel">
+      <div class="insight-inner">
         <div class="insight-hdr">Brain Activity Insight</div>
         <div class="insight-summary" id="insightSummary"></div>
         <div class="insight-cards" id="insightCards"></div>
       </div>
-
     </div>
 
-  </div><!-- .workspace -->
-
-  <!-- QUERY CONSTRUCTOR -->
-  <div class="query-bar">
-    <div class="qb-spinner"></div>
-    <span class="qb-label">TRIBE v2 API</span>
-    <span class="qb-prefix">predict_bold(</span>
-    <div class="qb-text" id="queryText"></div>
-    <span class="qb-prefix" style="color:var(--t3)">)</span>
-    <div class="qb-actions">
-      <button class="qb-btn" id="copyBtn" onclick="copyQuery()">Copy</button>
+    <!-- Progress bar -->
+    <div id="inferProgress">
+      <div id="inferBar"></div>
     </div>
-  </div>
 
-  <!-- thin progress bar shown below query bar while inferring -->
-  <div id="inferProgress" style="height:2px;background:var(--b0);position:relative;flex-shrink:0;display:none">
-    <div id="inferBar" style="height:100%;background:var(--ac);width:0%;transition:width .2s ease"></div>
-  </div>
+  </main>
 
-  <!-- STATUS BAR -->
-  <div class="statusbar">
-    <div class="sb-item"><div class="sb-dot ready"></div>Ready</div>
-    <div class="sb-item">session: untitled-001</div>
-    <div class="sb-item">space: MNI152 · 2mm</div>
-    <div class="sb-item" id="sbN">N = 12</div>
-    <div class="sb-item" id="sbRes">res = 70×</div>
-    <div class="sb-item" id="sbRois">1 / 6 ROI active</div>
-    <div class="sb-item" id="sbLastRun" style="color:rgba(255,255,255,.55)">not run yet</div>
-    <div class="sb-item">TRIBE v2 · CC BY-NC 4.0 · Meta AI Research</div>
-  </div>
+  <!-- RIGHT PANEL: Stimulus -->
+  <aside class="side-panel panel-right">
 
-  <!-- MODEL INFO MODAL -->
-  <div class="info-modal-backdrop" id="infoModalBackdrop" onclick="if(event.target===this)closeInfoModal()">
-    <div class="info-modal">
-      <div class="info-modal-head">
-        <span class="info-modal-title">TRIBE v2 · Model Reference</span>
-        <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
+    <div class="modality-tabs">
+      <button class="mod-tab on" data-stim="text"  onclick="selStim('text')">Text</button>
+      <button class="mod-tab" data-stim="image" onclick="selStim('image')">Image</button>
+      <button class="mod-tab" data-stim="video" onclick="selStim('video')">Video</button>
+      <button class="mod-tab" data-stim="audio" onclick="selStim('audio')">Audio</button>
+    </div>
+
+    <!-- Demo banner (hidden by default) -->
+    <div class="demo-banner" id="demoBanner" style="display:none;margin:10px 12px 0">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm8-3a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 018 5zm0 7a1 1 0 110-2 1 1 0 010 2z" fill="currentColor"/></svg>
+      <span id="demoBannerText"><strong>Demo mode</strong> — hash-based features. Install <a href="https://huggingface.co/meta-llama/Llama-3.2-3B" target="_blank">LLaMA-3.2-3B</a> for accuracy.</span>
+    </div>
+
+    <!-- TEXT panel -->
+    <div class="input-panel on" id="panel-text">
+      <div class="input-meta">
+        <span class="meta-item">modality: <span>text</span></span>
+        <div class="meta-sep"></div>
+        <span class="meta-item">encoder: <span>LLaMA-3.2-3B</span></span>
+        <div class="meta-sep"></div>
+        <span class="meta-item" id="charCount">0 chars</span>
+        <div class="meta-sep"></div>
+        <span class="meta-item" id="tokenEst">~0 tokens</span>
       </div>
-      <div class="info-modal-body">
-
-        <div>
-          <div class="info-section-title">Model</div>
-          <div class="info-grid" id="infoGridModel">
-            <div class="info-row"><span class="info-label">Class</span><span class="info-val">FmriEncoder</span></div>
-            <div class="info-row"><span class="info-label">Parameters</span><span class="info-val" id="infoNParams">loading…</span></div>
-            <div class="info-row"><span class="info-label">Checkpoint</span><span class="info-val" style="font-size:10px">facebook/tribev2</span></div>
-            <div class="info-row"><span class="info-label">Output surface</span><span class="info-val">fsaverage5</span></div>
-          </div>
-        </div>
-
-        <div>
-          <div class="info-section-title">Architecture</div>
-          <div class="info-grid">
-            <div class="info-row"><span class="info-label">Hidden dim</span><span class="info-val">1,152</span></div>
-            <div class="info-row"><span class="info-label">Attention heads</span><span class="info-val">8</span></div>
-            <div class="info-row"><span class="info-label">Transformer layers</span><span class="info-val">16 (8 attn + 8 FF)</span></div>
-            <div class="info-row"><span class="info-label">FF multiplier</span><span class="info-val">4×</span></div>
-            <div class="info-row"><span class="info-label">Output vertices</span><span class="info-val">20,484</span></div>
-            <div class="info-row"><span class="info-label">Max sequence</span><span class="info-val">1,024 TR</span></div>
-          </div>
-        </div>
-
-        <div>
-          <div class="info-section-title">Feature Encoders (trained on)</div>
-          <div class="info-encoder-row">
-            <div class="info-encoder-dot" style="background:#58A6FF"></div>
-            <span class="info-encoder-name">Text</span>
-            <span class="info-encoder-model">LLaMA-3.2-3B</span>
-            <span class="info-encoder-dims">2 × 3,072 → 6,144</span>
-          </div>
-          <div class="info-encoder-row">
-            <div class="info-encoder-dot" style="background:#FF8C42"></div>
-            <span class="info-encoder-name">Audio</span>
-            <span class="info-encoder-model">Wav2Vec-BERT 2.0</span>
-            <span class="info-encoder-dims">2 × 1,024 → 2,048</span>
-          </div>
-          <div class="info-encoder-row">
-            <div class="info-encoder-dot" style="background:#3FB950"></div>
-            <span class="info-encoder-name">Video</span>
-            <span class="info-encoder-model">V-JEPA2 ViT-G</span>
-            <span class="info-encoder-dims">2 × 1,408 → 2,816</span>
-          </div>
-        </div>
-
-        <div>
-          <div class="info-section-title">Training Data</div>
-          <div class="info-datasets">
-            <span class="info-dataset-pill">Algonauts2025Bold</span>
-            <span class="info-dataset-pill">Lahner2024Bold</span>
-            <span class="info-dataset-pill">Lebel2023Bold</span>
-            <span class="info-dataset-pill">Wen2017</span>
-          </div>
-          <div style="margin-top:8px; font-size:11px; color:var(--t3)">25 subjects · 15 training epochs · fsaverage5 surface projection</div>
-        </div>
-
-        <div>
-          <div class="info-section-title">Output Metrics (ROI Table)</div>
-          <div class="info-metrics-table">
-            <div class="info-metric-row">
-              <span class="info-metric-name">Rel. Act.</span>
-              <span class="info-metric-desc">Regional z-score relative to whole-brain mean activation. Positive = more active than brain average; negative = suppressed.</span>
-            </div>
-            <div class="info-metric-row">
-              <span class="info-metric-name">Mean (z)</span>
-              <span class="info-metric-desc">Mean predicted BOLD amplitude across all vertices in the region, in model z-score units.</span>
-            </div>
-            <div class="info-metric-row">
-              <span class="info-metric-name">σ</span>
-              <span class="info-metric-desc">Vertex-level standard deviation — higher values indicate spatially heterogeneous activation within the region.</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="info-demo-note">
-          ⚠ <strong>Demo mode</strong> — The FmriEncoder runs with real trained weights (676 MB checkpoint), but text inputs are encoded with hash-based pseudo-features rather than LLaMA-3.2-3B. Predicted activations have correct structure but are not semantically grounded. For meaningful predictions, install the full LLaMA-3.2-3B encoder.
-        </div>
-
+      <textarea id="textInput"
+        placeholder="Enter stimulus text — prose, poetry, sentences, or any natural language. TRIBE v2 predicts the fMRI BOLD response across selected cortical regions."
+        oninput="debouncedUpdate()"></textarea>
+      <div class="input-footer">
+        <span>UTF-8 · any language</span>
+        <span id="stimBadge" style="font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:.06em">TEXT</span>
       </div>
     </div>
-  </div>
 
-</div><!-- .body-wrap -->
+    <!-- IMAGE panel -->
+    <div class="input-panel" id="panel-image">
+      <div class="input-meta">
+        <span class="meta-item">encoder: <span>V-JEPA2</span></span>
+        <div class="meta-sep"></div>
+        <span class="meta-item">accepted: <span>JPG · PNG · WebP</span></span>
+      </div>
+      <div class="dropzone" id="dz-image" onclick="document.getElementById('imgFile').click()"
+           ondragover="dzDrag(event,'dz-image')" ondragleave="dzLeave('dz-image')" ondrop="dzDrop(event,'image')">
+        <img id="imgPreview" class="img-preview" alt="">
+        <div class="dz-inner" id="dz-image-inner">
+          <div class="dz-icon">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+              <rect x="4" y="7" width="24" height="18" rx="3"/>
+              <circle cx="11.5" cy="14" r="2.5"/>
+              <path d="M4 21.5L11 14.5L16.5 20.5L21 15.5L28 21.5"/>
+            </svg>
+          </div>
+          <div class="dz-title">Drop image or click to browse</div>
+          <div class="dz-sub">Any common format · no size limit</div>
+          <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('imgFile').click()">Select File</button>
+        </div>
+        <div class="file-badge" id="img-badge"></div>
+        <button class="clear-btn" id="img-clear" onclick="event.stopPropagation();clearInput('image')" title="Clear">✕</button>
+        <input type="file" id="imgFile" accept="image/*" style="display:none" onchange="handleFile(this,'image')">
+      </div>
+    </div>
+
+    <!-- VIDEO panel -->
+    <div class="input-panel" id="panel-video">
+      <div class="input-meta">
+        <span class="meta-item">encoder: <span>V-JEPA2 temporal</span></span>
+        <div class="meta-sep"></div>
+        <span class="meta-item">accepted: <span>MP4 · WebM · MOV</span></span>
+      </div>
+      <div class="url-bar">
+        <input class="url-input" id="videoUrl" type="text" placeholder="Video URL (.mp4 / .webm)" oninput="updateAll()">
+        <button class="url-go" onclick="loadVideoUrl()">Load</button>
+      </div>
+      <div class="dropzone" id="dz-video" onclick="document.getElementById('videoFile').click()"
+           ondragover="dzDrag(event,'dz-video')" ondragleave="dzLeave('dz-video')" ondrop="dzDrop(event,'video')">
+        <video id="videoPreview" controls></video>
+        <div class="dz-inner" id="dz-video-inner">
+          <div class="dz-icon">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+              <rect x="2" y="6" width="20" height="20" rx="3"/>
+              <path d="M22 12L30 8V24L22 20Z"/>
+            </svg>
+          </div>
+          <div class="dz-title">Drop video or enter URL above</div>
+          <div class="dz-sub">MP4 · WebM · MOV · AVI</div>
+          <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('videoFile').click()">Select File</button>
+        </div>
+        <div class="file-badge" id="video-badge"></div>
+        <button class="clear-btn" id="video-clear" onclick="event.stopPropagation();clearInput('video')" title="Clear">✕</button>
+        <input type="file" id="videoFile" accept="video/*" style="display:none" onchange="handleFile(this,'video')">
+      </div>
+    </div>
+
+    <!-- AUDIO panel -->
+    <div class="input-panel" id="panel-audio">
+      <div class="input-meta">
+        <span class="meta-item">encoder: <span>Wav2Vec-BERT 2.0</span></span>
+        <div class="meta-sep"></div>
+        <span class="meta-item">accepted: <span>MP3 · WAV · FLAC · M4A</span></span>
+      </div>
+      <div class="dropzone" id="dz-audio" onclick="document.getElementById('audioFile').click()"
+           ondragover="dzDrag(event,'dz-audio')" ondragleave="dzLeave('dz-audio')" ondrop="dzDrop(event,'audio')">
+        <div class="dz-inner" id="dz-audio-inner">
+          <div class="audio-waveform" id="audioWave">
+            <div class="aw-bar"></div><div class="aw-bar"></div><div class="aw-bar"></div>
+          </div>
+          <div class="dz-title">Drop audio or click to browse</div>
+          <div class="dz-sub">MP3 · WAV · FLAC · OGG · M4A</div>
+          <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('audioFile').click()">Select File</button>
+        </div>
+        <audio id="audioPreview" controls></audio>
+        <div class="file-badge" id="audio-badge"></div>
+        <button class="clear-btn" id="audio-clear" onclick="event.stopPropagation();clearInput('audio')" title="Clear">✕</button>
+        <input type="file" id="audioFile" accept="audio/*" style="display:none" onchange="handleFile(this,'audio')">
+      </div>
+    </div>
+
+  </aside>
+
+</div><!-- .app-layout -->
+
+<!-- MODEL INFO MODAL -->
+<div class="info-modal-backdrop" id="infoModalBackdrop" onclick="if(event.target===this)closeInfoModal()">
+  <div class="info-modal">
+    <div class="info-modal-head">
+      <span class="info-modal-title">TRIBE v2 · Model Reference</span>
+      <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
+    </div>
+    <div class="info-modal-body">
+
+      <div>
+        <div class="info-section-title">Model</div>
+        <div class="info-grid" id="infoGridModel">
+          <div class="info-row"><span class="info-label">Class</span><span class="info-val">FmriEncoder</span></div>
+          <div class="info-row"><span class="info-label">Parameters</span><span class="info-val" id="infoNParams">loading…</span></div>
+          <div class="info-row"><span class="info-label">Checkpoint</span><span class="info-val" style="font-size:10px">facebook/tribev2</span></div>
+          <div class="info-row"><span class="info-label">Output surface</span><span class="info-val">fsaverage5</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="info-section-title">Architecture</div>
+        <div class="info-grid">
+          <div class="info-row"><span class="info-label">Hidden dim</span><span class="info-val">1,152</span></div>
+          <div class="info-row"><span class="info-label">Attention heads</span><span class="info-val">8</span></div>
+          <div class="info-row"><span class="info-label">Transformer layers</span><span class="info-val">16 (8 attn + 8 FF)</span></div>
+          <div class="info-row"><span class="info-label">FF multiplier</span><span class="info-val">4×</span></div>
+          <div class="info-row"><span class="info-label">Output vertices</span><span class="info-val">20,484</span></div>
+          <div class="info-row"><span class="info-label">Max sequence</span><span class="info-val">1,024 TR</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="info-section-title">Encoders</div>
+        <div class="info-encoder-row">
+          <div class="info-encoder-dot" style="background:var(--r-language)"></div>
+          <span class="info-encoder-name">Text</span>
+          <span class="info-encoder-model" id="encoderStatus-text">LLaMA-3.2-3B</span>
+          <span class="info-encoder-dims">6,144 dim</span>
+        </div>
+        <div class="info-encoder-row">
+          <div class="info-encoder-dot" style="background:var(--r-auditory)"></div>
+          <span class="info-encoder-name">Audio</span>
+          <span class="info-encoder-model" id="encoderStatus-audio">Wav2Vec-BERT 2.0</span>
+          <span class="info-encoder-dims">2,048 dim</span>
+        </div>
+        <div class="info-encoder-row">
+          <div class="info-encoder-dot" style="background:var(--r-prefrontal)"></div>
+          <span class="info-encoder-name">Video</span>
+          <span class="info-encoder-model" id="encoderStatus-video">V-JEPA2 ViT-G</span>
+          <span class="info-encoder-dims">2,816 dim</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="info-section-title">Training Data</div>
+        <div class="info-datasets">
+          <span class="info-dataset-pill">Algonauts2025Bold</span>
+          <span class="info-dataset-pill">Lahner2024Bold</span>
+          <span class="info-dataset-pill">Lebel2023Bold</span>
+          <span class="info-dataset-pill">Wen2017</span>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--t3)">25 subjects · 15 training epochs · fsaverage5 surface</div>
+      </div>
+
+      <div>
+        <div class="info-section-title">Output Metrics</div>
+        <div class="info-metrics-table">
+          <div class="info-metric-row">
+            <span class="info-metric-name">Rel. Act.</span>
+            <span class="info-metric-desc">Regional z-score relative to whole-brain mean. Positive = more active; negative = suppressed.</span>
+          </div>
+          <div class="info-metric-row">
+            <span class="info-metric-name">Mean (z)</span>
+            <span class="info-metric-desc">Mean predicted BOLD amplitude across all vertices in the region, in model z-score units.</span>
+          </div>
+          <div class="info-metric-row">
+            <span class="info-metric-name">σ</span>
+            <span class="info-metric-desc">Vertex-level standard deviation — higher values indicate spatially heterogeneous activation.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-demo-note">
+        ⚠ <strong>Demo mode</strong> — The FmriEncoder runs with real weights (676 MB) but text uses hash-based pseudo-features instead of LLaMA-3.2-3B. Install the full encoder for semantically grounded predictions.
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- STATE + UI SCRIPT -->
 <script>
@@ -1916,8 +1868,8 @@ function handleFile(input, type) {
     document.getElementById('dz-audio').classList.add('has-content');
   }
   updateAll();
-  // Auto-run prediction immediately when audio is loaded
-  if (type === 'audio') setTimeout(runPrediction, 200);
+  // Auto-run prediction when a stimulus file is loaded
+  if (type === 'audio' || type === 'image' || type === 'video') setTimeout(runPrediction, 200);
 }
 
 function loadVideoUrl() {
@@ -1976,48 +1928,9 @@ function updateAll() {
 
   const n = ST.regions.length;
   document.getElementById('roiCount').textContent  = n+' active';
-  document.getElementById('roiBadge').textContent  = n+' / 6 ROI';
-  document.getElementById('sbN').textContent       = 'N = '+ST.subjects;
-  document.getElementById('sbRes').textContent     = 'res = '+ST.resolution+'\u00d7';
-  document.getElementById('sbRois').textContent    = n+' / 6 ROI active';
+  document.getElementById('roiBadge').textContent  = n+' / 6';
 
-  buildQuery();
   if (window.updateBrainRegions) window.updateBrainRegions(ST.regions);
-}
-
-function buildQuery() {
-  const sub = (SUBTYPES[ST.stim].find(s=>s.v===ST.subtype)||{}).label||ST.subtype;
-  const rois = ST.regions.map(r=>RNAMES_SHORT[r]).join(', ');
-  let inp='';
-  if (ST.stim==='text'&&ST.textContent) inp=', stimulus="'+ST.textContent.substring(0,60)+(ST.textContent.length>60?'…':'')+'"';
-  else if (ST.fileName) inp=', stimulus_file="'+ST.fileName+'"';
-  else if (ST.videoUrl) inp=', stimulus_url="'+ST.videoUrl+'"';
-
-  const flags=[];
-  if (ST.zeroshot) flags.push('zero_shot=True');
-  if (ST.crosslang) flags.push('cross_lingual=True');
-
-  const parts=[
-    'modality="'+ST.stim+'"',
-    'encoder="'+STIM_ENCODER[ST.stim]+'"',
-    'category="'+sub+'"',
-    'paradigm="'+TASK_LBL[ST.task]+'"',
-    'roi=['+rois+']',
-    'n_subjects='+ST.subjects,
-    'resolution='+ST.resolution,
-    'min_confidence='+ST.confidence.toFixed(2),
-    ...flags,
-  ];
-  if (inp) parts.unshift(inp.substring(2));
-  document.getElementById('queryText').textContent = parts.join(', ');
-}
-
-function copyQuery() {
-  const full = 'predict_bold('+document.getElementById('queryText').textContent+')';
-  navigator.clipboard.writeText(full).then(()=>{
-    const b=document.getElementById('copyBtn'); b.textContent='Copied'; b.classList.add('copied');
-    setTimeout(()=>{b.textContent='Copy';b.classList.remove('copied');},1800);
-  });
 }
 
 function applyPreset(name) {
@@ -2073,8 +1986,6 @@ function newSession() {
   const num = String(Math.floor(Math.random()*998)+1).padStart(3,'0');
   const name = 'untitled-'+num;
   document.getElementById('sessionName').textContent = name;
-  const sbItems = document.querySelectorAll('.sb-item');
-  if (sbItems[1]) sbItems[1].textContent = 'session: '+name;
   ST.regions=['visual']; ST.zeroshot=false; ST.crosslang=false;
   ST.resolution=70; ST.confidence=0.85; ST.task='passive';
   ST.textContent=''; ST.fileName=''; ST.videoUrl='';
@@ -2117,7 +2028,7 @@ function exportJSON() {
       n_subjects: ST.subjects, resolution: ST.resolution,
       min_confidence: ST.confidence, zero_shot: ST.zeroshot, cross_lingual: ST.crosslang,
     },
-    query: 'predict_bold('+document.getElementById('queryText').textContent+')',
+    query: 'predict_bold(modality="'+ST.stim+'", roi=['+ST.regions.join(',')+'])',
   };
   const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -2141,12 +2052,10 @@ function exportCSV() {
 
 // ── STATUS / PROGRESS ─────────────────────────────────────────
 function _setStatus(running) {
-  const dot = document.querySelector('.sb-dot');
-  if (dot) dot.className = 'sb-dot ' + (running ? 'running' : 'ready');
-  const qb = document.querySelector('.query-bar');
-  if (qb) qb.classList.toggle('inferring', running);
   const prog = document.getElementById('inferProgress');
   if (prog) prog.style.display = running ? 'block' : 'none';
+  const btn = document.querySelector('.run-btn');
+  if (btn) btn.classList.toggle('inferring', running);
 }
 
 function _animateBar(bar, targetPct, durationMs) {
@@ -2187,10 +2096,6 @@ function _applyResult(data) {
     }
   });
 
-  // Update statusbar
-  const sbTime = document.getElementById('sbLastRun');
-  if (sbTime) sbTime.textContent = data.modality + ' · ' + data.elapsed_ms + 'ms';
-
   // Demo banner
   const banner = document.getElementById('demoBanner');
   if (banner) banner.style.display = data.demo_mode ? '' : 'none';
@@ -2209,18 +2114,12 @@ function _applyResult(data) {
   // Update label activation bars on 3D brain
   if (window.updateLabelActivations) updateLabelActivations(data.region_stats);
 
+  // Drive breathing + glow from prediction results
+  if (window.setBreathing) window.setBreathing(data.region_stats, ST.regions);
+  if (window.setRegionGlow) window.setRegionGlow(data.region_stats, ST.regions);
+
   // Update educational insight panel
   _updateInsight(data);
-}
-
-async function _getAudioB64() {
-  const file = document.getElementById('audioFile').files[0];
-  if (!file) return '';
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = e => resolve(e.target.result.split(',')[1] || '');
-    reader.readAsDataURL(file);
-  });
 }
 
 // ── WebSocket connection ──────────────────────────────────────
@@ -2258,11 +2157,23 @@ function _handleWSMsg(msg) {
   }
 }
 
+async function _getFileb64(inputId) {
+  const file = document.getElementById(inputId).files[0];
+  if (!file) return '';
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result.split(',')[1] || '');
+    reader.readAsDataURL(file);
+  });
+}
+
 async function runPrediction() {
   if (_predRunning) return;
   const text = document.getElementById('textInput').value.trim();
   if (ST.stim === 'text' && !text) return;
   if (ST.stim === 'audio' && !document.getElementById('audioFile').files[0]) return;
+  if (ST.stim === 'image' && !document.getElementById('imgFile').files[0]) return;
+  if (ST.stim === 'video' && !document.getElementById('videoFile').files[0] && !ST.videoUrl) return;
 
   _predRunning = true;
   _setStatus(true);
@@ -2271,7 +2182,11 @@ async function runPrediction() {
 
   const payload = { seq_len: 16 };
   if (ST.stim === 'audio') {
-    payload.audio_b64 = await _getAudioB64();
+    payload.audio_b64 = await _getFileb64('audioFile');
+  } else if (ST.stim === 'image') {
+    payload.image_b64 = await _getFileb64('imgFile');
+  } else if (ST.stim === 'video') {
+    payload.video_b64 = await _getFileb64('videoFile');
   } else {
     payload.text = text || ST.stim;
   }
@@ -2322,8 +2237,6 @@ async function fetchModelInfo() {
     const d = await r.json();
     const el = document.getElementById('infoNParams');
     if (el) el.textContent = d.n_params ? (d.n_params / 1e6).toFixed(1) + 'M' : '—';
-    const sb = document.querySelector('.statusbar .sb-item:last-child');
-    if (sb && d.n_params) sb.textContent = 'TRIBE v2 · ' + (d.n_params/1e6).toFixed(0) + 'M params · CC BY-NC 4.0';
 
     // Hide demo banner — demo_mode only when LLaMA not loaded
     const banner = document.getElementById('demoBanner');
@@ -2379,39 +2292,21 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader }     from 'three/addons/loaders/OBJLoader.js';
 
 // ── Region classification in normalised MNI space ────────────
-// brain.obj bounding box: X[-72.6,73.6] Y[-105,77.4] Z[-51.8,80.9] mm
-// After centering (cx≈0.5, cy≈-13.8, cz≈14.6) and scaling by 2.4/182.4 ≈ 1/75.97:
-//   x=right(+), y=anterior(+), z=superior(+)
-//   MNI_mm ≈ coord * 75.97 + offset
-//
-// Region boundaries in raw MNI mm (X=right, Y=anterior, Z=superior):
-//   Visual    occipital         Y < -70
-//   Prefrontal frontal         Y >  35
-//   Motor     M1/premotor/SMA  Z >  45, Y: -25 to 30
-//   Parietal  SPL/IPL/precun.  Z >  20, Y: -70 to -25
-//   Auditory  STG/HG           |X| > 30, Y:-45 to 15, Z:-10 to 20
-//   Language  IFG/Wernicke/STS (default)
 function getRegion(x,y,z){
-  // Visual cortex (V1–V5, occipital pole): Y < -70 mm
   if (y < -0.74) return 'visual';
-  // Prefrontal (frontal pole, DLPFC, OFC): Y > 35 mm
   if (y >  0.64) return 'prefrontal';
-  // Motor strip (M1, S1, premotor, SMA): Z > 45 mm, Y: -30 to 30 mm
   if (z >  0.40 && y > -0.22 && y < 0.58) return 'motor';
-  // Parietal (SPL, IPL, precuneus, angular gyrus): Z > 20 mm, Y: -70 to -30 mm
   if (z >  0.07 && y < -0.22 && y > -0.74) return 'parietal';
-  // Auditory (Heschl's gyrus, STG, planum temporale): lateral temporal, Y: -48 to 15 mm
   if (Math.abs(x) > 0.38 && y > -0.45 && y < 0.38 && z > -0.33 && z < 0.07) return 'auditory';
-  // Language (IFG/Broca, posterior STG/Wernicke, angular, STS): default
   return 'language';
 }
 
-const REGION_HEX={visual:0xFF4D4D,auditory:0xFF8C42,language:0x58A6FF,prefrontal:0x3FB950,motor:0xE040FB,parietal:0xFFCA28};
+const REGION_HEX={visual:0xFF5252,auditory:0xFF9142,language:0x4F8EFF,prefrontal:0x3ECF70,motor:0xCC5CFF,parietal:0xFFD042};
 const BASE_COL={r:0.56,g:0.50,b:0.48};
 const ALL_R=['visual','auditory','language','prefrontal','motor','parietal'];
 const regionVerts={}, regionCentroids={};
 
-// ── Procedural fallback (kept from original) ─────────────────
+// ── Procedural fallback ───────────────────────────────────────
 function vnoise(x,y,z){
   const ix=Math.floor(x),iy=Math.floor(y),iz=Math.floor(z);
   const fx=x-ix,fy=y-iy,fz=z-iz;
@@ -2433,7 +2328,6 @@ function buildProceduralGeo(){
     let x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i);
     const len=Math.sqrt(x*x+y*y+z*z);
     const nx=x/len,ny=y/len,nz=z/len;
-    // map procedural normals to mni-like axes for consistent region classification
     const region=getRegion(nx*0.96, ny*1.2, nz*0.87);
     regionVerts[region].push(i);
     const sx=1.25,sy=1.0,sz=1.4;
@@ -2464,8 +2358,8 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
 
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x080B12);
-scene.fog=new THREE.FogExp2(0x080B12,0.06);
+scene.background=new THREE.Color(0x06080E);
+scene.fog=new THREE.FogExp2(0x06080E,0.06);
 
 const camera=new THREE.PerspectiveCamera(40,1,0.1,100);
 camera.position.set(0,0.3,5.4);
@@ -2481,23 +2375,53 @@ const sun=new THREE.DirectionalLight(0xfff8f0,1.4);sun.position.set(3.5,4,5);sce
 const fill=new THREE.DirectionalLight(0x6699cc,0.4);fill.position.set(-3,-1,2);scene.add(fill);
 scene.add(new THREE.HemisphereLight(0x223355,0x331100,0.4));
 
-// ── State vars (populated after model loads) ──────────────────
+// ── State vars ────────────────────────────────────────────────
 let brain=null, colAttr, colCur, colTgt;
 const glowMeshes={}, regionLights={}, ptSystems={};
 const PCNT=120;
 let activeRegions=['visual'];
 let brainReady=false;
-let lastInteract=Date.now();
-// Per-vertex data for inference-driven coloring
-let vertMNI=null;     // Float32Array [N*3] — MNI coords in normalised space
-let vertRegion=null;  // Array<string>[N]   — region name per vertex
-let vertYMin=0, vertYMax=1; // Y-range for sample index mapping
+const regionBreath={};
+ALL_R.forEach(r=>{ regionBreath[r]={amp:0,freq:0.9,phase:Math.random()*Math.PI*2}; });
 
-// Label overlay — created immediately
+const regionGlow={};
+ALL_R.forEach(r=>{ regionGlow[r]={opacityTarget:0.08,intensityTarget:0.4}; });
+
+window.setRegionGlow=function(regionStats, activeRegs){
+  ALL_R.forEach(r=>{
+    const s=regionStats&&regionStats[r];
+    const active=s&&activeRegs.includes(r);
+    if(!active){regionGlow[r]={opacityTarget:0,intensityTarget:0};return;}
+    const rel=s.rel_activation??0;
+    regionGlow[r]={
+      opacityTarget:  Math.max(0.04, Math.min(0.40, 0.12 + rel * 0.35)),
+      intensityTarget:Math.max(0.2,  Math.min(3.5,  1.2 + rel * 2.0)),
+    };
+  });
+};
+
+window.setBreathing=function(regionStats, activeRegs){
+  ALL_R.forEach(r=>{
+    const s=regionStats&&regionStats[r];
+    const active=s&&activeRegs.includes(r);
+    const rel=active?(s.rel_activation??0):0;
+    regionBreath[r]={
+      amp:  active?Math.max(0.06,Math.min(0.30,0.10+rel*0.40)):0,
+      freq: active?0.7+Math.max(0,rel)*0.8:0.8,
+      phase:regionBreath[r].phase,
+    };
+  });
+};
+let lastInteract=Date.now();
+let vertMNI=null;
+let vertRegion=null;
+let vertYMin=0, vertYMax=1;
+
+// Label overlay
 const labelCtr=document.getElementById('regionLabels');
 const labelLines=document.getElementById('labelLines');
 const labelEls={};
-const lineSvg={};  // SVG <line> per region
+const lineSvg={};
 const RNAMES_DISPLAY={
   visual:'Visual Cortex', auditory:'Auditory Cortex', language:'Language',
   prefrontal:'Prefrontal', motor:'Motor Cortex', parietal:'Parietal',
@@ -2516,7 +2440,6 @@ ALL_R.forEach(r=>{
     <div class="rl-val" id="rlval-${r}">—</div>`;
   labelCtr.appendChild(el); labelEls[r]=el;
 
-  // SVG leader line (drawn behind labels)
   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
   line.setAttribute('stroke',rgb); line.setAttribute('stroke-width','1');
   line.setAttribute('stroke-opacity','0.45'); line.setAttribute('stroke-dasharray','3 3');
@@ -2524,7 +2447,7 @@ ALL_R.forEach(r=>{
   labelLines.appendChild(line); lineSvg[r]=line;
 });
 
-// ── Post-load geometry setup ─────────────────────────────────
+// ── Post-load geometry setup ──────────────────────────────────
 function resetPt(ps,i){
   const sp=0.38;
   ps.pos[i*3]=ps.ctr.x+(Math.random()-.5)*sp;
@@ -2538,12 +2461,9 @@ function resetPt(ps,i){
 
 function onGeoReady(geo, isReal){
   const pos=geo.attributes.position, N=pos.count;
-
-  // Store MNI positions + region per vertex (used by setBrainVertexSample)
   vertMNI=new Float32Array(N*3);
   vertRegion=new Array(N);
   vertYMin=Infinity; vertYMax=-Infinity;
-
   ALL_R.forEach(r=>{regionVerts[r]=[];regionCentroids[r]=new THREE.Vector3();});
   const col=new Float32Array(N*3);
   for(let i=0;i<N;i++){
@@ -2560,25 +2480,16 @@ function onGeoReady(geo, isReal){
   geo.setAttribute('color',new THREE.BufferAttribute(col,3));
 
   brain=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.76,metalness:0,side:THREE.DoubleSide}));
-  if(isReal){
-    // MNI: y=anterior, z=superior → rotate so anterior faces camera (+z) and superior faces up (+y)
-    brain.rotation.x=-Math.PI/2;
-  } else {
-    brain.rotation.y=Math.PI*0.1;
-  }
+  if(isReal){ brain.rotation.x=-Math.PI/2; } else { brain.rotation.y=Math.PI*0.1; }
   scene.add(brain);
 
-  // Convert region centroids to world space for glow + particle placement
   const rotM=new THREE.Matrix4().makeRotationFromEuler(brain.rotation);
   ALL_R.forEach(r=>{
     const worldCtr=regionCentroids[r].clone().applyMatrix4(rotM);
-
     const gm=new THREE.Mesh(new THREE.SphereGeometry(0.28,12,12),
       new THREE.MeshBasicMaterial({color:REGION_HEX[r],transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}));
     gm.position.copy(worldCtr);scene.add(gm);glowMeshes[r]=gm;
-
     const rl=new THREE.PointLight(REGION_HEX[r],0,2.5);rl.position.copy(worldCtr);scene.add(rl);regionLights[r]=rl;
-
     const ppos=new Float32Array(PCNT*3),vel=new Float32Array(PCNT*3),life=new Float32Array(PCNT);
     const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(ppos,3));
     const pm=new THREE.PointsMaterial({color:REGION_HEX[r],size:0.022,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending});
@@ -2598,7 +2509,6 @@ function onGeoReady(geo, isReal){
 
 function setRegionTarget(r,active){
   const c=REGION_RGB[r]||new THREE.Color(REGION_HEX[r]);
-  // Default opacity 0.55 before inference; inactive → dim surface
   const op=active?0.55:0;
   const dim=active?1:0.38;
   regionVerts[r].forEach(i=>{
@@ -2612,66 +2522,18 @@ function updateLabels(active){
   if(!brain)return;
   const v3=new THREE.Vector3();
   const rect=canvas.getBoundingClientRect();
-  const cx=rect.width*.5, cy=rect.height*.5;
-  // Push radius: labels sit on a ring well outside the brain silhouette
-  const pushR=Math.min(rect.width,rect.height)*0.44;
-
-  // Collect projected positions for active labels
-  const projPts={};
   ALL_R.forEach(r=>{
+    const el=labelEls[r];
+    const on=active.includes(r);
+    if(!on){el.style.opacity='0';return;}
     v3.copy(regionCentroids[r]).applyMatrix4(brain.matrixWorld);
     const pr=v3.clone().project(camera);
-    projPts[r]={
-      ax:(pr.x*.5+.5)*rect.width,   // actual centroid screen x
-      ay:(-pr.y*.5+.5)*rect.height,  // actual centroid screen y
-      behind: pr.z>=1,
-    };
-  });
-
-  // Assign pushed positions (radially outward from brain center)
-  const pushPts={};
-  ALL_R.forEach(r=>{
-    const {ax,ay}=projPts[r];
-    let dx=ax-cx, dy=ay-cy;
-    const d=Math.sqrt(dx*dx+dy*dy)||1;
-    // Ensure minimum push distance so all labels reach the ring
-    const scale=pushR/Math.max(d,pushR*0.3);
-    pushPts[r]={lx:cx+dx*scale, ly:cy+dy*scale};
-  });
-
-  // Simple 1-pass collision spread: sort by angle, enforce min angular gap
-  const active_r=ALL_R.filter(r=>active.includes(r));
-  active_r.sort((a,b)=>{
-    const pa=pushPts[a], pb=pushPts[b];
-    return Math.atan2(pa.ly-cy,pa.lx-cx)-Math.atan2(pb.ly-cy,pb.lx-cx);
-  });
-  const minGap=0.38; // radians (~22°)
-  for(let i=1;i<active_r.length;i++){
-    const prev=active_r[i-1], cur=active_r[i];
-    const aPrev=Math.atan2(pushPts[prev].ly-cy,pushPts[prev].lx-cx);
-    let aCur =Math.atan2(pushPts[cur].ly-cy, pushPts[cur].lx-cx);
-    if(aCur-aPrev<minGap){ aCur=aPrev+minGap; }
-    pushPts[cur].lx=cx+Math.cos(aCur)*pushR;
-    pushPts[cur].ly=cy+Math.sin(aCur)*pushR;
-  }
-
-  ALL_R.forEach(r=>{
-    const el=labelEls[r], line=lineSvg[r];
-    const on=active.includes(r);
-    if(!on||projPts[r].behind){
-      el.style.opacity='0'; line.style.display='none'; return;
-    }
-    const {lx,ly}=pushPts[r];
-    const {ax,ay}=projPts[r];
-    el.style.left=lx+'px'; el.style.top=ly+'px'; el.style.opacity='1';
-    // Leader line: from label centre to actual centroid
-    line.setAttribute('x1',lx); line.setAttribute('y1',ly);
-    line.setAttribute('x2',ax); line.setAttribute('y2',ay);
-    line.style.display='';
+    if(pr.z>=1){el.style.opacity='0';return;}
+    const px=(pr.x*.5+.5)*rect.width, py=(-pr.y*.5+.5)*rect.height;
+    el.style.left=px+'px'; el.style.top=py+'px'; el.style.opacity='1';
   });
 }
 
-// Update label activation bars + values after inference
 window.updateLabelActivations=function updateLabelActivations(regionStats){
   ALL_R.forEach(r=>{
     const s=regionStats&&regionStats[r];
@@ -2680,7 +2542,6 @@ window.updateLabelActivations=function updateLabelActivations(regionStats){
     const val=document.getElementById('rlval-'+r);
     if(!bar||!val)return;
     if(rel===null){bar.style.width='0%';val.textContent='—';val.className='rl-val';return;}
-    // Map rel [-0.5, +1.0] → bar width [0, 100%]
     const pct=Math.round(Math.max(0,Math.min(1,(rel+0.5)/1.5))*100);
     bar.style.width=pct+'%';
     val.textContent=(rel>=0?'+':'')+rel.toFixed(2)+'σ';
@@ -2688,7 +2549,7 @@ window.updateLabelActivations=function updateLabelActivations(regionStats){
   });
 };
 
-// ── MNI coordinate readout ────────────────────────────────────
+// MNI coordinate readout
 const raycaster=new THREE.Raycaster();
 const mouse=new THREE.Vector2();
 renderer.domElement.addEventListener('mousemove',e=>{
@@ -2699,16 +2560,14 @@ renderer.domElement.addEventListener('mousemove',e=>{
   raycaster.setFromCamera(mouse,camera);
   const hits=raycaster.intersectObject(brain);
   if(hits.length>0){
-    // invert brain transform to get model-space coords → scale back to mm
     const p=hits[0].point.clone().applyMatrix4(brain.matrixWorld.clone().invert());
-    const sc=182.4/2.4; // inverse of our normalisation scale
+    const sc=182.4/2.4;
     const mx=Math.round(p.x*sc), my=Math.round(p.y*sc), mz=Math.round(p.z*sc);
     document.getElementById('mniCoord').textContent=mx+', '+my+', '+mz;
   }
 });
 
 // ── Window API ────────────────────────────────────────────────
-// Activation levels per region (0-1); updated by _applyResult after inference
 const activationLevels = {visual:1,auditory:1,language:1,prefrontal:1,motor:1,parietal:1};
 
 window.updateBrainRegions=function(regions){
@@ -2719,7 +2578,6 @@ window.updateBrainRegions=function(regions){
 };
 
 window.setBrainActivations=function(levels){
-  // levels: {region: 0-1 normalised activation}
   Object.assign(activationLevels, levels);
   if(!brainReady) return;
   ALL_R.forEach(r=>{
@@ -2739,28 +2597,9 @@ window.setBrainActivations=function(levels){
   });
 };
 
-// Per-vertex activation from vertex_sample (512 evenly-spaced samples over the surface).
-// Each mesh vertex is assigned a sample index via its MNI Y-position (posterior→anterior),
-// giving a spatially-varying activation heatmap within each region.
-// Pre-computed region RGB values (avoids per-vertex THREE.Color allocation)
 const REGION_RGB={};
 ALL_R.forEach(r=>{const c=new THREE.Color(REGION_HEX[r]);REGION_RGB[r]={r:c.r,g:c.g,b:c.b};});
 
-// Per-vertex activation heatmap — opacity-based blending.
-//
-// Active regions:
-//   opacity = gamma(normalised_vertex_activation) * regionOpacityCap
-//   finalColor = lerp(BASE_COL, regionColor, opacity)
-//
-//   Low score  → opacity≈0  → vertex shows BASE_COL (brain surface visible)
-//   High score → opacity≈1  → vertex shows full region colour
-//
-// regionOpacityCap is derived from rel_activation:
-//   rel ≥ +0.5σ → cap = 1.0   (fully opaque at peak vertices)
-//   rel ≈  0    → cap = 0.55  (region colour visible but muted)
-//   rel ≤ −0.3σ → cap = 0.18  (suppressed: barely colours the surface)
-//
-// Inactive regions → dimmed BASE_COL (visual cue that they're excluded).
 window.setBrainVertexSample=function(samples, gMin, gMax, activeRegs, regionStats){
   if(!brainReady||!vertMNI||!vertRegion)return;
   const N=colTgt.length/3;
@@ -2768,34 +2607,25 @@ window.setBrainVertexSample=function(samples, gMin, gMax, activeRegs, regionStat
   const valRange=gMax-gMin||1;
   const nSamples=samples.length;
   const activeSet=new Set(activeRegs);
-
-  // Per-region opacity ceiling from rel_activation
   const opacityCap={};
   ALL_R.forEach(r=>{
     const s=regionStats&&regionStats[r];
     const rel=s?s.rel_activation??0:0;
-    // map rel [-0.5, +0.5] → cap [0.18, 1.0]
     opacityCap[r]=Math.min(1.0, Math.max(0.18, 0.55 + rel * 0.9));
   });
-
   for(let i=0;i<N;i++){
     const r=vertRegion[i];
     if(!activeSet.has(r)){
-      // Inactive: dim the brain surface to push focus toward active regions
       colTgt[i*3  ]=BASE_COL.r*0.38;
       colTgt[i*3+1]=BASE_COL.g*0.38;
       colTgt[i*3+2]=BASE_COL.b*0.38;
       continue;
     }
-    // Map vertex to sample by MNI-Y (posterior→anterior)
     const yNorm=(vertMNI[i*3+1]-vertYMin)/yRange;
     const sIdx=Math.min(Math.floor(yNorm*(nSamples-1)),nSamples-1);
-    // Normalise to [0,1], gamma-curve to spread mid-range values
     const raw=Math.max(0,Math.min(1,(samples[sIdx]-gMin)/valRange));
-    const t=Math.pow(raw,0.5);   // γ=0.5 pulls mid-values up for visibility
-    // Final opacity = per-vertex t × region ceiling
+    const t=Math.pow(raw,0.5);
     const opacity=t*opacityCap[r];
-    // Lerp: BASE_COL → regionColor by opacity  (true opacity compositing)
     const c=REGION_RGB[r];
     colTgt[i*3  ]=BASE_COL.r*(1-opacity)+c.r*opacity;
     colTgt[i*3+1]=BASE_COL.g*(1-opacity)+c.g*opacity;
@@ -2828,7 +2658,6 @@ window.toggleBrainLabels=function(show){
   });
 };
 
-// ── Load real brain model ─────────────────────────────────────
 controls.addEventListener('start',()=>{controls.autoRotate=false;lastInteract=Date.now();});
 controls.addEventListener('end',()=>{lastInteract=Date.now();});
 
@@ -2842,7 +2671,6 @@ function animate(){
   controls.update();
 
   if(brainReady){
-    // Lerp vertex colors
     let dirty=false;
     for(let i=0;i<colAttr.count;i++){
       const dr=colTgt[i*3]-colCur[i*3],dg=colTgt[i*3+1]-colCur[i*3+1],db=colTgt[i*3+2]-colCur[i*3+2];
@@ -2854,13 +2682,31 @@ function animate(){
     }
     if(dirty)colAttr.needsUpdate=true;
 
+    if(vertRegion){
+      let breathDirty=false;
+      for(let i=0;i<colAttr.count;i++){
+        const b=regionBreath[vertRegion[i]];
+        if(!b||b.amp===0)continue;
+        const pulse=b.amp*Math.sin(2*Math.PI*b.freq*t+b.phase);
+        colAttr.array[i*3  ]=Math.min(1,Math.max(0,colCur[i*3  ]*(1+pulse)));
+        colAttr.array[i*3+1]=Math.min(1,Math.max(0,colCur[i*3+1]*(1+pulse)));
+        colAttr.array[i*3+2]=Math.min(1,Math.max(0,colCur[i*3+2]*(1+pulse)));
+        breathDirty=true;
+      }
+      if(breathDirty)colAttr.needsUpdate=true;
+    }
+
     ALL_R.forEach((r,idx)=>{
       const on=activeRegions.includes(r);
+      const gl=regionGlow[r];
       const gm=glowMeshes[r].material;
-      gm.opacity+=(on?(0.14+0.06*Math.sin(t*2.1+idx)):0-gm.opacity)*0.07;
-      glowMeshes[r].scale.setScalar(1+0.1*Math.sin(t*1.9+idx*1.2));
+      const pulse=0.03*Math.sin(t*2.1+idx);
+      const tgtOp=on?(gl.opacityTarget+pulse):0;
+      gm.opacity+=(tgtOp-gm.opacity)*0.07;
+      glowMeshes[r].scale.setScalar(1+0.08*Math.sin(t*1.9+idx*1.2));
       const rl=regionLights[r];
-      rl.intensity+=((on?(1.6+0.5*Math.sin(t*2.3+idx*.8)):0)-rl.intensity)*0.06;
+      const tgtInt=on?(gl.intensityTarget+0.2*Math.sin(t*2.3+idx*.8)):0;
+      rl.intensity+=(tgtInt-rl.intensity)*0.06;
     });
 
     ALL_R.forEach(r=>{
@@ -2889,7 +2735,6 @@ new ResizeObserver(resize).observe(canvas.parentElement);
 resize();
 animate();
 
-// ── OBJLoader — load real brain, fallback to procedural ───────
 const blFill=document.getElementById('blFill');
 const blPct =document.getElementById('blPct');
 
@@ -2916,9 +2761,9 @@ new OBJLoader().load('/static/brain.obj',
     }
   },
   (err)=>{
-    console.warn('brain.obj load failed (serve via HTTP server), using procedural fallback.',err);
+    console.warn('brain.obj load failed, using procedural fallback.',err);
     const lo=document.getElementById('brainLoading');
-    if(lo){const lbl=lo.querySelector('.bl-label');if(lbl)lbl.textContent='Using procedural model (serve via HTTP for real brain)';}
+    if(lo){const lbl=lo.querySelector('.bl-label');if(lbl)lbl.textContent='Using procedural model';}
     onGeoReady(buildProceduralGeo(),false);
   }
 );

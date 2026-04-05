@@ -10,6 +10,7 @@
 //! No Python process is spawned at runtime.
 
 use std::{net::SocketAddr, path::PathBuf, sync::Arc};
+use tracing::{info, warn, error};
 
 use anyhow::{Context, Result};
 use axum::{
@@ -64,14 +65,14 @@ fn find_root() -> PathBuf {
 
 fn pick_device() -> Device {
     if std::env::var("TRIBE_DEVICE").as_deref() == Ok("cpu") {
-        println!("[tribe] Using CPU (forced)");
+        info!("using CPU (forced via TRIBE_DEVICE)");
         return Device::Cpu;
     }
     if let Ok(dev) = Device::new_metal(0) {
-        println!("[tribe] Using Metal GPU");
+        info!("using Metal GPU");
         return dev;
     }
-    println!("[tribe] Using CPU");
+    info!("using CPU");
     Device::Cpu
 }
 
@@ -79,13 +80,20 @@ fn pick_device() -> Device {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
+
     let root = find_root();
     let weights_dir = root.join("tribe-v2-weights");
     let st_path = weights_dir.join("best.safetensors");
 
     // ── Ensure converted artifacts exist ──────────────────────────────────────
     if !st_path.exists() {
-        println!("[tribe] best.safetensors not found — running convert_ckpt.py …");
+        warn!("best.safetensors not found — running convert_ckpt.py");
         let status = std::process::Command::new("python3")
             .arg(root.join("convert_ckpt.py"))
             .current_dir(&root)
@@ -99,55 +107,54 @@ async fn main() -> Result<()> {
     let device = pick_device();
 
     // ── Load FmriEncoder ─────────────────────────────────────────────────────
-    println!("[tribe] Loading FmriEncoder …");
+    info!("loading FmriEncoder");
     let fmri = FmriEncoder::load(
         st_path.to_str().context("invalid path")?,
         &device,
     ).context("failed to load FmriEncoder")?;
-    println!("[tribe] FmriEncoder loaded ✓  ({:.1}M params)", fmri.n_params() as f64 / 1e6);
+    info!(params_m = format!("{:.1}", fmri.n_params() as f64 / 1e6), "FmriEncoder loaded");
 
     // ── Mel spectrogram extractor ─────────────────────────────────────────────
     let mel_spec = match MelSpec::load(&weights_dir) {
-        Ok(m) => { println!("[tribe] MelSpec loaded ✓"); Some(m) }
-        Err(e) => { println!("[tribe] MelSpec not loaded: {e}"); None }
+        Ok(m)  => { info!("MelSpec loaded"); Some(m) }
+        Err(e) => { warn!(error = %e, "MelSpec not loaded"); None }
     };
 
     // ── Wav2Vec2Bert (audio encoder) ─────────────────────────────────────────
     let w2v_path = weights_dir.join("w2v-bert-2.0.safetensors");
     let audio_enc = if w2v_path.exists() {
         let p = w2v_path.to_str().context("invalid w2v path")?;
-        println!("[tribe] Loading Wav2Vec2Bert …");
+        info!("loading Wav2Vec2Bert");
         match Wav2Vec2Bert::load(p, &device) {
-            Ok(enc) => { println!("[tribe] Wav2Vec2Bert loaded ✓"); Some(enc) }
-            Err(e)  => { println!("[tribe] Wav2Vec2Bert failed: {e}"); None }
+            Ok(enc) => { info!("Wav2Vec2Bert loaded"); Some(enc) }
+            Err(e)  => { error!(error = %e, "Wav2Vec2Bert failed to load"); None }
         }
     } else {
-        println!("[tribe] w2v-bert-2.0.safetensors not found (audio disabled)");
+        warn!("w2v-bert-2.0.safetensors not found — audio disabled");
         None
     };
 
     // ── LLaMA-3.2-3B (text encoder) ──────────────────────────────────────────
-    // Place weights in tribe-v2-weights/llama/ with tokenizer.json + model shards.
     let llama_dir = weights_dir.join("llama");
     let text_enc = if llama_dir.exists() {
-        println!("[tribe] Loading LLaMA-3.2-3B text encoder …");
+        info!("loading LLaMA text encoder");
         match LlamaTextEncoder::load(&llama_dir, &device) {
-            Ok(enc) => { println!("[tribe] LLaMA text encoder loaded ✓"); Some(enc) }
-            Err(e)  => { println!("[tribe] LLaMA failed to load: {e}"); None }
+            Ok(enc) => { info!("LLaMA text encoder loaded"); Some(enc) }
+            Err(e)  => { error!(error = %e, "LLaMA text encoder failed to load"); None }
         }
     } else {
-        println!("[tribe] tribe-v2-weights/llama/ not found — using hash text encoder");
+        warn!("tribe-v2-weights/llama/ not found — using hash-based text features");
         None
     };
 
     // ── Metal JIT warmup ─────────────────────────────────────────────────────
-    println!("[tribe] Warming up Metal kernels …");
+    info!("warming up Metal kernels");
     {
         use candle_core::Tensor;
         let dummy = Tensor::zeros((1, 4, 6144), candle_core::DType::F32, &device)?;
         let _ = fmri.forward(Some(&dummy), None, None);
     }
-    println!("[tribe] Warmup done ✓");
+    info!("warmup done");
 
     let state = Arc::new(AppState {
         fmri, text_enc, audio_enc, mel_spec,
@@ -171,8 +178,8 @@ async fn main() -> Result<()> {
         .with_state(state);
 
     let addr: SocketAddr = format!("0.0.0.0:{SERVER_PORT}").parse()?;
-    println!("[tribe] Listening on http://localhost:{SERVER_PORT}");
-    println!("[tribe] WebSocket at  ws://localhost:{SERVER_PORT}/ws");
+    info!(addr = %format!("http://localhost:{SERVER_PORT}"), "listening");
+    info!(addr = %format!("ws://localhost:{SERVER_PORT}/ws"), "WebSocket ready");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
