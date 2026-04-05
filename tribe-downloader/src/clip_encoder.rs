@@ -250,20 +250,5 @@ impl ClipVisualEncoder {
 /// Fixed [PROJ_OUT × HIDDEN] random projection matrix, seeded at 43.
 /// Preserves relative distances between CLIP embeddings (JL embedding).
 fn build_proj_matrix() -> Vec<f32> {
-    let scale = 1.0 / (HIDDEN as f32).sqrt();
-    let mut state: u64 = 43;
-    let n = PROJ_OUT * HIDDEN;
-    let mut out = Vec::with_capacity(n);
-    while out.len() < n {
-        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-        let u1 = (state >> 33) as f32 / (u32::MAX as f32);
-        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-        let u2 = (state >> 33) as f32 / (u32::MAX as f32);
-        let r = (-2.0 * u1.max(1e-7).ln()).sqrt();
-        let theta = 2.0 * std::f32::consts::PI * u2;
-        out.push(r * theta.cos() * scale);
-        if out.len() < n { out.push(r * theta.sin() * scale); }
-    }
-    out.truncate(n);
-    out
+    crate::features::lcg_normal(43, PROJ_OUT * HIDDEN, 1.0 / (HIDDEN as f32).sqrt(), 0.0)
 }

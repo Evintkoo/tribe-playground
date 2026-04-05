@@ -8,6 +8,9 @@ use crate::clip_encoder::ClipVisualEncoder;
 
 /// Nearest-neighbour resample [T_src, D] → [target_len, D].
 pub fn temporal_pool(feats: &Tensor, target_len: usize) -> Result<Tensor> {
+    if target_len == 0 {
+        return Tensor::zeros((0, feats.dim(1)?), feats.dtype(), feats.device());
+    }
     let t_src = feats.dim(0)?;
     if t_src == target_len {
         return Ok(feats.clone());
@@ -119,14 +122,12 @@ pub fn visual_features_clip(
     bytes: &[u8],
     seq_len: usize,
     enc: &ClipVisualEncoder,
-    device: &Device,
 ) -> anyhow::Result<Tensor> {
     let feat = enc.encode_image(bytes)?;            // [1, 1, 2816]
     let feat_1d = feat.squeeze(0)?.squeeze(0)?;     // [2816]
     let rows: Vec<Tensor> = (0..seq_len).map(|_| feat_1d.clone()).collect();
     let stacked = Tensor::stack(&rows, 0)?;         // [seq_len, 2816]
-    let out = stacked.unsqueeze(0)?;                // [1, seq_len, 2816]
-    Ok(out.to_device(device)?)
+    Ok(stacked.unsqueeze(0)?)                       // [1, seq_len, 2816]
 }
 
 // ── Hash-based demo visual features (no V-JEPA2 required) ───────────────────
@@ -212,55 +213,38 @@ pub fn text_to_features_demo(text: &str, seq_len: usize, device: &Device) -> Res
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-fn build_projection_matrix() -> Vec<f32> {
-    // Seeded 42 LCG → [TEXT_FEAT_DIM * PROJ_IN_DIM] normal-ish floats
-    // Scale by 1/sqrt(PROJ_IN_DIM)
-    let scale = 1.0 / (PROJ_IN_DIM as f32).sqrt();
-    let mut state: u64 = 42;
-    let n = TEXT_FEAT_DIM * PROJ_IN_DIM;
-    let mut out = Vec::with_capacity(n);
-    for _ in 0..n {
-        // Box-Muller using two LCG draws
-        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-        let u1 = (state >> 33) as f32 / (u32::MAX as f32);
-        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-        let u2 = (state >> 33) as f32 / (u32::MAX as f32);
-        let z = (-2.0 * (u1.max(1e-7).ln())).sqrt() * (2.0 * std::f32::consts::PI * u2).cos();
-        out.push(z * scale);
-    }
-    out
-}
-
-fn lcg_normal_n(seed: u32, n: usize) -> Vec<f32> {
-    let mut state: u64 = seed as u64 | 1;
+/// Core LCG Box-Muller sampler. Shared by all pseudo-random feature generators.
+/// Generates `n` normal samples scaled by `scale`, seeded at `seed`.
+/// Pass `clamp_val > 0` to clamp outputs to `±clamp_val`; `0.0` for no clamping.
+pub(crate) fn lcg_normal(seed: u64, n: usize, scale: f32, clamp_val: f32) -> Vec<f32> {
+    let mut state = seed | 1;
     let mut out = Vec::with_capacity(n);
     while out.len() < n {
         state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
         let u1 = (state >> 33) as f32 / (u32::MAX as f32);
         state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
         let u2 = (state >> 33) as f32 / (u32::MAX as f32);
-        let r = (-2.0 * u1.max(1e-7).ln()).sqrt();
+        let r = (-2.0 * u1.max(1e-7).ln()).sqrt() * scale;
         let theta = 2.0 * std::f32::consts::PI * u2;
-        out.push((r * theta.cos()).clamp(-3.0, 3.0));
-        if out.len() < n { out.push((r * theta.sin()).clamp(-3.0, 3.0)); }
+        let (z0, z1) = (r * theta.cos(), r * theta.sin());
+        let apply = |z: f32| if clamp_val > 0.0 { z.clamp(-clamp_val, clamp_val) } else { z };
+        out.push(apply(z0));
+        if out.len() < n { out.push(apply(z1)); }
     }
+    out.truncate(n);
     out
 }
 
+fn build_projection_matrix() -> Vec<f32> {
+    lcg_normal(42, TEXT_FEAT_DIM * PROJ_IN_DIM, 1.0 / (PROJ_IN_DIM as f32).sqrt(), 0.0)
+}
+
+fn lcg_normal_n(seed: u32, n: usize) -> Vec<f32> {
+    lcg_normal(seed as u64, n, 1.0, 3.0)
+}
+
 fn lcg_normal_768(seed: u32) -> Vec<f32> {
-    let mut state: u64 = seed as u64 | 1;
-    let mut out = Vec::with_capacity(PROJ_IN_DIM);
-    for _ in 0..(PROJ_IN_DIM / 2) {
-        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-        let u1 = (state >> 33) as f32 / (u32::MAX as f32);
-        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-        let u2 = (state >> 33) as f32 / (u32::MAX as f32);
-        let r = (-2.0 * u1.max(1e-7).ln()).sqrt();
-        let theta = 2.0 * std::f32::consts::PI * u2;
-        out.push((r * theta.cos()).clamp(-3.0, 3.0));
-        out.push((r * theta.sin()).clamp(-3.0, 3.0));
-    }
-    out
+    lcg_normal(seed as u64, PROJ_IN_DIM, 1.0, 3.0)
 }
 
 fn pool_feat_rows(rows: &[Vec<f32>], target: usize) -> Vec<Vec<f32>> {

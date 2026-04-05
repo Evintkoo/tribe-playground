@@ -13,7 +13,7 @@ const DEPTH:     usize = 8;           // attention layers; equal number of FF la
 const FF_INNER:  usize = DIM * 4;     // 4608
 const N_LAYERS:  usize = DEPTH * 2;   // 16 total (alternating attn / ff)
 const MAX_SEQ:   usize = 1024;
-const N_VERT:    usize = 20484;
+pub const N_VERT: usize = 20484;
 const ROT_DIM:   usize = 72;          // first 72 of 144 head dims are rotated
 
 // ── ScaleNorm ─────────────────────────────────────────────────────────────────
@@ -192,14 +192,13 @@ impl TransformerEncoder {
         let t = x.dim(1)?;
         let (cos, sin) = self.rotary.forward(t, x.device())?;
         let mut h = x.clone();
-        for (i, layer) in self.layers.iter().enumerate() {
+        for layer in &self.layers {
             let normed = layer.norm.forward(&h)?;
             let out = match &layer.block {
                 Block::Attn(a) => a.forward(&normed, &cos, &sin)?,
                 Block::FF(ff)  => ff.forward(&normed)?,
             };
             h = (h + out.broadcast_mul(&layer.rscale)?)?;
-            let _ = i; // suppress warning
         }
         self.final_norm.forward(&h)
     }

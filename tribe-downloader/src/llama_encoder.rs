@@ -43,7 +43,7 @@ impl RmsNorm {
 
     fn forward(&self, x: &Tensor) -> Result<Tensor> {
         let rms = x.sqr()?.mean_keepdim(D::Minus1)?
-            .clamp(1e-8_f64, f64::MAX)?.sqrt()?;
+            .clamp(RMS_EPS, f64::MAX)?.sqrt()?;
         x.broadcast_div(&rms)?.broadcast_mul(&self.w)
     }
 }

@@ -14,8 +14,7 @@ use std::path::Path;
 
 /// Decode any audio file bytes to mono f32 PCM at 16 000 Hz.
 pub fn decode_audio(bytes: &[u8]) -> Result<Vec<f32>> {
-    let bytes = bytes.to_vec();
-    decode_audio_owned(bytes)
+    decode_audio_owned(bytes.to_vec())
 }
 
 fn decode_audio_owned(bytes: Vec<u8>) -> Result<Vec<f32>> {

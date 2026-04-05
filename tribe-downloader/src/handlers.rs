@@ -125,7 +125,7 @@ where
         // Video always uses hash-demo (no frame extractor yet).
         if !is_video_modality {
             if let Some(ref clip) = st.clip_enc {
-                match visual_features_clip(&bytes, seq, clip, device) {
+                match visual_features_clip(&bytes, seq, clip) {
                     Ok(t)  => Some(t),
                     Err(e) => return Err(format!("CLIP encode: {e}")),
                 }
@@ -163,7 +163,7 @@ where
         .map(|rows| rows.into_iter().flatten().collect())
         .map_err(|e| e.to_string())?;
 
-    let n_vert = 20484usize;
+    let n_vert = crate::fmri_encoder::N_VERT;
     let (rstats, gstats) = region_stats(&act_flat, n_vert);
 
     let n_time = act_flat.len() / n_vert;
@@ -275,6 +275,7 @@ pub async fn health(State(st): State<Arc<AppState>>) -> impl IntoResponse {
         "ready": true,
         "audio_enc": st.audio_enc.is_some(),
         "text_enc": st.text_enc.is_some(),
+        "clip_enc": st.clip_enc.is_some(),
     }))
 }
 
@@ -307,10 +308,11 @@ pub async fn info(State(st): State<Arc<AppState>>) -> impl IntoResponse {
         "encoders": {
             "text":  text_status,
             "audio": if st.audio_enc.is_some() { "Wav2Vec-BERT 2.0 · loaded" } else { "not loaded" },
+            "image": if st.clip_enc.is_some() { "CLIP ViT-L/14 · loaded" } else { "not loaded" },
             "video": "not loaded"
         },
         "runtime": "Rust/candle (no Python)",
-        "demo_mode": st.text_enc.is_none()
+        "demo_mode": st.text_enc.is_none() || st.clip_enc.is_none()
     }))
 }
 
