@@ -744,7 +744,7 @@ select:focus { border-color: var(--ac); }
 }
 .rst-head {
   display: grid;
-  grid-template-columns: 1fr 70px 80px 72px 40px;
+  grid-template-columns: 1fr 64px 66px 52px 52px 36px;
   padding: 7px 12px;
   background: rgba(255,255,255,0.03);
   border-bottom: 1px solid var(--p-border);
@@ -775,7 +775,7 @@ select:focus { border-color: var(--ac); }
 .rst-hcell:hover .hdr-tip { display: block; }
 .rst-row {
   display: grid;
-  grid-template-columns: 1fr 70px 80px 72px 40px;
+  grid-template-columns: 1fr 64px 66px 52px 52px 36px;
   padding: 7px 12px;
   border-bottom: 1px solid var(--p-border);
   cursor: pointer;
@@ -1148,6 +1148,74 @@ audio#audioPreview {
 /* ── Relative activation labels ──────────────────────────────── */
 .rel-act-pos { color: var(--green); }
 .rel-act-neg { color: var(--orange); }
+
+/* ── Peak stat column ────────────────────────────────────────── */
+.rst-peak { font-family: var(--mono); font-size: 11px; color: var(--t3); }
+
+/* ── 3D label detail line ────────────────────────────────────── */
+.rl-detail {
+  font-family: var(--mono); font-size: 8px; color: var(--t3);
+  margin-top: 3px; line-height: 1.5;
+}
+
+/* ── Colorbar legend ─────────────────────────────────────────── */
+.colorbar {
+  position: absolute;
+  bottom: 46px; right: 14px;
+  width: 132px;
+  z-index: 5;
+  background: rgba(6,8,18,0.86);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r8);
+  padding: 8px 10px;
+  backdrop-filter: blur(14px);
+  display: none;
+}
+.colorbar.visible { display: block; }
+.cb-title {
+  font-family: var(--mono); font-size: 8px;
+  letter-spacing: .10em; text-transform: uppercase;
+  color: var(--t3); margin-bottom: 5px;
+}
+.cb-scale {
+  height: 6px; border-radius: 3px; margin-bottom: 4px;
+  background: linear-gradient(90deg,
+    #1833bb 0%, #3355cc 20%, #5577ee 35%,
+    #888 50%,
+    #ccaa22 65%, #dd6600 80%, #cc2200 100%);
+}
+.cb-labels {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 8px; color: var(--t3);
+}
+
+/* ── Post-prediction metadata badge ─────────────────────────── */
+.pred-meta {
+  position: absolute;
+  top: 50px; left: 12px;
+  z-index: 6;
+  background: rgba(6,8,18,0.82);
+  border: 1px solid var(--p-border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-family: var(--mono); font-size: 9px;
+  display: none; gap: 8px;
+  align-items: center;
+  backdrop-filter: blur(12px);
+}
+.pred-meta.visible { display: flex; }
+.pm-sep { width: 1px; height: 10px; background: var(--p-border); flex-shrink: 0; }
+.pm-label { color: var(--t3); }
+.pm-val { color: var(--t2); }
+
+/* ── Insight stat chips ──────────────────────────────────────── */
+.icard-statrow { display: flex; gap: 6px; flex-wrap: wrap; }
+.icard-stat {
+  font-family: var(--mono); font-size: 9px;
+  background: var(--surface-a); border: 1px solid var(--p-border);
+  border-radius: 4px; padding: 2px 7px; color: var(--t3);
+}
+.icard-stat strong { color: var(--t2); }
 </style>
 </head>
 <body>
@@ -1515,15 +1583,16 @@ audio#audioPreview {
         <span class="rst-hcell">Region</span>
         <span class="rst-hcell">Rel. Act.<span class="hdr-tip">Regional z-score vs whole-brain mean. Positive = more active than average.</span></span>
         <span class="rst-hcell">Mean (z)<span class="hdr-tip">Mean predicted BOLD amplitude across vertices in this region.</span></span>
-        <span class="rst-hcell">σ<span class="hdr-tip">Vertex-level standard deviation — higher = more heterogeneous.</span></span>
+        <span class="rst-hcell">σ<span class="hdr-tip">Vertex-level standard deviation — higher = more heterogeneous activation within the region.</span></span>
+        <span class="rst-hcell">Peak<span class="hdr-tip">95th-percentile absolute vertex activation — the top 5% of vertices by amplitude.</span></span>
         <span class="rst-hcell">Status</span>
       </div>
-      <div class="rst-row on"  data-r="visual"     onclick="toggleR('visual')">    <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-visual)"></div>Visual<div class="region-tip"><div class="rt-name">Visual Cortex</div><div class="rt-loc">Occipital lobe · BA 17, 18, 19 · V1–V4/MT</div><div class="rt-fns"><span class="rt-fn-item">V1 detects edges, orientations, spatial frequency</span><span class="rt-fn-item">V4 encodes color, shape, object form</span><span class="rt-fn-item">MT/V5 processes motion and optic flow</span></div><div class="rt-high"><strong>High activation:</strong> visual input, reading, vivid imagery</div></div></span><span class="rst-cell rst-pearson" id="pr-visual">—</span><span class="rst-cell rst-mean" id="mn-visual">—</span><span class="rst-cell rst-std" id="sd-visual">—</span><span class="rst-cell rst-status" id="st-visual">ON</span></div>
-      <div class="rst-row"     data-r="auditory"   onclick="toggleR('auditory')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-auditory)"></div>Auditory<div class="region-tip"><div class="rt-name">Auditory Cortex</div><div class="rt-loc">Superior temporal gyrus · BA 41, 42, 22</div><div class="rt-fns"><span class="rt-fn-item">A1 (Heschl's gyrus) maps tones tonotopically</span><span class="rt-fn-item">Auditory belt parses complex sounds, timbre</span><span class="rt-fn-item">Posterior STG → Wernicke's area</span></div><div class="rt-high"><strong>High activation:</strong> speech, music, environmental sounds</div></div></span><span class="rst-cell rst-pearson" id="pr-auditory">—</span><span class="rst-cell rst-mean" id="mn-auditory">—</span><span class="rst-cell rst-std" id="sd-auditory">—</span><span class="rst-cell rst-status" id="st-auditory" style="color:var(--t3)">off</span></div>
-      <div class="rst-row"     data-r="language"   onclick="toggleR('language')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-language)"></div>Language<div class="region-tip"><div class="rt-name">Language Network</div><div class="rt-loc">Left frontal + temporal · BA 44, 45, 22, 39</div><div class="rt-fns"><span class="rt-fn-item">Broca's area (BA44/45): syntax, production</span><span class="rt-fn-item">Wernicke's area (BA22): speech comprehension</span><span class="rt-fn-item">Angular gyrus (BA39): reading, semantics</span></div><div class="rt-high"><strong>High activation:</strong> reading, speech, semantic tasks</div></div></span><span class="rst-cell rst-pearson" id="pr-language">—</span><span class="rst-cell rst-mean" id="mn-language">—</span><span class="rst-cell rst-std" id="sd-language">—</span><span class="rst-cell rst-status" id="st-language" style="color:var(--t3)">off</span></div>
-      <div class="rst-row"     data-r="prefrontal" onclick="toggleR('prefrontal')"><span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-prefrontal)"></div>Prefrontal<div class="region-tip"><div class="rt-name">Prefrontal Cortex</div><div class="rt-loc">Frontal lobe · BA 9, 10, 11, 46, 47</div><div class="rt-fns"><span class="rt-fn-item">dlPFC (BA9/46): working memory, cognitive control</span><span class="rt-fn-item">vmPFC (BA11): reward, emotional valuation</span><span class="rt-fn-item">ACC monitors conflict, drives attention</span></div><div class="rt-high"><strong>High activation:</strong> complex narratives, inference, attention</div></div></span><span class="rst-cell rst-pearson" id="pr-prefrontal">—</span><span class="rst-cell rst-mean" id="mn-prefrontal">—</span><span class="rst-cell rst-std" id="sd-prefrontal">—</span><span class="rst-cell rst-status" id="st-prefrontal" style="color:var(--t3)">off</span></div>
-      <div class="rst-row"     data-r="motor"      onclick="toggleR('motor')">     <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-motor)"></div>Motor<div class="region-tip"><div class="rt-name">Motor Cortex</div><div class="rt-loc">Precentral gyrus · BA 4, 6 · M1 + premotor + SMA</div><div class="rt-fns"><span class="rt-fn-item">M1 (BA4): executes voluntary movements</span><span class="rt-fn-item">Premotor (BA6): plans movements</span><span class="rt-fn-item">SMA: action sequences, self-initiated movement</span></div><div class="rt-high"><strong>Surprising:</strong> reading action verbs ("kick", "run", "grasp")</div></div></span><span class="rst-cell rst-pearson" id="pr-motor">—</span><span class="rst-cell rst-mean" id="mn-motor">—</span><span class="rst-cell rst-std" id="sd-motor">—</span><span class="rst-cell rst-status" id="st-motor" style="color:var(--t3)">off</span></div>
-      <div class="rst-row"     data-r="parietal"   onclick="toggleR('parietal')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-parietal)"></div>Parietal<div class="region-tip"><div class="rt-name">Parietal Cortex</div><div class="rt-loc">Parietal lobe · BA 5, 7, 39, 40 · IPS + SPL</div><div class="rt-fns"><span class="rt-fn-item">IPS: spatial attention, saccades, numerosity</span><span class="rt-fn-item">SPL: proprioception, body-in-space</span><span class="rt-fn-item">Angular gyrus: reading, semantics</span></div><div class="rt-high"><strong>High activation:</strong> spatial tasks, sentence comprehension</div></div></span><span class="rst-cell rst-pearson" id="pr-parietal">—</span><span class="rst-cell rst-mean" id="mn-parietal">—</span><span class="rst-cell rst-std" id="sd-parietal">—</span><span class="rst-cell rst-status" id="st-parietal" style="color:var(--t3)">off</span></div>
+      <div class="rst-row on"  data-r="visual"     onclick="toggleR('visual')">    <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-visual)"></div>Visual<div class="region-tip"><div class="rt-name">Visual Cortex</div><div class="rt-loc">Occipital lobe · BA 17, 18, 19 · V1–V4/MT</div><div class="rt-fns"><span class="rt-fn-item">V1 detects edges, orientations, spatial frequency</span><span class="rt-fn-item">V4 encodes color, shape, object form</span><span class="rt-fn-item">MT/V5 processes motion and optic flow</span></div><div class="rt-high"><strong>High activation:</strong> visual input, reading, vivid imagery</div></div></span><span class="rst-cell rst-pearson" id="pr-visual">—</span><span class="rst-cell rst-mean" id="mn-visual">—</span><span class="rst-cell rst-std" id="sd-visual">—</span><span class="rst-cell rst-peak" id="pk-visual">—</span><span class="rst-cell rst-status" id="st-visual">ON</span></div>
+      <div class="rst-row"     data-r="auditory"   onclick="toggleR('auditory')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-auditory)"></div>Auditory<div class="region-tip"><div class="rt-name">Auditory Cortex</div><div class="rt-loc">Superior temporal gyrus · BA 41, 42, 22</div><div class="rt-fns"><span class="rt-fn-item">A1 (Heschl's gyrus) maps tones tonotopically</span><span class="rt-fn-item">Auditory belt parses complex sounds, timbre</span><span class="rt-fn-item">Posterior STG → Wernicke's area</span></div><div class="rt-high"><strong>High activation:</strong> speech, music, environmental sounds</div></div></span><span class="rst-cell rst-pearson" id="pr-auditory">—</span><span class="rst-cell rst-mean" id="mn-auditory">—</span><span class="rst-cell rst-std" id="sd-auditory">—</span><span class="rst-cell rst-peak" id="pk-auditory">—</span><span class="rst-cell rst-status" id="st-auditory" style="color:var(--t3)">off</span></div>
+      <div class="rst-row"     data-r="language"   onclick="toggleR('language')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-language)"></div>Language<div class="region-tip"><div class="rt-name">Language Network</div><div class="rt-loc">Left frontal + temporal · BA 44, 45, 22, 39</div><div class="rt-fns"><span class="rt-fn-item">Broca's area (BA44/45): syntax, production</span><span class="rt-fn-item">Wernicke's area (BA22): speech comprehension</span><span class="rt-fn-item">Angular gyrus (BA39): reading, semantics</span></div><div class="rt-high"><strong>High activation:</strong> reading, speech, semantic tasks</div></div></span><span class="rst-cell rst-pearson" id="pr-language">—</span><span class="rst-cell rst-mean" id="mn-language">—</span><span class="rst-cell rst-std" id="sd-language">—</span><span class="rst-cell rst-peak" id="pk-language">—</span><span class="rst-cell rst-status" id="st-language" style="color:var(--t3)">off</span></div>
+      <div class="rst-row"     data-r="prefrontal" onclick="toggleR('prefrontal')"><span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-prefrontal)"></div>Prefrontal<div class="region-tip"><div class="rt-name">Prefrontal Cortex</div><div class="rt-loc">Frontal lobe · BA 9, 10, 11, 46, 47</div><div class="rt-fns"><span class="rt-fn-item">dlPFC (BA9/46): working memory, cognitive control</span><span class="rt-fn-item">vmPFC (BA11): reward, emotional valuation</span><span class="rt-fn-item">ACC monitors conflict, drives attention</span></div><div class="rt-high"><strong>High activation:</strong> complex narratives, inference, attention</div></div></span><span class="rst-cell rst-pearson" id="pr-prefrontal">—</span><span class="rst-cell rst-mean" id="mn-prefrontal">—</span><span class="rst-cell rst-std" id="sd-prefrontal">—</span><span class="rst-cell rst-peak" id="pk-prefrontal">—</span><span class="rst-cell rst-status" id="st-prefrontal" style="color:var(--t3)">off</span></div>
+      <div class="rst-row"     data-r="motor"      onclick="toggleR('motor')">     <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-motor)"></div>Motor<div class="region-tip"><div class="rt-name">Motor Cortex</div><div class="rt-loc">Precentral gyrus · BA 4, 6 · M1 + premotor + SMA</div><div class="rt-fns"><span class="rt-fn-item">M1 (BA4): executes voluntary movements</span><span class="rt-fn-item">Premotor (BA6): plans movements</span><span class="rt-fn-item">SMA: action sequences, self-initiated movement</span></div><div class="rt-high"><strong>Surprising:</strong> reading action verbs ("kick", "run", "grasp")</div></div></span><span class="rst-cell rst-pearson" id="pr-motor">—</span><span class="rst-cell rst-mean" id="mn-motor">—</span><span class="rst-cell rst-std" id="sd-motor">—</span><span class="rst-cell rst-peak" id="pk-motor">—</span><span class="rst-cell rst-status" id="st-motor" style="color:var(--t3)">off</span></div>
+      <div class="rst-row"     data-r="parietal"   onclick="toggleR('parietal')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-parietal)"></div>Parietal<div class="region-tip"><div class="rt-name">Parietal Cortex</div><div class="rt-loc">Parietal lobe · BA 5, 7, 39, 40 · IPS + SPL</div><div class="rt-fns"><span class="rt-fn-item">IPS: spatial attention, saccades, numerosity</span><span class="rt-fn-item">SPL: proprioception, body-in-space</span><span class="rt-fn-item">Angular gyrus: reading, semantics</span></div><div class="rt-high"><strong>High activation:</strong> spatial tasks, sentence comprehension</div></div></span><span class="rst-cell rst-pearson" id="pr-parietal">—</span><span class="rst-cell rst-mean" id="mn-parietal">—</span><span class="rst-cell rst-std" id="sd-parietal">—</span><span class="rst-cell rst-peak" id="pk-parietal">—</span><span class="rst-cell rst-status" id="st-parietal" style="color:var(--t3)">off</span></div>
     </div>
 
     <!-- Insight panel -->
@@ -1540,6 +1609,22 @@ audio#audioPreview {
       <div id="inferBar"></div>
     </div>
     <div id="inferStepLabel"></div>
+
+    <!-- Colorbar legend (shown after first prediction) -->
+    <div class="colorbar" id="bColorbar">
+      <div class="cb-title">BOLD Activation</div>
+      <div class="cb-scale"></div>
+      <div class="cb-labels"><span>Suppressed</span><span>0</span><span>Active</span></div>
+    </div>
+
+    <!-- Post-prediction metadata badge -->
+    <div class="pred-meta" id="predMeta">
+      <span class="pm-label">seq</span><span class="pm-val" id="pmSeq">—</span>
+      <div class="pm-sep"></div>
+      <span class="pm-label">time</span><span class="pm-val" id="pmTime">—</span>
+      <div class="pm-sep"></div>
+      <span class="pm-label">modality</span><span class="pm-val" id="pmMod">—</span>
+    </div>
 
     <!-- Comparison panel (hidden until Pin A is used) -->
     <div class="compare-panel" id="comparePanel" style="display:none">
@@ -1597,7 +1682,7 @@ audio#audioPreview {
     <!-- IMAGE panel -->
     <div class="input-panel" id="panel-image">
       <div class="input-meta">
-        <span class="meta-item">encoder: <span>V-JEPA2</span></span>
+        <span class="meta-item">encoder: <span id="imageEncoderLabel">CLIP ViT-L/14</span></span>
         <div class="meta-sep"></div>
         <span class="meta-item">accepted: <span>JPG · PNG · WebP</span></span>
       </div>
@@ -1725,6 +1810,12 @@ audio#audioPreview {
           <span class="info-encoder-name">Audio</span>
           <span class="info-encoder-model" id="encoderStatus-audio">Wav2Vec-BERT 2.0</span>
           <span class="info-encoder-dims">2,048 dim</span>
+        </div>
+        <div class="info-encoder-row">
+          <div class="info-encoder-dot" style="background:var(--r-visual)"></div>
+          <span class="info-encoder-name">Image</span>
+          <span class="info-encoder-model" id="encoderStatus-image">CLIP ViT-L/14</span>
+          <span class="info-encoder-dims">2,816 dim</span>
         </div>
         <div class="info-encoder-row">
           <div class="info-encoder-dot" style="background:var(--r-prefrontal)"></div>
@@ -1899,11 +1990,16 @@ function _updateInsight(data) {
 
   // Per-region cards
   cards.innerHTML = ranked.map(({ r, rel }) => {
-    const e = REGION_EDU[r];
+    const e  = REGION_EDU[r];
+    const s  = rs[r];
     if (!e) return '';
     const lv = _insightLevel(rel);
     const sg = rel >= 0 ? '+' : '';
     const stimTxt = stim === 'audio' ? e.stimAudio : stim.includes('video') ? e.stimVideo : e.stimText;
+    const peak  = s?.peak   != null ? s.peak.toFixed(3)   : '—';
+    const std   = s?.std    != null ? s.std.toFixed(3)     : '—';
+    const nv    = s?.n_vertices != null ? s.n_vertices.toLocaleString() : '—';
+    const mn    = s?.mean   != null ? (s.mean>=0?'+':'')+s.mean.toFixed(3) : '—';
     return `<div class="icard">
       <div class="icard-head">
         <div class="icard-dot" style="background:${e.color}"></div>
@@ -1915,6 +2011,12 @@ function _updateInsight(data) {
         <div class="icard-anatomy">
           <span class="icard-atom">${e.lobe}</span>
           <span class="icard-atom">${e.ba}</span>
+        </div>
+        <div class="icard-statrow">
+          <span class="icard-stat">μ <strong>${mn}</strong></span>
+          <span class="icard-stat">σ <strong>${std}</strong></span>
+          <span class="icard-stat">peak <strong>${peak}</strong></span>
+          <span class="icard-stat"><strong>${nv}</strong> vertices</span>
         </div>
         <div class="icard-explain">${e.what}</div>
         <div class="icard-explain" style="border-top:1px solid var(--b0);padding-top:6px;margin-top:2px;font-size:11px;color:var(--t3)">
@@ -2228,19 +2330,38 @@ function _applyResult(data) {
     const pr  = document.getElementById('pr-' + r);
     const mn  = document.getElementById('mn-' + r);
     const sd  = document.getElementById('sd-' + r);
+    const pk  = document.getElementById('pk-' + r);
     if (!st) return;
     if (onR && s) {
       const rel = s.rel_activation ?? 0;
-      pr.textContent = (rel >= 0 ? '+' : '') + rel.toFixed(3);
+      pr.textContent = (rel >= 0 ? '+' : '') + rel.toFixed(2);
       pr.style.color = rel > 0.3 ? 'var(--green)' : rel < -0.3 ? 'var(--orange)' : 'var(--t2)';
-      mn.textContent = (s.mean >= 0 ? '+' : '') + s.mean.toFixed(5);
-      sd.textContent = s.std.toFixed(5);
+      mn.textContent = (s.mean >= 0 ? '+' : '') + s.mean.toFixed(3);
+      sd.textContent = s.std.toFixed(3);
+      if (pk) pk.textContent = s.peak != null ? s.peak.toFixed(3) : '—';
       st.textContent = 'ON'; st.style.color = 'var(--green)';
     } else {
       pr.textContent = '—'; mn.textContent = '—'; sd.textContent = '—';
+      if (pk) pk.textContent = '—';
       st.textContent = 'off'; st.style.color = 'var(--t3)'; pr.style.color = '';
     }
   });
+
+  // Prediction metadata badge
+  const predMeta = document.getElementById('predMeta');
+  const pmSeq    = document.getElementById('pmSeq');
+  const pmTime   = document.getElementById('pmTime');
+  const pmMod    = document.getElementById('pmMod');
+  if (predMeta) {
+    if (pmSeq)  pmSeq.textContent  = (data.seq_len ?? '—') + ' TR';
+    if (pmTime) pmTime.textContent = data.elapsed_ms != null ? data.elapsed_ms.toFixed(0) + ' ms' : '—';
+    if (pmMod)  pmMod.textContent  = data.modality || '—';
+    predMeta.classList.add('visible');
+  }
+
+  // Show colorbar
+  const cb = document.getElementById('bColorbar');
+  if (cb) cb.classList.add('visible');
 
   // Demo banner
   const banner = document.getElementById('demoBanner');
@@ -2475,10 +2596,13 @@ async function fetchModelInfo() {
 
     // Update encoder status in info modal if present
     if (d.encoders) {
-      ['text','audio','video'].forEach(m => {
+      ['text','audio','image','video'].forEach(m => {
         const el2 = document.getElementById('encoderStatus-' + m);
-        if (el2) el2.textContent = d.encoders[m] || '—';
+        if (el2 && d.encoders[m]) el2.textContent = d.encoders[m];
       });
+      // Update image panel encoder label
+      const imgLbl = document.getElementById('imageEncoderLabel');
+      if (imgLbl && d.encoders.image) imgLbl.textContent = d.encoders.image.replace(' · loaded','').replace(' · not loaded','not loaded');
     }
   } catch(_) {}
 }
@@ -2668,7 +2792,8 @@ ALL_R.forEach(r=>{
       <span class="rl-name">${RNAMES_DISPLAY[r]||r.toUpperCase()}</span>
     </div>
     <div class="rl-bar-wrap"><div class="rl-bar-fill" id="rlbar-${r}" style="background:${rgb}"></div></div>
-    <div class="rl-val" id="rlval-${r}">—</div>`;
+    <div class="rl-val" id="rlval-${r}">—</div>
+    <div class="rl-detail" id="rldetail-${r}"></div>`;
   labelCtr.appendChild(el); labelEls[r]=el;
 
   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
@@ -2771,12 +2896,23 @@ window.updateLabelActivations=function updateLabelActivations(regionStats){
     const rel=s?s.rel_activation??0:null;
     const bar=document.getElementById('rlbar-'+r);
     const val=document.getElementById('rlval-'+r);
+    const det=document.getElementById('rldetail-'+r);
     if(!bar||!val)return;
-    if(rel===null){bar.style.width='0%';val.textContent='—';val.className='rl-val';return;}
+    if(rel===null){
+      bar.style.width='0%';
+      val.textContent='—'; val.className='rl-val';
+      if(det)det.textContent='';
+      return;
+    }
     const pct=Math.round(Math.max(0,Math.min(1,(rel+0.5)/1.5))*100);
     bar.style.width=pct+'%';
     val.textContent=(rel>=0?'+':'')+rel.toFixed(2)+'σ';
     val.className='rl-val '+(rel>=0.15?'pos':rel<=-0.15?'neg':'');
+    if(det&&s){
+      const mn=(s.mean>=0?'+':'')+s.mean.toFixed(3);
+      const pk=s.peak!=null?s.peak.toFixed(3):'—';
+      det.textContent=`μ ${mn}  σ ${s.std.toFixed(3)}  pk ${pk}`;
+    }
   });
 };
 
@@ -2831,36 +2967,57 @@ window.setBrainActivations=function(levels){
 const REGION_RGB={};
 ALL_R.forEach(r=>{const c=new THREE.Color(REGION_HEX[r]);REGION_RGB[r]={r:c.r,g:c.g,b:c.b};});
 
+// ── BOLD-style colormap: negative=blue suppression, positive=warm activation ──
+// t ∈ [-1, +1] → {r, g, b} in [0,1]
+function boldColormap(t){
+  const b=BASE_COL;
+  if(t<0){
+    const s=Math.min(1,-t);
+    return {r:b.r*(1-s)+0.08*s, g:b.g*(1-s)+0.14*s, b:b.b*(1-s)+0.62*s};
+  } else {
+    const s=Math.min(1,t);
+    if(s<0.5){
+      const u=s*2;
+      return {r:b.r*(1-u)+0.90*u, g:b.g*(1-u)+0.72*u, b:b.b*(1-u)+0.10*u};
+    } else {
+      const u=(s-0.5)*2;
+      return {r:0.90*(1-u)+0.82*u, g:0.72*(1-u)+0.18*u, b:0.10*(1-u)+0.06*u};
+    }
+  }
+}
+
+// Deterministic per-vertex noise in [-1,+1] from vertex index
+function vertexNoise(i){
+  const x=Math.sin(i*127.1+3.7)*43758.5453;
+  const y=Math.sin(i*311.7+1.3)*23421.6312;
+  return ((x-Math.floor(x))+(y-Math.floor(y)))*0.5*2-1;
+}
+
+// setBrainVertexSample: uses region stats + spatial noise for realistic BOLD coloring.
+// The vertex_sample / gMin / gMax params are retained for API compatibility but unused —
+// regional mean (rel_activation) + std-scaled noise is more accurate than y-position sampling.
 window.setBrainVertexSample=function(samples, gMin, gMax, activeRegs, regionStats){
-  if(!brainReady||!vertMNI||!vertRegion)return;
+  if(!brainReady||!vertRegion)return;
   const N=colTgt.length/3;
-  const yRange=vertYMax-vertYMin||1;
-  const valRange=gMax-gMin||1;
-  const nSamples=samples.length;
   const activeSet=new Set(activeRegs);
-  const opacityCap={};
-  ALL_R.forEach(r=>{
-    const s=regionStats&&regionStats[r];
-    const rel=s?s.rel_activation??0:0;
-    opacityCap[r]=Math.min(1.0, Math.max(0.18, 0.55 + rel * 0.9));
-  });
   for(let i=0;i<N;i++){
     const r=vertRegion[i];
     if(!activeSet.has(r)){
-      colTgt[i*3  ]=BASE_COL.r*0.38;
-      colTgt[i*3+1]=BASE_COL.g*0.38;
-      colTgt[i*3+2]=BASE_COL.b*0.38;
+      colTgt[i*3  ]=BASE_COL.r*0.36;
+      colTgt[i*3+1]=BASE_COL.g*0.36;
+      colTgt[i*3+2]=BASE_COL.b*0.36;
       continue;
     }
-    const yNorm=(vertMNI[i*3+1]-vertYMin)/yRange;
-    const sIdx=Math.min(Math.floor(yNorm*(nSamples-1)),nSamples-1);
-    const raw=Math.max(0,Math.min(1,(samples[sIdx]-gMin)/valRange));
-    const t=Math.pow(raw,0.5);
-    const opacity=t*opacityCap[r];
-    const c=REGION_RGB[r];
-    colTgt[i*3  ]=BASE_COL.r*(1-opacity)+c.r*opacity;
-    colTgt[i*3+1]=BASE_COL.g*(1-opacity)+c.g*opacity;
-    colTgt[i*3+2]=BASE_COL.b*(1-opacity)+c.b*opacity;
+    const s=regionStats&&regionStats[r];
+    const rel=s?s.rel_activation??0:0;
+    const std=s?Math.min(s.std??0.15,0.45):0.15;
+    // Per-vertex noise proportional to regional std → heterogeneous within-region pattern
+    const noise=vertexNoise(i)*std*0.55;
+    const t=Math.max(-1,Math.min(1, rel + noise));
+    const c=boldColormap(t);
+    colTgt[i*3  ]=c.r;
+    colTgt[i*3+1]=c.g;
+    colTgt[i*3+2]=c.b;
   }
 };
 
@@ -2878,21 +3035,22 @@ window.setHemisphere=function(hem){
   else                   camera.position.set( 0,.3, d);
   camera.lookAt(0,0,0);controls.target.set(0,0,0);controls.update();lastInteract=Date.now();
 };
-// Colour brain by (B − A) rel_activation with diverging blue→gray→red map
+// Colour brain by (B − A) rel_activation with diverging BOLD map + per-vertex noise
 window.setDiffColors=function(statsA, statsB){
   if(!brainReady||!vertRegion)return;
-  const MAX_DIFF=2.5; // clamp range
-  ALL_R.forEach(r=>{
+  const MAX_DIFF=2.0;
+  const N=colTgt.length/3;
+  for(let i=0;i<N;i++){
+    const r=vertRegion[i];
     const a=statsA?.[r]?.rel_activation??0;
     const b=statsB?.[r]?.rel_activation??0;
-    const d=Math.max(-MAX_DIFF,Math.min(MAX_DIFF,b-a))/MAX_DIFF; // [-1,1]
-    const pos=Math.max(0,d), neg=Math.max(0,-d);
-    // red channel: base + red contribution; blue channel: base + blue contribution
-    const rr=0.12+pos*0.72, gg=0.12+(1-Math.abs(d))*0.14, bb=0.12+neg*0.72;
-    regionVerts[r]?.forEach(i=>{
-      colTgt[i*3]=rr; colTgt[i*3+1]=gg; colTgt[i*3+2]=bb;
-    });
-  });
+    const std=Math.min((statsB?.[r]?.std??0.15),0.45);
+    const delta=Math.max(-MAX_DIFF,Math.min(MAX_DIFF,b-a))/MAX_DIFF;
+    const noise=vertexNoise(i)*std*0.4;
+    const t=Math.max(-1,Math.min(1,delta+noise));
+    const c=boldColormap(t);
+    colTgt[i*3]=c.r; colTgt[i*3+1]=c.g; colTgt[i*3+2]=c.b;
+  }
   if(colAttr)colAttr.needsUpdate=true;
 };
 
