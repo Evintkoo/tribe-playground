@@ -263,6 +263,12 @@ html, body {
 }
 .run-btn svg { flex-shrink: 0; }
 
+.cancel-btn {
+  color: var(--red) !important;
+  border-color: rgba(245,80,80,0.25) !important;
+}
+.cancel-btn:hover { background: rgba(245,80,80,0.1) !important; }
+
 /* ── APP LAYOUT ──────────────────────────────────────────────── */
 .app-layout {
   display: flex;
@@ -578,6 +584,104 @@ select:focus { border-color: var(--ac); }
   letter-spacing: .03em;
   white-space: nowrap;
 }
+.vt-btn.pinned { color: var(--yellow) !important; background: rgba(245,203,64,0.12) !important; }
+.vt-btn.diff-on { color: var(--purple) !important; background: rgba(184,96,255,0.14) !important; }
+
+/* Inference step label */
+#inferStepLabel {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 5;
+  letter-spacing: .04em;
+}
+#inferStepLabel.visible { opacity: 1; }
+
+/* Comparison panel */
+.compare-panel {
+  position: absolute;
+  top: 12px; right: 12px;
+  z-index: 11;
+  background: rgba(6, 8, 18, 0.94);
+  border: 1px solid var(--p-border);
+  border-radius: var(--r12);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  min-width: 380px;
+}
+.cp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--p-border);
+}
+.cp-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: var(--t2);
+}
+.cp-title span { color: var(--yellow); }
+.cp-close {
+  font-size: 11px;
+  color: var(--t3);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--r4);
+  border: 1px solid var(--p-border);
+  background: transparent;
+  transition: all .1s;
+}
+.cp-close:hover { color: var(--t1); background: var(--surface-h); }
+.cp-cols {
+  display: grid;
+  grid-template-columns: 1fr 64px 64px 64px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--p-border);
+}
+.cp-col-hdr {
+  font-family: var(--mono);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: .10em; text-transform: uppercase;
+  color: var(--t3);
+}
+.cp-col-hdr.a { color: var(--ac); }
+.cp-col-hdr.b { color: var(--green); }
+.cp-col-hdr.d { color: var(--purple); }
+.cp-row {
+  display: grid;
+  grid-template-columns: 1fr 64px 64px 64px;
+  padding: 5px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  align-items: center;
+}
+.cp-row:last-child { border-bottom: none; }
+.cp-name {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--t2);
+}
+.cp-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.cp-val {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t2);
+  text-align: right;
+}
+.cp-val.pos { color: var(--green); }
+.cp-val.neg { color: var(--orange); }
 
 /* Labels overlay */
 #labelLines {
@@ -1138,6 +1242,9 @@ audio#audioPreview {
   </div>
 
   <div class="tb-right">
+    <button class="tb-icon-btn cancel-btn" id="cancelBtn" onclick="cancelPrediction()" style="display:none" title="Cancel inference">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
     <button class="tb-icon-btn" onclick="showAbout()" title="Model info">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zm0 4.5a.75.75 0 010 1.5A.75.75 0 018 6zm0 2.25a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0V9A.75.75 0 018 8.25z" fill="currentColor"/></svg>
     </button>
@@ -1383,6 +1490,10 @@ audio#audioPreview {
       <button class="vt-btn on" id="vt-roi" onclick="toggleROI()">Glow</button>
       <button class="vt-btn" id="vt-labels" onclick="toggleLabels()">Labels</button>
       <div class="vt-sep"></div>
+      <button class="vt-btn" id="vt-pin" onclick="pinCompareA()" title="Pin current result as A for comparison" style="display:none">Pin A</button>
+      <button class="vt-btn" id="vt-diff" onclick="toggleDiff()" style="display:none">Diff</button>
+      <button class="vt-btn" id="vt-clear-cmp" onclick="clearCompare()" style="display:none; color:var(--t3)">✕</button>
+      <div class="vt-sep"></div>
       <span class="vt-coord">MNI: <span id="mniCoord">— — —</span></span>
     </div>
 
@@ -1424,9 +1535,25 @@ audio#audioPreview {
       </div>
     </div>
 
-    <!-- Progress bar -->
+    <!-- Progress bar + step label -->
     <div id="inferProgress">
       <div id="inferBar"></div>
+    </div>
+    <div id="inferStepLabel"></div>
+
+    <!-- Comparison panel (hidden until Pin A is used) -->
+    <div class="compare-panel" id="comparePanel" style="display:none">
+      <div class="cp-header">
+        <span class="cp-title">Compare · <span id="cpStimA">A</span> vs <span id="cpStimB">B</span></span>
+        <button class="cp-close" onclick="clearCompare()">Clear</button>
+      </div>
+      <div class="cp-cols">
+        <span class="cp-col-hdr">Region</span>
+        <span class="cp-col-hdr a">A</span>
+        <span class="cp-col-hdr b">B</span>
+        <span class="cp-col-hdr d">Δ (B−A)</span>
+      </div>
+      <div id="cpRows"></div>
     </div>
 
   </main>
@@ -2056,6 +2183,20 @@ function _setStatus(running) {
   if (prog) prog.style.display = running ? 'block' : 'none';
   const btn = document.querySelector('.run-btn');
   if (btn) btn.classList.toggle('inferring', running);
+  const cancel = document.getElementById('cancelBtn');
+  if (cancel) cancel.style.display = running ? 'flex' : 'none';
+  const lbl = document.getElementById('inferStepLabel');
+  if (lbl) { if (!running) { lbl.classList.remove('visible'); lbl.textContent = ''; } }
+}
+
+function cancelPrediction() {
+  if (!_predRunning) return;
+  _predRunning = false;
+  _setStatus(false);
+  const bar = document.getElementById('inferBar');
+  if (bar) bar.style.width = '0%';
+  // Close WS to flush in-flight response; auto-reconnect fires in 2 s
+  if (_ws) _ws.close();
 }
 
 function _animateBar(bar, targetPct, durationMs) {
@@ -2071,6 +2212,11 @@ function _animateBar(bar, targetPct, durationMs) {
 
 // ── APPLY INFERENCE RESULT ────────────────────────────────────
 function _applyResult(data) {
+  _lastResult = data;
+  // Show Pin A button after first result
+  const pinBtn = document.getElementById('vt-pin');
+  if (pinBtn) pinBtn.style.display = '';
+
   const rois = ['visual','auditory','language','prefrontal','motor','parietal'];
   const rs = data.region_stats;
 
@@ -2120,6 +2266,86 @@ function _applyResult(data) {
 
   // Update educational insight panel
   _updateInsight(data);
+
+  // Update comparison panel if A is pinned
+  if (_pinnedA) _showComparison(_pinnedA, data);
+}
+
+// ── Comparison state ──────────────────────────────────────────
+let _lastResult  = null;
+let _pinnedA     = null;
+let _diffActive  = false;
+const _REGION_COLORS = {
+  visual:'#ff5252', auditory:'#ff9142', language:'#4f8eff',
+  prefrontal:'#3ecf70', motor:'#cc5cff', parietal:'#ffd042'
+};
+
+function pinCompareA() {
+  if (!_lastResult) return;
+  _pinnedA = _lastResult;
+  const btn = document.getElementById('vt-pin');
+  if (btn) { btn.classList.add('pinned'); btn.textContent = 'A ✓'; }
+  document.getElementById('vt-diff').style.display = '';
+  document.getElementById('vt-clear-cmp').style.display = '';
+}
+
+function toggleDiff() {
+  if (!_pinnedA || !_lastResult) return;
+  _diffActive = !_diffActive;
+  const btn = document.getElementById('vt-diff');
+  if (btn) btn.classList.toggle('diff-on', _diffActive);
+  if (_diffActive) {
+    if (window.setDiffColors) window.setDiffColors(_pinnedA.region_stats, _lastResult.region_stats);
+  } else {
+    // Restore normal coloring
+    if (window.setBrainVertexSample && _lastResult.vertex_sample?.length > 0) {
+      window.setBrainVertexSample(_lastResult.vertex_sample, _lastResult.global_stats.global_min, _lastResult.global_stats.global_max, ST.regions, _lastResult.region_stats);
+    }
+  }
+}
+
+function clearCompare() {
+  _pinnedA = null; _diffActive = false;
+  document.getElementById('comparePanel').style.display = 'none';
+  const pin = document.getElementById('vt-pin');
+  if (pin) { pin.classList.remove('pinned'); pin.textContent = 'Pin A'; }
+  const diff = document.getElementById('vt-diff');
+  if (diff) { diff.classList.remove('diff-on'); diff.style.display = 'none'; }
+  document.getElementById('vt-clear-cmp').style.display = 'none';
+  // Restore normal brain coloring
+  if (_lastResult && window.setBrainVertexSample && _lastResult.vertex_sample?.length > 0) {
+    window.setBrainVertexSample(_lastResult.vertex_sample, _lastResult.global_stats.global_min, _lastResult.global_stats.global_max, ST.regions, _lastResult.region_stats);
+  }
+}
+
+function _showComparison(a, b) {
+  const panel = document.getElementById('comparePanel');
+  panel.style.display = '';
+  const stimA = document.getElementById('cpStimA');
+  const stimB = document.getElementById('cpStimB');
+  if (stimA) stimA.textContent = a.modality || 'A';
+  if (stimB) stimB.textContent = b.modality || 'B';
+
+  const rows = document.getElementById('cpRows');
+  if (!rows) return;
+  const rois = ['visual','auditory','language','prefrontal','motor','parietal'];
+  rows.innerHTML = rois.map(r => {
+    const sa = a.region_stats?.[r], sb = b.region_stats?.[r];
+    const va = sa?.rel_activation ?? 0, vb = sb?.rel_activation ?? 0;
+    const delta = vb - va;
+    const fmt = v => (v >= 0 ? '+' : '') + v.toFixed(3);
+    const cls = v => v > 0.15 ? 'pos' : v < -0.15 ? 'neg' : '';
+    return `<div class="cp-row">
+      <span class="cp-name"><span class="cp-dot" style="background:${_REGION_COLORS[r]}"></span>${r[0].toUpperCase()+r.slice(1)}</span>
+      <span class="cp-val ${cls(va)}">${fmt(va)}</span>
+      <span class="cp-val ${cls(vb)}">${fmt(vb)}</span>
+      <span class="cp-val ${cls(delta)}">${fmt(delta)}</span>
+    </div>`;
+  }).join('');
+
+  // Auto-activate diff on brain
+  if (!_diffActive) { _diffActive = true; const btn = document.getElementById('vt-diff'); if (btn) btn.classList.add('diff-on'); }
+  if (window.setDiffColors) window.setDiffColors(a.region_stats, b.region_stats);
 }
 
 // ── WebSocket connection ──────────────────────────────────────
@@ -2141,8 +2367,13 @@ _connectWS();
 
 function _handleWSMsg(msg) {
   const bar = document.getElementById('inferBar');
+  const lbl = document.getElementById('inferStepLabel');
   if (msg.type === 'progress') {
     if (bar) _animateBar(bar, msg.pct, 300);
+    if (lbl && msg.msg) {
+      lbl.textContent = msg.msg + (msg.pct < 100 ? ' · ' + msg.pct + '%' : '');
+      lbl.classList.add('visible');
+    }
   } else if (msg.type === 'result') {
     if (bar) _animateBar(bar, 100, 150);
     _applyResult(msg);
@@ -2647,6 +2878,24 @@ window.setHemisphere=function(hem){
   else                   camera.position.set( 0,.3, d);
   camera.lookAt(0,0,0);controls.target.set(0,0,0);controls.update();lastInteract=Date.now();
 };
+// Colour brain by (B − A) rel_activation with diverging blue→gray→red map
+window.setDiffColors=function(statsA, statsB){
+  if(!brainReady||!vertRegion)return;
+  const MAX_DIFF=2.5; // clamp range
+  ALL_R.forEach(r=>{
+    const a=statsA?.[r]?.rel_activation??0;
+    const b=statsB?.[r]?.rel_activation??0;
+    const d=Math.max(-MAX_DIFF,Math.min(MAX_DIFF,b-a))/MAX_DIFF; // [-1,1]
+    const pos=Math.max(0,d), neg=Math.max(0,-d);
+    // red channel: base + red contribution; blue channel: base + blue contribution
+    const rr=0.12+pos*0.72, gg=0.12+(1-Math.abs(d))*0.14, bb=0.12+neg*0.72;
+    regionVerts[r]?.forEach(i=>{
+      colTgt[i*3]=rr; colTgt[i*3+1]=gg; colTgt[i*3+2]=bb;
+    });
+  });
+  if(colAttr)colAttr.needsUpdate=true;
+};
+
 window.toggleROIGlow=function(show){
   if(!brainReady)return;
   ALL_R.forEach(r=>{glowMeshes[r].visible=show;regionLights[r].visible=show;ptSystems[r].pts.visible=show;});
@@ -2738,7 +2987,7 @@ animate();
 const blFill=document.getElementById('blFill');
 const blPct =document.getElementById('blPct');
 
-new OBJLoader().load('/static/brain.obj',
+new OBJLoader().load('/brain.obj',
   (obj)=>{
     const child=obj.children.find(c=>c.isMesh)||obj.children[0];
     if(!child?.geometry){onGeoReady(buildProceduralGeo(),false);return;}

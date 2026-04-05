@@ -7,11 +7,9 @@ tribe-v2-weights/*.ckpt
 tribe-v2-weights/*.safetensors
 tribe-v2-weights/llama/
 
-# Large mesh files (served from static dir, check in if needed)
+# Large mesh files — brain.obj is 11 MB (too large), gz variants are tracked
 brain.obj
 brain-surface.obj
-brain-surface.obj.gz
-left-mesh.obj.gz
 
 # macOS
 .DS_Store

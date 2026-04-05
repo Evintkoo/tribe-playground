@@ -38,6 +38,9 @@ sha2 = "0.10"
 # LLaMA-3.2-3B text encoder
 tokenizers = { version = "0.19", default-features = false, features = ["onig"] }
 
+# Image decoding for CLIP encoder
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "bmp", "gif"] }
+
 # Logging
 tracing            = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

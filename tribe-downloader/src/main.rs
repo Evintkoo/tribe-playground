@@ -23,6 +23,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 
 mod audio;
+mod clip_encoder;
 mod features;
 mod fmri_encoder;
 mod handlers;
@@ -30,6 +31,7 @@ mod llama_encoder;
 mod wav2vec2bert;
 
 use audio::MelSpec;
+use clip_encoder::ClipVisualEncoder;
 use fmri_encoder::FmriEncoder;
 use llama_encoder::LlamaTextEncoder;
 use wav2vec2bert::Wav2Vec2Bert;
@@ -45,6 +47,7 @@ pub struct AppState {
     pub text_enc:  Option<LlamaTextEncoder>,
     pub audio_enc: Option<Wav2Vec2Bert>,
     pub mel_spec:  Option<MelSpec>,
+    pub clip_enc:  Option<ClipVisualEncoder>,
     pub root:      PathBuf,
     pub device:    Device,
 }
@@ -147,6 +150,20 @@ async fn main() -> Result<()> {
         None
     };
 
+    // ── CLIP ViT-L/14 (image encoder) ────────────────────────────────────────
+    let clip_path = weights_dir.join("clip").join("model.safetensors");
+    let clip_enc = if clip_path.exists() {
+        let p = clip_path.to_str().context("invalid clip path")?;
+        info!("loading CLIP ViT-L/14 image encoder");
+        match ClipVisualEncoder::load(p, &device) {
+            Ok(enc) => { info!("CLIP image encoder loaded"); Some(enc) }
+            Err(e)  => { error!(error = %e, "CLIP image encoder failed to load"); None }
+        }
+    } else {
+        warn!("tribe-v2-weights/clip/model.safetensors not found — image uses demo mode");
+        None
+    };
+
     // ── Metal JIT warmup ─────────────────────────────────────────────────────
     info!("warming up Metal kernels");
     {
@@ -157,7 +174,7 @@ async fn main() -> Result<()> {
     info!("warmup done");
 
     let state = Arc::new(AppState {
-        fmri, text_enc, audio_enc, mel_spec,
+        fmri, text_enc, audio_enc, mel_spec, clip_enc,
         root: root.clone(), device,
     });
 
@@ -173,6 +190,7 @@ async fn main() -> Result<()> {
         .route("/api/info",    get(handlers::info))
         .route("/health",      get(handlers::health))
         .route("/ws",          get(handlers::ws_handler))
+        .route("/brain.obj",   get(serve_brain_mesh))
         .nest_service("/static", ServeDir::new(&root))
         .layer(cors)
         .with_state(state);
@@ -184,6 +202,28 @@ async fn main() -> Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+// ── /brain.obj — serves brain-surface.obj.gz with gzip encoding ──────────────
+// The browser decompresses transparently; Three.js OBJLoader sees plain text.
+
+async fn serve_brain_mesh(
+    axum::extract::State(st): axum::extract::State<Arc<AppState>>,
+) -> axum::response::Response {
+    use axum::{body::Body, http::StatusCode, response::IntoResponse};
+    let gz_path = st.root.join("brain-surface.obj.gz");
+    match tokio::fs::read(&gz_path).await {
+        Ok(bytes) => axum::response::Response::builder()
+            .header("content-type", "text/plain; charset=utf-8")
+            .header("content-encoding", "gzip")
+            .header("cache-control", "public, max-age=86400")
+            .body(Body::from(bytes))
+            .unwrap(),
+        Err(_) => {
+            warn!("brain-surface.obj.gz not found — brain will use procedural fallback");
+            (StatusCode::NOT_FOUND, "brain mesh not found").into_response()
+        }
+    }
 }
 
 // ── Static HTML handler ───────────────────────────────────────────────────────

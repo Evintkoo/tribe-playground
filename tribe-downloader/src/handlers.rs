@@ -18,7 +18,8 @@ use candle_core::{DType, Device, Tensor};
 use crate::{
     audio::{decode_audio, MelSpec},
     features::{
-        region_stats, temporal_pool, text_to_features_demo, tribe_group_mean, visual_features_demo,
+        region_stats, temporal_pool, text_to_features_demo, tribe_group_mean,
+        visual_features_clip, visual_features_demo,
     },
     wav2vec2bert::Wav2Vec2Bert,
     AppState,
@@ -117,12 +118,30 @@ where
     let visual_feat: Option<Tensor> = if let Some(ref b64) = image_b64.or(video_b64) {
         modalities.push(if is_video_modality { "video" } else { "image" });
         progress(35, if is_video_modality { "Encoding video…" } else { "Encoding image…" });
-        demo_mode = true;
         let bytes = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, b64)
             .map_err(|e| format!("base64 decode: {e}"))?;
-        match visual_features_demo(&bytes, seq, device) {
-            Ok(t)  => Some(t),
-            Err(e) => return Err(format!("visual demo: {e}")),
+
+        // Use CLIP encoder for images when available; fall back to hash-demo otherwise.
+        // Video always uses hash-demo (no frame extractor yet).
+        if !is_video_modality {
+            if let Some(ref clip) = st.clip_enc {
+                match visual_features_clip(&bytes, seq, clip, device) {
+                    Ok(t)  => Some(t),
+                    Err(e) => return Err(format!("CLIP encode: {e}")),
+                }
+            } else {
+                demo_mode = true;
+                match visual_features_demo(&bytes, seq, device) {
+                    Ok(t)  => Some(t),
+                    Err(e) => return Err(format!("visual demo: {e}")),
+                }
+            }
+        } else {
+            demo_mode = true;
+            match visual_features_demo(&bytes, seq, device) {
+                Ok(t)  => Some(t),
+                Err(e) => return Err(format!("visual demo: {e}")),
+            }
         }
     } else {
         None

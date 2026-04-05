@@ -2,6 +2,8 @@
 use candle_core::{DType, Device, Result, Tensor};
 use sha2::{Digest, Sha256};
 
+use crate::clip_encoder::ClipVisualEncoder;
+
 // ── Temporal pooling ──────────────────────────────────────────────────────────
 
 /// Nearest-neighbour resample [T_src, D] → [target_len, D].
@@ -107,6 +109,24 @@ pub fn region_stats(act: &[f32], n_vertices: usize) -> (std::collections::HashMa
         global_min: g_min,
         global_max: g_max,
     })
+}
+
+// ── CLIP visual features (real encoder) ──────────────────────────────────────
+
+/// Encode a single image with CLIP ViT-L/14 → [1, seq_len, 2816].
+/// The same CLS embedding is tiled across all seq_len timesteps.
+pub fn visual_features_clip(
+    bytes: &[u8],
+    seq_len: usize,
+    enc: &ClipVisualEncoder,
+    device: &Device,
+) -> anyhow::Result<Tensor> {
+    let feat = enc.encode_image(bytes)?;            // [1, 1, 2816]
+    let feat_1d = feat.squeeze(0)?.squeeze(0)?;     // [2816]
+    let rows: Vec<Tensor> = (0..seq_len).map(|_| feat_1d.clone()).collect();
+    let stacked = Tensor::stack(&rows, 0)?;         // [seq_len, 2816]
+    let out = stacked.unsqueeze(0)?;                // [1, seq_len, 2816]
+    Ok(out.to_device(device)?)
 }
 
 // ── Hash-based demo visual features (no V-JEPA2 required) ───────────────────
