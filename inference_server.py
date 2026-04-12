@@ -479,6 +479,8 @@ def _predict_core(req: PredictRequest) -> PredictResponse:
             except Exception as e:
                 print(f"[tribe] Image encoding error: {e}", flush=True)
                 demo_mode = True
+                if text_feat is None:
+                    text_feat = text_to_features_demo("", seq)
         else:
             demo_mode = True
             text_feat = text_to_features_demo("", seq)
@@ -574,7 +576,7 @@ def model_info():
 @app.websocket("/ws")
 async def ws_predict(websocket: WebSocket):
     await websocket.accept()
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     async def send(msg: dict):
         await websocket.send_text(_json.dumps(msg))
@@ -582,7 +584,11 @@ async def ws_predict(websocket: WebSocket):
     try:
         while True:
             raw = await websocket.receive_text()
-            req_data = _json.loads(raw)
+            try:
+                req_data = _json.loads(raw)
+            except _json.JSONDecodeError as exc:
+                await send({"type": "error", "message": f"Invalid JSON: {exc}"})
+                continue
 
             await send({"type": "progress", "pct": 5,  "msg": "Received request"})
 
@@ -595,7 +601,7 @@ async def ws_predict(websocket: WebSocket):
                     subject_id = int(req_data.get("subject_id", 0)),
                 )
                 await send({"type": "progress", "pct": 20, "msg": "Encoding stimulus"})
-                result = await loop.run_in_executor(None, lambda: _predict_core(req))
+                result = await loop.run_in_executor(None, _predict_core, req)
                 await send({"type": "progress", "pct": 90, "msg": "Coloring brain"})
                 payload = result.model_dump()
                 payload["type"] = "result"
