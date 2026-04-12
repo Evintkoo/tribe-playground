@@ -148,6 +148,12 @@ where
 
     let n_vert = crate::fmri_encoder::N_VERT;
     let n_time = act_flat.len() / n_vert;
+    if n_time == 0 {
+        return Err(format!(
+            "unexpected FmriEncoder output length: {} (expected >= {n_vert})",
+            act_flat.len()
+        ));
+    }
 
     let (rstats, gstats) = region_stats(&act_flat, n_vert);
 
@@ -361,16 +367,7 @@ async fn handle_ws_job(mut socket: WebSocket, job_id: Uuid, st: Arc<AppState>) {
                 break;
             }
             Some(j) => {
-                let progress_msg = json!({
-                    "type":        "progress",
-                    "pct":         j.pct,
-                    "bytes_done":  j.bytes_done,
-                    "total_bytes": j.total_bytes,
-                });
-                if socket.send(Message::Text(progress_msg.to_string())).await.is_err() {
-                    break;
-                }
-
+                // Check terminal status FIRST before sending progress
                 match j.status {
                     JobStatus::Done => {
                         let _ = socket.send(Message::Text(
@@ -384,7 +381,18 @@ async fn handle_ws_job(mut socket: WebSocket, job_id: Uuid, st: Arc<AppState>) {
                         )).await;
                         break;
                     }
-                    _ => {}
+                    _ => {
+                        // Job still running — send progress update
+                        let progress_msg = json!({
+                            "type":        "progress",
+                            "pct":         j.pct,
+                            "bytes_done":  j.bytes_done,
+                            "total_bytes": j.total_bytes,
+                        });
+                        if socket.send(Message::Text(progress_msg.to_string())).await.is_err() {
+                            break;
+                        }
+                    }
                 }
             }
         }

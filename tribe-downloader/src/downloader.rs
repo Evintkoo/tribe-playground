@@ -7,7 +7,7 @@ use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use crate::{
-    jobs::{Job, JobStatus, JobStore, ModelKind},
+    jobs::{JobStatus, JobStore, ModelKind},
     AppState,
 };
 
