@@ -1237,6 +1237,20 @@ audio#audioPreview {
   z-index: 9999; pointer-events: none;
   transition: opacity 0.3s; opacity: 0; white-space: nowrap;
 }
+/* ── DOWNLOAD PROGRESS ───────────────────────────────────────── */
+.dl-btn {
+  font-size: 9px; padding: 2px 6px; border-radius: 3px;
+  border: 1px solid var(--b1); background: var(--s1); color: var(--t2);
+  cursor: pointer; margin-left: 6px; vertical-align: middle;
+}
+.dl-btn:hover { background: var(--ac); color: #fff; }
+.dl-btn:disabled { opacity: 0.45; cursor: default; }
+.dl-bar-wrap {
+  display: inline-block; width: 70px; height: 4px;
+  background: var(--b1); border-radius: 2px; margin-left: 6px;
+  vertical-align: middle; overflow: hidden;
+}
+.dl-bar { height: 100%; width: 0%; background: var(--ac); transition: width 0.3s; }
 </style>
 </head>
 <body>
@@ -1712,7 +1726,7 @@ audio#audioPreview {
     <!-- IMAGE panel -->
     <div class="input-panel" id="panel-image">
       <div class="input-meta">
-        <span class="meta-item">encoder: <span id="imageEncoderLabel">CLIP ViT-L/14</span><span id="imgEncDot" title="checking…" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--t3);margin-left:5px;vertical-align:middle"></span></span>
+        <span class="meta-item">encoder: <span id="imageEncoderLabel">CLIP ViT-L/14</span><span id="imgEncDot" title="checking…" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--t3);margin-left:5px;vertical-align:middle"></span><button class="dl-btn" id="dlBtn-clip" onclick="downloadModel('clip')" title="Download CLIP weights (~1.7 GB)">↓ Download</button><span class="dl-bar-wrap" id="dlBar-clip" style="display:none"><span class="dl-bar" id="dlBarFill-clip"></span></span></span>
         <div class="meta-sep"></div>
         <span class="meta-item">accepted: <span>JPG · PNG · WebP</span></span>
       </div>
@@ -1863,6 +1877,20 @@ audio#audioPreview {
           <span class="info-encoder-name">Video</span>
           <span class="info-encoder-model" id="encoderStatus-video">V-JEPA2 ViT-G</span>
           <span class="info-encoder-dims">2,816 dim</span>
+        </div>
+        <div class="info-row" id="rowDlLlama" style="display:none">
+          <span class="info-lbl">LLaMA encoder</span>
+          <span class="info-val">not loaded
+            <button class="dl-btn" id="dlBtn-llama" onclick="downloadModel('llama')" title="Download LLaMA weights (~6 GB)">↓ Download</button>
+            <span class="dl-bar-wrap" id="dlBar-llama" style="display:none"><span class="dl-bar" id="dlBarFill-llama"></span></span>
+          </span>
+        </div>
+        <div class="info-row" id="rowDlWav2vec" style="display:none">
+          <span class="info-lbl">Wav2Vec encoder</span>
+          <span class="info-val">not loaded
+            <button class="dl-btn" id="dlBtn-wav2vec" onclick="downloadModel('wav2vec')" title="Download Wav2Vec weights (~0.6 GB)">↓ Download</button>
+            <span class="dl-bar-wrap" id="dlBar-wav2vec" style="display:none"><span class="dl-bar" id="dlBarFill-wav2vec"></span></span>
+          </span>
         </div>
       </div>
 
@@ -2564,6 +2592,62 @@ function showToast(msg, ms) {
   t._tid = setTimeout(() => { t.style.opacity = '0'; }, ms || 3000);
 }
 
+async function downloadModel(model) {
+  const btn     = document.getElementById('dlBtn-' + model);
+  const barWrap = document.getElementById('dlBar-' + model);
+  const barFill = document.getElementById('dlBarFill-' + model);
+
+  if (btn) btn.disabled = true;
+  if (barWrap) barWrap.style.display = 'inline-block';
+  showToast('Starting download: ' + model + '…', 4000);
+
+  let jobId;
+  try {
+    const r = await fetch('/api/download/' + model, { method: 'POST' });
+    if (r.status === 409) {
+      showToast(model + ' download already in progress');
+      if (btn) btn.disabled = false;
+      return;
+    }
+    if (!r.ok) { throw new Error(await r.text()); }
+    const d = await r.json();
+    jobId = d.job_id;
+  } catch (e) {
+    showToast('Download failed: ' + e.message, 5000);
+    if (btn) btn.disabled = false;
+    if (barWrap) barWrap.style.display = 'none';
+    return;
+  }
+
+  // Stream progress via WebSocket
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(proto + '://' + location.host + '/ws/jobs/' + jobId);
+
+  ws.onmessage = (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.type === 'progress') {
+      if (barFill) barFill.style.width = (msg.pct || 0).toFixed(1) + '%';
+    } else if (msg.type === 'done') {
+      showToast('✓ ' + model + ' downloaded — encoder now active', 5000);
+      if (barFill) barFill.style.width = '100%';
+      setTimeout(() => {
+        if (barWrap) barWrap.style.display = 'none';
+        if (btn) { btn.textContent = '✓ loaded'; btn.disabled = true; }
+        fetchModelInfo();   // refresh encoder status dots
+      }, 1200);
+    } else if (msg.type === 'error') {
+      showToast('Download error: ' + msg.message, 6000);
+      if (btn) btn.disabled = false;
+      if (barWrap) barWrap.style.display = 'none';
+    }
+  };
+
+  ws.onerror = () => {
+    showToast('WebSocket error tracking ' + model + ' download', 4000);
+    if (btn) btn.disabled = false;
+  };
+}
+
 function _showComparison(a, b) {
   const panel = document.getElementById('comparePanel');
   panel.style.display = '';
@@ -2735,6 +2819,22 @@ async function fetchModelInfo() {
         imgDot.style.background = loaded ? 'var(--green)' : 'var(--orange)';
         imgDot.title = d.encoders.image;
       }
+
+      // Show download buttons for encoders that are not loaded
+      const showDl = (model, rowId, loaded) => {
+        const btn = document.getElementById('dlBtn-' + model);
+        const row = document.getElementById(rowId);
+        if (btn) btn.style.display = loaded ? 'none' : '';
+        if (row) row.style.display = loaded ? 'none' : '';
+      };
+
+      const clipLoaded = d.encoders?.image?.includes('loaded') || false;
+      const textLoaded = d.encoders?.text?.includes('loaded')  || false;
+      const audLoaded  = d.encoders?.audio?.includes('loaded') || false;
+
+      showDl('clip',    null,           clipLoaded);
+      showDl('llama',   'rowDlLlama',   textLoaded);
+      showDl('wav2vec', 'rowDlWav2vec', audLoaded);
     }
   } catch(_) {}
 }
