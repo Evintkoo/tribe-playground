@@ -400,7 +400,7 @@ def serve_brain_obj():
     p = os.path.join(SCRIPT_DIR, "brain.obj")
     if not os.path.exists(p):
         raise HTTPException(404, "brain.obj not found")
-    return FileResponse(p, media_type="application/octet-stream")
+    return FileResponse(p, media_type="model/obj")
 
 
 # ── Request / Response models ─────────────────────────────────────────────────
