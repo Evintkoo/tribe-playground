@@ -3025,6 +3025,7 @@ window.setBrainVertexSample = function(vertexActs, gMin, gMax, activeRegs, regio
   const MODEL_N   = 20484;
   const rankArr   = window._vertRankInRegion;
   const regCntMap = window._regionVertCount;
+  if (!rankArr || !regCntMap) return;
 
   for (let i = 0; i < N; i++) {
     const r = vertRegion[i];
@@ -3038,7 +3039,7 @@ window.setBrainVertexSample = function(vertexActs, gMin, gMax, activeRegs, regio
     const lo  = REGION_RANGES_JS[r][0];
     const hi  = REGION_RANGES_JS[r][1];
     const cnt = regCntMap ? (regCntMap[r] || 1) : 1;
-    const modelIdx = lo + Math.round((rankArr[i] / cnt) * (hi - lo));
+    const modelIdx = lo + Math.floor((rankArr[i] / cnt) * (hi - lo));
     const act = vertexActs[Math.min(modelIdx, MODEL_N - 1)] ?? 0;
     const t   = Math.max(-1, Math.min(1, act / range));
     const c   = boldColormap(t);
