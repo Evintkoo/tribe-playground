@@ -24,6 +24,7 @@ use tower_http::services::ServeDir;
 
 mod audio;
 mod clip_encoder;
+mod downloader;
 mod features;
 mod fmri_encoder;
 mod handlers;
