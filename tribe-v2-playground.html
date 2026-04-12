@@ -2607,6 +2607,7 @@ async function downloadModel(model) {
     if (r.status === 409) {
       showToast(model + ' download already in progress');
       if (btn) btn.disabled = false;
+      if (barWrap) barWrap.style.display = 'none';
       return;
     }
     if (!r.ok) { throw new Error(await r.text()); }
@@ -2624,7 +2625,8 @@ async function downloadModel(model) {
   const ws = new WebSocket(proto + '://' + location.host + '/ws/jobs/' + jobId);
 
   ws.onmessage = (ev) => {
-    const msg = JSON.parse(ev.data);
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch { return; }
     if (msg.type === 'progress') {
       if (barFill) barFill.style.width = (msg.pct || 0).toFixed(1) + '%';
     } else if (msg.type === 'done') {
@@ -2645,6 +2647,14 @@ async function downloadModel(model) {
   ws.onerror = () => {
     showToast('WebSocket error tracking ' + model + ' download', 4000);
     if (btn) btn.disabled = false;
+  };
+
+  ws.onclose = (ev) => {
+    if (!ev.wasClean) {
+      showToast('Connection lost tracking ' + model + ' download', 5000);
+      if (btn) btn.disabled = false;
+      if (barWrap) barWrap.style.display = 'none';
+    }
   };
 }
 
