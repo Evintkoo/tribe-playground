@@ -33,7 +33,9 @@
 
   --ac:    #5b7fff;
   --ac-bg: rgba(91,127,255,0.1);
-  --red:   #e05252;
+  --red:    #e05252;
+  --green:  #3db870;
+  --orange: #e07a42;
 
   --r-visual:     #e05252;
   --r-auditory:   #e07a42;
@@ -1296,7 +1298,7 @@ function _updateInsight(data) {
           <span class="icard-stat"><strong>${nv}</strong> vertices</span>
         </div>
         <div class="icard-explain">${e.what}</div>
-        <div class="icard-explain" style="border-top:1px solid var(--b0);padding-top:6px;margin-top:2px;font-size:11px;color:var(--t3)">
+        <div class="icard-explain" style="border-top:1px solid var(--border);padding-top:6px;margin-top:2px;font-size:11px;color:var(--t3)">
           <strong style="color:var(--t2)">For this stimulus:</strong> ${stimTxt}
         </div>
         <div class="icard-subs">${e.subregions.map(s=>`<span class="icard-sub">${s}</span>`).join('')}</div>
