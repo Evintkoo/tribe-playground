@@ -8,8 +8,13 @@ Run:
     python3 download_clip.py
 """
 
-import sys
+import os, sys
 from pathlib import Path
+
+# Disable HuggingFace's XetHub chunked-transfer backend — it requires
+# auth tokens even for public models on some client versions.
+os.environ["HF_HUB_DISABLE_XET"] = "1"
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "0"
 
 REPO_ID  = "openai/clip-vit-large-patch14"
 OUT_DIR  = Path(__file__).parent / "tribe-v2-weights" / "clip"
@@ -43,6 +48,14 @@ def main():
     import shutil
     shutil.copy(tmp, OUT_FILE)
     print(f"[download] Saved → {OUT_FILE}")
+    # Save config and processor alongside weights so server can load offline
+    try:
+        from transformers import CLIPVisionConfig, CLIPImageProcessor
+        CLIPVisionConfig.from_pretrained("openai/clip-vit-large-patch14").save_pretrained(str(OUT_DIR))
+        CLIPImageProcessor.from_pretrained("openai/clip-vit-large-patch14").save_pretrained(str(OUT_DIR))
+        print("[download] Config and processor saved alongside weights.")
+    except Exception as e:
+        print(f"[download] Warning: could not save config/processor: {e}")
     print("[download] Restart the TRIBE server — image encoder will load automatically.")
 
 def _download_and_convert():
@@ -61,6 +74,14 @@ def _download_and_convert():
     state = torch.load(tmp, map_location="cpu", weights_only=True)
     save_file({k: v.contiguous() for k, v in state.items()}, str(OUT_FILE))
     print(f"[download] Saved → {OUT_FILE}")
+    # Save config and processor alongside weights so server can load offline
+    try:
+        from transformers import CLIPVisionConfig, CLIPImageProcessor
+        CLIPVisionConfig.from_pretrained("openai/clip-vit-large-patch14").save_pretrained(str(OUT_DIR))
+        CLIPImageProcessor.from_pretrained("openai/clip-vit-large-patch14").save_pretrained(str(OUT_DIR))
+        print("[download] Config and processor saved alongside weights.")
+    except Exception as e:
+        print(f"[download] Warning: could not save config/processor: {e}")
     print("[download] Restart the TRIBE server — image encoder will load automatically.")
 
 if __name__ == "__main__":

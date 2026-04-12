@@ -311,28 +311,45 @@ class ImageEncoder:
         from safetensors.torch import load_file
 
         print("[tribe] Loading ImageEncoder (CLIP ViT-L/14)\u2026", flush=True)
-        cfg = CLIPVisionConfig.from_pretrained("openai/clip-vit-large-patch14")
+        weights_dir = os.path.dirname(weights_path)
+        # Load config from local dir (saved by download_clip.py); fall back to HF Hub
+        try:
+            cfg = CLIPVisionConfig.from_pretrained(weights_dir)
+        except Exception:
+            cfg = CLIPVisionConfig.from_pretrained("openai/clip-vit-large-patch14")
         self.model = CLIPVisionModel(cfg)
-        self.model.eval()
 
         sd_full   = load_file(weights_path, device="cpu")
         prefix    = "vision_model."
         sd_vision = {k[len(prefix):]: v for k, v in sd_full.items() if k.startswith(prefix)}
         if sd_vision:
-            self.model.vision_model.load_state_dict(sd_vision, strict=False)
+            result = self.model.vision_model.load_state_dict(sd_vision, strict=False)
         else:
-            # weights file may have no prefix (pure vision model save)
-            self.model.load_state_dict(sd_full, strict=False)
+            result = self.model.load_state_dict(sd_full, strict=False)
+        if result.missing_keys:
+            print(f"[tribe] ImageEncoder: {len(result.missing_keys)} missing keys: {result.missing_keys[:3]}…", flush=True)
+        if result.unexpected_keys:
+            print(f"[tribe] ImageEncoder: {len(result.unexpected_keys)} unexpected keys", flush=True)
+        if len(result.missing_keys) > 10:
+            raise RuntimeError(f"CLIP weight load incomplete — {len(result.missing_keys)} missing keys. Re-run python3 download_clip.py.")
+        self.model.eval()
 
-        self.processor = CLIPImageProcessor.from_pretrained("openai/clip-vit-large-patch14")
+        from PIL import Image as _PILImage
+        import io as _io
+        self._PILImage = _PILImage
+        self._io = _io
+
+        # Load processor from local dir; fall back to HF Hub
+        try:
+            self.processor = CLIPImageProcessor.from_pretrained(weights_dir)
+        except Exception:
+            self.processor = CLIPImageProcessor.from_pretrained("openai/clip-vit-large-patch14")
         n_layers = cfg.num_hidden_layers   # 24
         self.li  = [round(0.50 * n_layers), round(0.75 * n_layers), n_layers]
         print(f"[tribe] ImageEncoder ready \u2713  (layers {self.li})", flush=True)
 
     def encode(self, image_bytes: bytes, seq_len: int) -> torch.Tensor:
-        from PIL import Image
-        import io
-        img    = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        img = self._PILImage.open(self._io.BytesIO(image_bytes)).convert("RGB")
         inputs = self.processor(images=img, return_tensors="pt")
         with torch.no_grad():
             out = self.model(**inputs, output_hidden_states=True)
@@ -408,7 +425,7 @@ def region_stats(activations: np.ndarray):
 MODEL:         Optional[FmriEncoder] = None
 AUDIO_ENCODER: Optional[AudioEncoder] = None
 TEXT_ENCODER:  Optional[TextEncoder]  = None
-IMAGE_ENCODER: Optional["ImageEncoder"] = None
+IMAGE_ENCODER: Optional[ImageEncoder] = None
 
 
 # ── FastAPI lifespan ──────────────────────────────────────────────────────────
