@@ -794,6 +794,8 @@ window.ST = {
 };
 
 const _blobUrls = {};
+let _currentFile = null;   // holds the File object last loaded via handleFile
+let seqLen = 16;           // current seq_len; updated by cycleSeq()
 
 function init() { populateSubs(ST.stim); updateAll(); }
 
@@ -854,22 +856,10 @@ function _showFileChip(file) {
 function handleFile(input, type) {
   const file=input.files[0]; if (!file) return;
   ST.fileName=file.name;
+  _currentFile = file;
   if (_blobUrls[type]) { URL.revokeObjectURL(_blobUrls[type]); }
   const url = URL.createObjectURL(file);
   _blobUrls[type] = url;
-  if (type==='image') {
-    const img=document.getElementById('imgPreview'); img.src=url; img.style.display='block';
-    document.getElementById('dz-image-inner').style.display='none'; showBadge('img',file.name);
-    document.getElementById('dz-image').classList.add('has-content');
-  } else if (type==='video') {
-    const vid=document.getElementById('videoPreview'); vid.src=url; vid.style.display='block';
-    document.getElementById('dz-video-inner').style.display='none'; showBadge('video',file.name);
-    document.getElementById('dz-video').classList.add('has-content');
-  } else if (type==='audio') {
-    const aud=document.getElementById('audioPreview'); aud.src=url; aud.style.display='block';
-    document.getElementById('audioWave').classList.add('active'); showBadge('audio',file.name);
-    document.getElementById('dz-audio').classList.add('has-content');
-  }
   _showFileChip(file);
   updateAll();
   // Auto-run prediction when a stimulus file is loaded
@@ -880,9 +870,9 @@ function loadVideoUrl() {
   const url=document.getElementById('videoUrl').value.trim(); if (!url) return;
   ST.videoUrl=url;
   if (!url.includes('youtube')) {
-    const vid=document.getElementById('videoPreview'); vid.src=url; vid.style.display='block';
-    document.getElementById('dz-video-inner').style.display='none';
-    document.getElementById('dz-video').classList.add('has-content');
+    const vid=document.getElementById('videoPreview'); if(vid){vid.src=url; vid.style.display='block';}
+    const dzvi=document.getElementById('dz-video-inner'); if(dzvi) dzvi.style.display='none';
+    const dzvid=document.getElementById('dz-video'); if(dzvid) dzvid.classList.add('has-content');
     showBadge('video', url.split('/').pop().substring(0,36));
   } else { showBadge('video','[external URL]'); }
   updateAll();
@@ -890,7 +880,7 @@ function loadVideoUrl() {
 
 function showBadge(p,name) {
   const n=name.length>36?name.substring(0,36)+'…':name;
-  const b=document.getElementById(p+'-badge'); b.textContent=n; b.style.display='block';
+  const b=document.getElementById(p+'-badge'); if(b){b.textContent=n; b.style.display='block';}
   const c=document.getElementById(p+'-clear'); if(c) c.style.display='flex';
 }
 
@@ -904,9 +894,10 @@ function clearInput(type) {
   document.getElementById(p+'-badge').style.display='none';
   const cb=document.getElementById(p+'-clear'); if(cb) cb.style.display='none';
   document.getElementById('dz-'+type).classList.remove('has-content');
-  if (type==='image') { const i=document.getElementById('imgPreview');i.src='';i.style.display='none';document.getElementById('dz-image-inner').style.display='';document.getElementById('imgFile').value=''; }
-  else if (type==='video') { const v=document.getElementById('videoPreview');v.src='';v.style.display='none';document.getElementById('dz-video-inner').style.display='';document.getElementById('videoFile').value='';document.getElementById('videoUrl').value=''; }
-  else if (type==='audio') { const a=document.getElementById('audioPreview');a.src='';a.style.display='none';document.getElementById('audioWave').classList.remove('active');document.getElementById('dz-audio-inner').style.display='';document.getElementById('audioFile').value=''; }
+  _currentFile = null;
+  if (type==='image') { const i=document.getElementById('imgPreview');if(i){i.src='';i.style.display='none';} const dii=document.getElementById('dz-image-inner');if(dii)dii.style.display=''; }
+  else if (type==='video') { const v=document.getElementById('videoPreview');if(v){v.src='';v.style.display='none';} const dvi=document.getElementById('dz-video-inner');if(dvi)dvi.style.display=''; const vurl=document.getElementById('videoUrl');if(vurl)vurl.value=''; }
+  else if (type==='audio') { const a=document.getElementById('audioPreview');if(a){a.src='';a.style.display='none';} const aw=document.getElementById('audioWave');if(aw)aw.classList.remove('active'); const dai=document.getElementById('dz-audio-inner');if(dai)dai.style.display=''; }
   updateAll();
 }
 
@@ -1085,7 +1076,7 @@ function _setRunning(running) {
     document.getElementById('inferFill').style.width = '0%';
   } else {
     btn.classList.remove('cancelling');
-    btn.textContent = 'Run \u21B5';
+    btn.innerHTML = 'Run <span class="kbd">&#x21B5;</span>';
     btn.disabled = false;
     track.classList.remove('active');
   }
@@ -1602,8 +1593,8 @@ function _handleWSMsg(msg) {
   }
 }
 
-async function _getFileb64(inputId) {
-  const file = document.getElementById(inputId).files[0];
+async function _getFileb64() {
+  const file = _currentFile;
   if (!file) return '';
   return new Promise(resolve => {
     const reader = new FileReader();
@@ -1616,8 +1607,8 @@ async function runPrediction() {
   if (_predRunning) return;
   const text = document.getElementById('textInput').value.trim();
   if (ST.stim === 'text' && !text) return;
-  if (ST.stim === 'audio' && !document.getElementById('audioFile').files[0]) return;
-  if (ST.stim === 'image' && !document.getElementById('imgFile').files[0]) return;
+  if (ST.stim === 'audio' && !_currentFile) return;
+  if (ST.stim === 'image' && !_currentFile) return;
   if (ST.stim === 'video') {
     showToast('Video encoder not available — use text, image, or audio.');
     return;
@@ -1629,11 +1620,11 @@ async function runPrediction() {
   const bar = document.getElementById('inferBar');
   if (bar) { bar.style.width = '0%'; _animateBar(bar, 8, 200); }
 
-  const payload = { seq_len: 16 };
+  const payload = { seq_len: seqLen };
   if (ST.stim === 'audio') {
-    payload.audio_b64 = await _getFileb64('audioFile');
+    payload.audio_b64 = await _getFileb64();
   } else if (ST.stim === 'image') {
-    payload.image_b64 = await _getFileb64('imgFile');
+    payload.image_b64 = await _getFileb64();
   } else {
     payload.text = text || ST.stim;
   }
@@ -1784,6 +1775,7 @@ function cycleSeq() {
   const cur = parseInt(label.textContent.replace('seq ',''), 10);
   const idx  = SEQ_STEPS.indexOf(cur);
   const next = SEQ_STEPS[(idx + 1) % SEQ_STEPS.length];
+  seqLen = next;
   label.textContent = 'seq ' + next;
 }
 
