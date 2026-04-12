@@ -24,11 +24,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import uvicorn
+import asyncio
+import json as _json
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -356,6 +358,7 @@ def region_stats(activations: np.ndarray):
 MODEL:         Optional[FmriEncoder] = None
 AUDIO_ENCODER: Optional[AudioEncoder] = None
 TEXT_ENCODER:  Optional[TextEncoder]  = None
+IMAGE_ENCODER = None
 
 
 # ── FastAPI lifespan ──────────────────────────────────────────────────────────
@@ -407,7 +410,8 @@ def serve_brain_obj():
 
 class PredictRequest(BaseModel):
     text:       str = ""
-    audio_b64:  str = ""   # base64-encoded audio file bytes (any format librosa reads)
+    audio_b64:  str = ""
+    image_b64:  str = ""   # base64 image bytes (JPEG / PNG / WebP)
     seq_len:    int = 16
     subject_id: int = 0
 
@@ -415,21 +419,21 @@ class PredictRequest(BaseModel):
 class PredictResponse(BaseModel):
     region_stats:  dict
     global_stats:  dict
-    vertex_sample: list   # 512 evenly-spaced vertices for brain colour map
+    vertex_acts:   list   # 20484 floats (mean over T) for per-vertex BOLD coloring
+    temporal_acts: list   # [T][6] regional means per timepoint for TR animation
     seq_len:       int
     modality:      str
     elapsed_ms:    float
-    demo_mode:     bool   # True when hash-based fallback is used
+    demo_mode:     bool
 
 
-# ── Predict endpoint ──────────────────────────────────────────────────────────
+# ── Core prediction logic ─────────────────────────────────────────────────────
 
-@app.post("/api/predict", response_model=PredictResponse)
-def predict(req: PredictRequest):
+def _predict_core(req: PredictRequest) -> PredictResponse:
     if MODEL is None:
         raise HTTPException(503, "Model not ready")
-    if not req.text.strip() and not req.audio_b64:
-        raise HTTPException(400, "Provide text or audio input")
+    if not req.text.strip() and not req.audio_b64 and not req.image_b64:
+        raise HTTPException(400, "Provide text, audio, or image input")
 
     t0        = time.perf_counter()
     seq       = max(1, min(req.seq_len, 100))
@@ -464,30 +468,62 @@ def predict(req: PredictRequest):
             if text_feat is None:
                 text_feat = text_to_features_demo("", seq)
 
+    # ── Image ─────────────────────────────────────────────────────────────────
+    image_feat = None
+    if req.image_b64 and not req.audio_b64 and not req.text.strip():
+        modalities.append("image")
+        if IMAGE_ENCODER is not None:
+            try:
+                image_bytes = base64.b64decode(req.image_b64)
+                image_feat  = IMAGE_ENCODER.encode(image_bytes, seq)
+            except Exception as e:
+                print(f"[tribe] Image encoding error: {e}", flush=True)
+                demo_mode = True
+        else:
+            demo_mode = True
+            text_feat = text_to_features_demo("", seq)
+
     # Must have at least one feature tensor
-    if text_feat is None and audio_feat is None:
+    if text_feat is None and audio_feat is None and image_feat is None:
         raise HTTPException(400, "Could not produce any features from the input")
 
     # ── Run FmriEncoder ───────────────────────────────────────────────────────
     with torch.no_grad():
-        out = MODEL(text=text_feat, audio=audio_feat, video=None)  # [1, T, 20484]
+        out = MODEL(text=text_feat, audio=audio_feat, video=image_feat)  # [1, T, 20484]
 
-    act = out[0].numpy()                                           # [T, 20484]
+    act      = out[0].numpy()          # [T, 20484]
     rstats, gstats = region_stats(act)
 
-    idx    = np.round(np.linspace(0, 20483, 512)).astype(int)
-    sample = act.mean(axis=0)[idx].tolist()
+    mean_act    = act.mean(axis=0)     # [20484]
+    vertex_acts = [round(float(v), 4) for v in mean_act]
+
+    region_order = ["visual", "auditory", "language", "prefrontal", "motor", "parietal"]
+    temporal_acts: list = []
+    for t_idx in range(act.shape[0]):
+        row = []
+        for r in region_order:
+            lo, hi = REGION_RANGES[r]
+            row.append(round(float(act[t_idx, lo:hi].mean()), 4))
+        temporal_acts.append(row)
 
     elapsed = (time.perf_counter() - t0) * 1000
     return PredictResponse(
         region_stats  = rstats,
         global_stats  = gstats,
-        vertex_sample = sample,
+        vertex_acts   = vertex_acts,
+        temporal_acts = temporal_acts,
         seq_len       = seq,
         modality      = "+".join(modalities) if modalities else "unknown",
         elapsed_ms    = round(elapsed, 1),
         demo_mode     = demo_mode,
     )
+
+
+# ── HTTP predict endpoint ─────────────────────────────────────────────────────
+
+@app.post("/api/predict", response_model=PredictResponse)
+def predict(req: PredictRequest):
+    return _predict_core(req)
 
 
 # ── Health / Info endpoints ───────────────────────────────────────────────────
@@ -533,6 +569,44 @@ def model_info():
         },
         "demo_mode": TEXT_ENCODER is None,
     }
+
+
+@app.websocket("/ws")
+async def ws_predict(websocket: WebSocket):
+    await websocket.accept()
+    loop = asyncio.get_event_loop()
+
+    async def send(msg: dict):
+        await websocket.send_text(_json.dumps(msg))
+
+    try:
+        while True:
+            raw = await websocket.receive_text()
+            req_data = _json.loads(raw)
+
+            await send({"type": "progress", "pct": 5,  "msg": "Received request"})
+
+            try:
+                req = PredictRequest(
+                    text       = req_data.get("text", ""),
+                    audio_b64  = req_data.get("audio_b64", ""),
+                    image_b64  = req_data.get("image_b64", ""),
+                    seq_len    = int(req_data.get("seq_len", 16)),
+                    subject_id = int(req_data.get("subject_id", 0)),
+                )
+                await send({"type": "progress", "pct": 20, "msg": "Encoding stimulus"})
+                result = await loop.run_in_executor(None, lambda: _predict_core(req))
+                await send({"type": "progress", "pct": 90, "msg": "Coloring brain"})
+                payload = result.model_dump()
+                payload["type"] = "result"
+                await send(payload)
+            except HTTPException as e:
+                await send({"type": "error", "message": e.detail})
+            except Exception as e:
+                await send({"type": "error", "message": str(e)})
+
+    except WebSocketDisconnect:
+        pass
 
 
 if __name__ == "__main__":
