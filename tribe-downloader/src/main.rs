@@ -38,7 +38,7 @@ use wav2vec2bert::Wav2Vec2Bert;
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const SERVER_PORT: u16 = 8080;
+const SERVER_PORT: u16 = 8081;
 
 // ── Shared application state ──────────────────────────────────────────────────
 
