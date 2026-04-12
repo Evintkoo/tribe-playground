@@ -27,6 +27,7 @@ mod clip_encoder;
 mod features;
 mod fmri_encoder;
 mod handlers;
+mod jobs;
 mod llama_encoder;
 mod wav2vec2bert;
 
