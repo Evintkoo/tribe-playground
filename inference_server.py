@@ -296,6 +296,56 @@ class TextEncoder:
         return temporal_pool(feats, seq_len).unsqueeze(0)                 # [1, seq_len, 6144]
 
 
+# ── Image encoder (CLIP ViT-L/14) ────────────────────────────────────────────
+
+class ImageEncoder:
+    """
+    Encodes images using CLIP ViT-L/14 vision transformer.
+    Extracts patch hidden states at layers 50%, 75%, 100% (12, 18, 24).
+    tribe_group_mean -> [n_patches, 2048].
+    Temporal pool to seq_len then zero-pad to 2816 (video projector slot).
+    Returns [1, seq_len, 2816].
+    """
+    def __init__(self, weights_path: str):
+        from transformers import CLIPVisionConfig, CLIPVisionModel, CLIPImageProcessor
+        from safetensors.torch import load_file
+
+        print("[tribe] Loading ImageEncoder (CLIP ViT-L/14)\u2026", flush=True)
+        cfg = CLIPVisionConfig.from_pretrained("openai/clip-vit-large-patch14")
+        self.model = CLIPVisionModel(cfg)
+        self.model.eval()
+
+        sd_full   = load_file(weights_path, device="cpu")
+        prefix    = "vision_model."
+        sd_vision = {k[len(prefix):]: v for k, v in sd_full.items() if k.startswith(prefix)}
+        if sd_vision:
+            self.model.vision_model.load_state_dict(sd_vision, strict=False)
+        else:
+            # weights file may have no prefix (pure vision model save)
+            self.model.load_state_dict(sd_full, strict=False)
+
+        self.processor = CLIPImageProcessor.from_pretrained("openai/clip-vit-large-patch14")
+        n_layers = cfg.num_hidden_layers   # 24
+        self.li  = [round(0.50 * n_layers), round(0.75 * n_layers), n_layers]
+        print(f"[tribe] ImageEncoder ready \u2713  (layers {self.li})", flush=True)
+
+    def encode(self, image_bytes: bytes, seq_len: int) -> torch.Tensor:
+        from PIL import Image
+        import io
+        img    = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        inputs = self.processor(images=img, return_tensors="pt")
+        with torch.no_grad():
+            out = self.model(**inputs, output_hidden_states=True)
+        # hidden_states: list of [1, n_patches+1, 1024]
+        # index 0 = embedding layer, 1..24 = transformer layers
+        # Drop CLS token (position 0), keep patch tokens
+        h      = [out.hidden_states[i].squeeze(0)[1:].float() for i in self.li]
+        feats  = tribe_group_mean(*h)                           # [n_patches, 2048]
+        pooled = temporal_pool(feats, seq_len)                  # [seq_len, 2048]
+        pad    = torch.zeros(seq_len, 768, dtype=pooled.dtype)
+        return torch.cat([pooled, pad], dim=-1).unsqueeze(0)    # [1, seq_len, 2816]
+
+
 # ── Hash-based demo text features (fallback) ─────────────────────────────────
 
 def text_to_features_demo(text: str, seq_len: int) -> torch.Tensor:
@@ -358,14 +408,14 @@ def region_stats(activations: np.ndarray):
 MODEL:         Optional[FmriEncoder] = None
 AUDIO_ENCODER: Optional[AudioEncoder] = None
 TEXT_ENCODER:  Optional[TextEncoder]  = None
-IMAGE_ENCODER = None
+IMAGE_ENCODER: Optional["ImageEncoder"] = None
 
 
 # ── FastAPI lifespan ──────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def _lifespan(app):
-    global MODEL, AUDIO_ENCODER, TEXT_ENCODER
+    global MODEL, AUDIO_ENCODER, TEXT_ENCODER, IMAGE_ENCODER
 
     MODEL = load_fmri_encoder()
 
@@ -382,6 +432,17 @@ async def _lifespan(app):
     except Exception as e:
         print(f"[tribe] TextEncoder not loaded (demo mode for text): {e}", flush=True)
         TEXT_ENCODER = None
+
+    # Try ImageEncoder (CLIP ViT-L/14)
+    clip_path = os.path.join(SCRIPT_DIR, "tribe-v2-weights", "clip", "model.safetensors")
+    try:
+        if os.path.exists(clip_path):
+            IMAGE_ENCODER = ImageEncoder(clip_path)
+        else:
+            print(f"[tribe] CLIP weights not found at {clip_path} — run: python3 download_clip.py", flush=True)
+    except Exception as e:
+        print(f"[tribe] ImageEncoder not loaded: {e}", flush=True)
+        IMAGE_ENCODER = None
 
     yield
 
@@ -560,9 +621,10 @@ def model_info():
                       "encoder": "V-JEPA2 ViT-G"},
         },
         "encoders": {
-            "text":  ("LLaMA-3.2-3B · loaded"  if TEXT_ENCODER  else "demo · hash-based fallback"),
-            "audio": ("Wav2Vec-BERT 2.0 · loaded" if AUDIO_ENCODER else "not loaded"),
-            "video": "not loaded",
+            "text":  ("LLaMA-3.2-3B · loaded"      if TEXT_ENCODER  else "demo · hash-based fallback"),
+            "audio": ("Wav2Vec-BERT 2.0 · loaded"   if AUDIO_ENCODER else "not loaded"),
+            "image": ("CLIP ViT-L/14 · loaded"      if IMAGE_ENCODER else "not loaded"),
+            "video": "not loaded (V-JEPA2 not integrated)",
         },
         "training": {
             "n_subjects": 25,
