@@ -5,7 +5,7 @@
 //!   2. Loads FmriEncoder (candle, CPU/Metal).
 //!   3. Tries to load Wav2Vec2Bert from tribe-v2-weights/ (optional).
 //!   4. Tries to load LlamaTextEncoder from tribe-v2-weights/llama/ (optional).
-//!   5. Starts Axum HTTP server on port 8080 with WebSocket at /ws.
+//!   5. Starts Axum HTTP server on port 8081 with WebSocket at /ws.
 //!
 //! No Python process is spawned at runtime.
 
