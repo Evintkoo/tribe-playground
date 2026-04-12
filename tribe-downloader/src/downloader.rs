@@ -141,6 +141,7 @@ pub async fn run(
 
         drop(file); // flush + close before rename
         if let Err(e) = tokio::fs::rename(&tmp, &dest).await {
+            let _ = tokio::fs::remove_file(&tmp).await;
             mark_failed(&store, job_id, format!("rename {tmp:?} → {dest:?}: {e}")).await;
             return;
         }
