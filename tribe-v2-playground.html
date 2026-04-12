@@ -854,6 +854,9 @@ function _showFileChip(file) {
   document.getElementById('fcName').textContent = file.name;
   document.getElementById('fcSize').textContent = sz;
   document.getElementById('fileChip').classList.add('visible');
+  // Hide drop zone message when a file is attached
+  document.getElementById('dzImage').style.display = 'none';
+  document.getElementById('dzAudio').style.display = 'none';
 }
 
 function handleFile(input, type) {
@@ -892,6 +895,10 @@ function clearInput(type) {
   document.getElementById('fcExt').textContent  = '';
   document.getElementById('fcName').textContent = '';
   document.getElementById('fcSize').textContent = '';
+  _currentFile = null;
+  // Restore drop zone message for current mode
+  document.getElementById('dzImage').style.display = ST.stim === 'image' ? '' : 'none';
+  document.getElementById('dzAudio').style.display = ST.stim === 'audio' ? '' : 'none';
   if (!type) return;
   const p=type==='image'?'img':type; ST.fileName=''; ST.videoUrl='';
   document.getElementById(p+'-badge').style.display='none';
