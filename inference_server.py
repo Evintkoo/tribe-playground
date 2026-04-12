@@ -26,6 +26,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import uvicorn
 
@@ -387,6 +388,21 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_methods=["*"], allow_headers=["*"])
 
 
+@app.get("/")
+def serve_html():
+    p = os.path.join(SCRIPT_DIR, "tribe-v2-playground.html")
+    if not os.path.exists(p):
+        raise HTTPException(404, "tribe-v2-playground.html not found")
+    return FileResponse(p, media_type="text/html")
+
+@app.get("/brain.obj")
+def serve_brain_obj():
+    p = os.path.join(SCRIPT_DIR, "brain.obj")
+    if not os.path.exists(p):
+        raise HTTPException(404, "brain.obj not found")
+    return FileResponse(p, media_type="application/octet-stream")
+
+
 # ── Request / Response models ─────────────────────────────────────────────────
 
 class PredictRequest(BaseModel):
@@ -408,7 +424,7 @@ class PredictResponse(BaseModel):
 
 # ── Predict endpoint ──────────────────────────────────────────────────────────
 
-@app.post("/predict", response_model=PredictResponse)
+@app.post("/api/predict", response_model=PredictResponse)
 def predict(req: PredictRequest):
     if MODEL is None:
         raise HTTPException(503, "Model not ready")
@@ -476,12 +492,12 @@ def predict(req: PredictRequest):
 
 # ── Health / Info endpoints ───────────────────────────────────────────────────
 
-@app.get("/health")
+@app.get("/api/health")
 def health():
     return {"ready": MODEL is not None}
 
 
-@app.get("/info")
+@app.get("/api/info")
 def model_info():
     n_params = sum(p.numel() for p in MODEL.parameters()) if MODEL else 0
     return {
