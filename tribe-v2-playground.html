@@ -1587,7 +1587,7 @@ audio#audioPreview {
       <div id="temporalControls" style="display:none;align-items:center;gap:5px">
         <input type="range" id="temporalScrubber" min="0" max="15" value="0"
                style="width:55px;height:2px;cursor:pointer;accent-color:var(--ac)"
-               oninput="clearInterval(_temporalTimer);_temporalPlaying=false;document.getElementById('vt-temporal').classList.remove('on');document.getElementById('vt-temporal').textContent='\u25B6 TR';_applyTemporalFrame(+this.value)">
+               oninput="scrubTemporal(+this.value)">
         <span id="temporalFrameLbl" style="font-size:9px;color:var(--t3);font-family:var(--mono);white-space:nowrap">TR 1</span>
       </div>
       <div class="vt-sep"></div>
@@ -2484,6 +2484,14 @@ function _applyTemporalFrame(t) {
   if (lbl) lbl.textContent = 'TR ' + (t + 1) + ' / ' + _temporalActs.length;
 }
 
+function scrubTemporal(val) {
+  clearInterval(_temporalTimer);
+  _temporalPlaying = false;
+  const btn = document.getElementById('vt-temporal');
+  if (btn) { btn.classList.remove('on'); btn.textContent = '\u25B6 TR'; }
+  _applyTemporalFrame(val);
+}
+
 function playTemporal() {
   if (!_temporalActs) return;
   _temporalPlaying = !_temporalPlaying;
@@ -2642,8 +2650,6 @@ async function runPrediction() {
   if (ST.stim === 'text' && !text) return;
   if (ST.stim === 'audio' && !document.getElementById('audioFile').files[0]) return;
   if (ST.stim === 'image' && !document.getElementById('imgFile').files[0]) return;
-  if (ST.stim === 'video' && !document.getElementById('videoFile').files[0] && !ST.videoUrl) return;
-
   if (ST.stim === 'video') {
     showToast('Video encoder not available — use text, image, or audio.');
     return;
@@ -2659,8 +2665,6 @@ async function runPrediction() {
     payload.audio_b64 = await _getFileb64('audioFile');
   } else if (ST.stim === 'image') {
     payload.image_b64 = await _getFileb64('imgFile');
-  } else if (ST.stim === 'video') {
-    payload.video_b64 = await _getFileb64('videoFile');
   } else {
     payload.text = text || ST.stim;
   }
