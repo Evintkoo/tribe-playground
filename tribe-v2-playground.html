@@ -464,684 +464,159 @@ html, body {
 </style>
 </head>
 <body>
+<div class="shell">
 
-<!-- TOP BAR -->
-<header class="topbar">
-  <div class="tb-brand">
-    <span class="tb-logo">TRIBE</span>
-    <span class="tb-badge">v2</span>
-  </div>
-  <div class="tb-div"></div>
-  <span class="tb-session">session: <span id="sessionName">untitled-001</span></span>
-
-  <div class="tb-menus">
-    <div class="menu-wrap" id="menu-file">
-      <button class="tb-menu-btn" onclick="toggleMenu('file')">File</button>
-      <div class="menu-dropdown">
-        <div class="md-item" onclick="newSession();closeMenus()">New Session <span class="md-kbd">⌘N</span></div>
-        <div class="md-sep"></div>
-        <div class="md-item" onclick="exportJSON();closeMenus()">Export JSON</div>
-        <div class="md-item" onclick="exportCSV();closeMenus()">Export CSV</div>
-      </div>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">TRIBE<span class="brand-v">v2</span></div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-mid">
+      <div class="view-chip on" id="vc-lateral" onclick="setCamView('lateral')">LATERAL</div>
+      <div class="view-chip" id="vc-medial" onclick="setCamView('medial')">MEDIAL</div>
+      <div class="view-chip" id="vc-dorsal" onclick="setCamView('dorsal')">DORSAL</div>
     </div>
-    <div class="menu-wrap" id="menu-edit">
-      <button class="tb-menu-btn" onclick="toggleMenu('edit')">Edit</button>
-      <div class="menu-dropdown">
-        <div class="md-item" onclick="newSession();closeMenus()">Reset Session</div>
-        <div class="md-item" onclick="clearAllInputs();closeMenus()">Clear Stimulus</div>
-        <div class="md-sep"></div>
-        <div class="md-item" onclick="selectAllROI();closeMenus()">Select All ROI</div>
-        <div class="md-item" onclick="clearAllROI();closeMenus()">Clear All ROI</div>
-      </div>
-    </div>
-    <div class="menu-wrap" id="menu-view">
-      <button class="tb-menu-btn" onclick="toggleMenu('view')">View</button>
-      <div class="menu-dropdown">
-        <div class="md-item" onclick="setCamView('lateral');closeMenus()">Lateral</div>
-        <div class="md-item" onclick="setCamView('medial');closeMenus()">Medial</div>
-        <div class="md-item" onclick="setCamView('dorsal');closeMenus()">Dorsal</div>
-        <div class="md-sep"></div>
-        <div class="md-item" onclick="setHem('left');closeMenus()">Left Hemisphere</div>
-        <div class="md-item" onclick="setHem('right');closeMenus()">Right Hemisphere</div>
-        <div class="md-item" onclick="setHem('both');closeMenus()">Both Hemispheres</div>
-      </div>
-    </div>
-    <div class="menu-wrap" id="menu-analysis">
-      <button class="tb-menu-btn" onclick="toggleMenu('analysis')">Analysis</button>
-      <div class="menu-dropdown">
-        <div class="md-item" onclick="runPrediction();closeMenus()">Run Prediction <span class="md-kbd">⌘↵</span></div>
-        <div class="md-sep"></div>
-        <div class="md-item disabled">Compare Sessions…</div>
-        <div class="md-item disabled">Batch Predict…</div>
-      </div>
-    </div>
-    <div class="menu-wrap" id="menu-roi">
-      <button class="tb-menu-btn" onclick="toggleMenu('roi')">ROI</button>
-      <div class="menu-dropdown">
-        <div class="md-item" onclick="selectAllROI();closeMenus()">Select All</div>
-        <div class="md-item" onclick="clearAllROI();closeMenus()">Clear All</div>
-        <div class="md-sep"></div>
-        <div class="md-item" onclick="applyPreset('visual');closeMenus()">Visual Preset</div>
-        <div class="md-item" onclick="applyPreset('language');closeMenus()">Language Preset</div>
-        <div class="md-item" onclick="applyPreset('auditory');closeMenus()">Auditory Preset</div>
-      </div>
-    </div>
-    <div class="menu-wrap" id="menu-export">
-      <button class="tb-menu-btn" onclick="toggleMenu('export')">Export</button>
-      <div class="menu-dropdown">
-        <div class="md-item" onclick="exportJSON();closeMenus()">Export JSON</div>
-        <div class="md-item" onclick="exportCSV();closeMenus()">Export CSV</div>
-        <div class="md-sep"></div>
-        <div class="md-item disabled">Export NIfTI…</div>
-      </div>
-    </div>
-    <div class="menu-wrap" id="menu-help">
-      <button class="tb-menu-btn" onclick="toggleMenu('help')">Help</button>
-      <div class="menu-dropdown">
-        <div class="md-item" onclick="window.open('https://ai.meta.com/blog/tribe-v2-brain-predictive-foundation-model/');closeMenus()">TRIBE v2 Blog Post</div>
-        <div class="md-item" onclick="window.open('https://huggingface.co/facebook/tribev2');closeMenus()">HuggingFace Repo</div>
-        <div class="md-sep"></div>
-        <div class="md-item" onclick="showAbout();closeMenus()">About</div>
-      </div>
+    <div class="topbar-right">
+      <div class="icon-btn" title="Export" onclick="exportResults()">&#x2193;</div>
+      <div class="icon-btn" id="infoBtn" title="Info" onclick="toggleInfoPanel()">?</div>
     </div>
   </div>
 
-  <div class="tb-presets">
-    <button class="preset-chip tpl-btn" onclick="applyPreset('visual')">VISUAL</button>
-    <button class="preset-chip tpl-btn" onclick="applyPreset('language')">LANGUAGE</button>
-    <button class="preset-chip tpl-btn" onclick="applyPreset('auditory')">AUDITORY</button>
-    <button class="preset-chip tpl-btn" onclick="applyPreset('multimodal')">MULTI</button>
-    <button class="preset-chip tpl-btn" onclick="applyPreset('zeroshot')">ZERO-SHOT</button>
-  </div>
-
-  <div class="tb-right">
-    <button class="tb-icon-btn cancel-btn" id="cancelBtn" onclick="cancelPrediction()" style="display:none" title="Cancel inference">
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    </button>
-    <button class="tb-icon-btn" onclick="showAbout()" title="Model info">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zm0 4.5a.75.75 0 010 1.5A.75.75 0 018 6zm0 2.25a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0V9A.75.75 0 018 8.25z" fill="currentColor"/></svg>
-    </button>
-    <button class="run-btn" onclick="runPrediction()">
-      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-        <path d="M2.5 1.5L9 5.5L2.5 9.5V1.5Z" fill="white"/>
-      </svg>
-      Run Prediction
-    </button>
-  </div>
-</header>
-
-<!-- APP LAYOUT -->
-<div class="app-layout">
-
-  <!-- LEFT PANEL: Controls -->
-  <aside class="side-panel">
-
-    <!-- ROI -->
-    <div class="p-sect">
-      <div class="sect-label">
-        Regions of Interest
-        <span class="sect-badge" id="roiBadge">1 / 6</span>
-      </div>
-      <div class="roi-list" id="roiGrid">
-
-        <div class="roi-row on" data-r="visual" onclick="toggleR('visual')">
-          <div class="roi-dot" style="background:var(--r-visual);color:var(--r-visual)"></div>
-          <div class="roi-info">
-            <span class="roi-name">Visual Cortex</span>
-            <span class="roi-abbr">V1–V4 · Occipital</span>
-          </div>
-          <div class="roi-check">
-            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="region-tip">
-            <div class="rt-name">Visual Cortex</div>
-            <div class="rt-loc">Occipital lobe · BA 17, 18, 19 · V1–V4/MT</div>
-            <div class="rt-fns">
-              <span class="rt-fn-item">V1 detects edges, orientations, spatial frequency</span>
-              <span class="rt-fn-item">V4 encodes color, shape, object form</span>
-              <span class="rt-fn-item">MT/V5 processes motion and optic flow</span>
-            </div>
-            <div class="rt-high"><strong>High activation:</strong> visual input, reading, vivid imagery</div>
-          </div>
-        </div>
-
-        <div class="roi-row" data-r="auditory" onclick="toggleR('auditory')">
-          <div class="roi-dot" style="background:var(--r-auditory);color:var(--r-auditory)"></div>
-          <div class="roi-info">
-            <span class="roi-name">Auditory Cortex</span>
-            <span class="roi-abbr">STG · BA 41, 42</span>
-          </div>
-          <div class="roi-check">
-            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="region-tip">
-            <div class="rt-name">Auditory Cortex</div>
-            <div class="rt-loc">Superior temporal gyrus · BA 41, 42, 22</div>
-            <div class="rt-fns">
-              <span class="rt-fn-item">A1 (Heschl's) maps tones tonotopically</span>
-              <span class="rt-fn-item">Belt parses complex sounds and timbre</span>
-              <span class="rt-fn-item">Posterior STG → Wernicke's area</span>
-            </div>
-            <div class="rt-high"><strong>High activation:</strong> speech, music, environmental sounds</div>
-          </div>
-        </div>
-
-        <div class="roi-row" data-r="language" onclick="toggleR('language')">
-          <div class="roi-dot" style="background:var(--r-language);color:var(--r-language)"></div>
-          <div class="roi-info">
-            <span class="roi-name">Language Network</span>
-            <span class="roi-abbr">Broca + Wernicke</span>
-          </div>
-          <div class="roi-check">
-            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="region-tip">
-            <div class="rt-name">Language Network</div>
-            <div class="rt-loc">Left frontal + temporal · BA 44, 45, 22, 39</div>
-            <div class="rt-fns">
-              <span class="rt-fn-item">Broca's (BA44/45): syntax & production</span>
-              <span class="rt-fn-item">Wernicke's (BA22): speech comprehension</span>
-              <span class="rt-fn-item">Angular gyrus (BA39): reading & semantics</span>
-            </div>
-            <div class="rt-high"><strong>High activation:</strong> reading, speech, semantic tasks</div>
-          </div>
-        </div>
-
-        <div class="roi-row" data-r="prefrontal" onclick="toggleR('prefrontal')">
-          <div class="roi-dot" style="background:var(--r-prefrontal);color:var(--r-prefrontal)"></div>
-          <div class="roi-info">
-            <span class="roi-name">Prefrontal Cortex</span>
-            <span class="roi-abbr">dlPFC · vmPFC</span>
-          </div>
-          <div class="roi-check">
-            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="region-tip">
-            <div class="rt-name">Prefrontal Cortex</div>
-            <div class="rt-loc">Frontal lobe · BA 9, 10, 11, 46, 47</div>
-            <div class="rt-fns">
-              <span class="rt-fn-item">dlPFC (BA9/46): working memory, control</span>
-              <span class="rt-fn-item">vmPFC (BA11): reward, emotional valuation</span>
-              <span class="rt-fn-item">ACC: conflict monitoring, attention</span>
-            </div>
-            <div class="rt-high"><strong>High activation:</strong> complex narratives, inference, attention</div>
-          </div>
-        </div>
-
-        <div class="roi-row" data-r="motor" onclick="toggleR('motor')">
-          <div class="roi-dot" style="background:var(--r-motor);color:var(--r-motor)"></div>
-          <div class="roi-info">
-            <span class="roi-name">Motor Cortex</span>
-            <span class="roi-abbr">M1 · PMC · BA 4, 6</span>
-          </div>
-          <div class="roi-check">
-            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="region-tip">
-            <div class="rt-name">Motor Cortex</div>
-            <div class="rt-loc">Precentral gyrus · BA 4, 6 · M1 + premotor</div>
-            <div class="rt-fns">
-              <span class="rt-fn-item">M1 (BA4): executes voluntary movement</span>
-              <span class="rt-fn-item">Premotor (BA6): plans movements</span>
-              <span class="rt-fn-item">Mirror neurons: action observation</span>
-            </div>
-            <div class="rt-high"><strong>Surprising:</strong> reading action verbs ("kick", "run")</div>
-          </div>
-        </div>
-
-        <div class="roi-row" data-r="parietal" onclick="toggleR('parietal')">
-          <div class="roi-dot" style="background:var(--r-parietal);color:var(--r-parietal)"></div>
-          <div class="roi-info">
-            <span class="roi-name">Parietal Cortex</span>
-            <span class="roi-abbr">IPS · SPL · BA 5, 7</span>
-          </div>
-          <div class="roi-check">
-            <svg class="roi-check-mark" viewBox="0 0 7 7" fill="none"><path d="M1.5 3.5L3 5L5.5 2" stroke="white" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="region-tip">
-            <div class="rt-name">Parietal Cortex</div>
-            <div class="rt-loc">Parietal lobe · BA 5, 7, 39, 40</div>
-            <div class="rt-fns">
-              <span class="rt-fn-item">IPS: spatial attention & numerosity</span>
-              <span class="rt-fn-item">SPL: proprioception, body-in-space</span>
-              <span class="rt-fn-item">Angular gyrus: reading, semantics</span>
-            </div>
-            <div class="rt-high"><strong>High activation:</strong> spatial tasks, sentence comprehension</div>
-          </div>
-        </div>
-
-      </div>
-      <div style="margin-top:6px; font-family:var(--mono); font-size:9px; color:var(--t3); text-align:right">
-        <span id="roiCount">1 active</span>
-      </div>
-    </div>
-
-    <!-- Paradigm -->
-    <div class="p-sect">
-      <div class="sect-label">Paradigm</div>
-      <div class="task-grid">
-        <button class="task-chip on" data-task="passive"       onclick="selTask('passive')">Passive</button>
-        <button class="task-chip"    data-task="attention"     onclick="selTask('attention')">Attention</button>
-        <button class="task-chip"    data-task="memory"        onclick="selTask('memory')">Memory</button>
-        <button class="task-chip"    data-task="comprehension" onclick="selTask('comprehension')">Comprehension</button>
-      </div>
-    </div>
-
-    <!-- Stimulus Category -->
-    <div class="p-sect">
-      <div class="sect-label" id="subtypeLabel">Stimulus Category</div>
-      <div class="sel-wrap">
-        <select id="subtypeSelect" onchange="updateAll()"></select>
-      </div>
-    </div>
-
-    <!-- Model Config -->
-    <div class="p-sect">
-      <div class="sect-label">Model Config</div>
-
-      <div class="param-row">
-        <span class="param-label">Subjects (N)</span>
-        <span class="param-value" id="subjectVal">12</span>
-      </div>
-      <div class="slider-wrap" style="margin-bottom:12px">
-        <input class="slider-full" type="range" id="subjectSlider" min="1" max="72" value="12"
-               oninput="document.getElementById('subjectVal').textContent=this.value;updateAll()">
-      </div>
-
-      <div class="param-row">
-        <span class="param-label">Confidence</span>
-        <span class="param-value" id="confVal">0.85</span>
-      </div>
-      <div class="slider-wrap" style="margin-bottom:12px">
-        <input class="slider-full" type="range" id="confSlider" min="50" max="100" value="85"
-               oninput="document.getElementById('confVal').textContent=(this.value/100).toFixed(2);updateAll()">
-      </div>
-
-      <div class="param-row">
-        <span class="param-label">Resolution</span>
-        <span class="param-value" id="resVal">70×</span>
-      </div>
-      <div class="slider-wrap">
-        <input class="slider-full" type="range" id="resSlider" min="1" max="70" value="70"
-               oninput="document.getElementById('resVal').textContent=this.value+'×';ST.resolution=+this.value;updateAll()">
-      </div>
-    </div>
-
-    <!-- Toggles -->
-    <div class="p-sect">
-      <div class="sect-label">Advanced</div>
-      <div class="tog-row">
-        <div>
-          <span class="tog-label">Zero-shot</span>
-          <span class="tog-tag">no fine-tuning</span>
-        </div>
-        <div class="tog" id="togZS" onclick="flipTog('zeroshot')"></div>
-      </div>
-      <div class="tog-row">
-        <div>
-          <span class="tog-label">Cross-lingual</span>
-          <span class="tog-tag">non-English text</span>
-        </div>
-        <div class="tog" id="togCL" onclick="flipTog('crosslang')"></div>
-      </div>
-    </div>
-
-  </aside>
-
-  <!-- BRAIN VIEW -->
-  <main class="brain-view">
-
-    <!-- Viz toolbar -->
-    <div class="viz-toolbar">
-      <button class="vt-btn on" id="vt-lateral" onclick="setCamView('lateral')">Lateral</button>
-      <button class="vt-btn" id="vt-medial" onclick="setCamView('medial')">Medial</button>
-      <button class="vt-btn" id="vt-dorsal" onclick="setCamView('dorsal')">Dorsal</button>
-      <div class="vt-sep"></div>
-      <button class="vt-btn on" id="vt-lhem" onclick="setHem('left')">L</button>
-      <button class="vt-btn" id="vt-rhem" onclick="setHem('right')">R</button>
-      <div class="vt-sep"></div>
-      <button class="vt-btn on" id="vt-roi" onclick="toggleROI()">Glow</button>
-      <button class="vt-btn" id="vt-labels" onclick="toggleLabels()">Labels</button>
-      <div class="vt-sep"></div>
-      <button class="vt-btn" id="vt-pin" onclick="pinCompareA()" title="Pin current result as A for comparison" style="display:none">Pin A</button>
-      <button class="vt-btn" id="vt-diff" onclick="toggleDiff()" style="display:none">Diff</button>
-      <button class="vt-btn" id="vt-clear-cmp" onclick="clearCompare()" style="display:none; color:var(--t3)">✕</button>
-      <div class="vt-sep"></div>
-      <button class="vt-btn" id="vt-temporal" onclick="playTemporal()" style="display:none" title="Animate temporal sequence">&#9654; TR</button>
-      <div id="temporalControls" style="display:none;align-items:center;gap:5px">
-        <input type="range" id="temporalScrubber" min="0" max="15" value="0"
-               style="width:55px;height:2px;cursor:pointer;accent-color:var(--ac)"
-               oninput="scrubTemporal(+this.value)">
-        <span id="temporalFrameLbl" style="font-size:9px;color:var(--t3);font-family:var(--mono);white-space:nowrap">TR 1</span>
-      </div>
-      <div class="vt-sep"></div>
-      <span class="vt-coord">MNI: <span id="mniCoord">— — —</span></span>
-    </div>
-
+  <!-- MAIN BRAIN AREA -->
+  <div class="main" id="mainArea">
     <canvas id="brainCanvas"></canvas>
 
-    <svg id="labelLines" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:visible"></svg>
-    <div id="regionLabels"></div>
+    <!-- Loading overlay -->
+    <div id="loadingOverlay">LOADING BRAIN MESH&#x2026;</div>
 
-    <!-- Loading -->
-    <div id="brainLoading">
-      <div class="bl-label">Loading brain surface…</div>
-      <div class="bl-bar"><div class="bl-fill" id="blFill"></div></div>
-      <div class="bl-label" id="blPct" style="color:var(--t3)">0%</div>
-    </div>
-
-    <!-- ROI Stats overlay -->
-    <div class="roi-stats-panel" id="roiStatsPanel">
-      <div class="rst-head">
-        <span class="rst-hcell">Region</span>
-        <span class="rst-hcell">Rel. Act.<span class="hdr-tip">Regional z-score vs whole-brain mean. Positive = more active than average.</span></span>
-        <span class="rst-hcell">Mean (z)<span class="hdr-tip">Mean predicted BOLD amplitude across vertices in this region.</span></span>
-        <span class="rst-hcell">σ<span class="hdr-tip">Vertex-level standard deviation — higher = more heterogeneous activation within the region.</span></span>
-        <span class="rst-hcell">Peak<span class="hdr-tip">95th-percentile absolute vertex activation — the top 5% of vertices by amplitude.</span></span>
-        <span class="rst-hcell">Status</span>
+    <!-- ROI strip — left edge -->
+    <div class="roi-strip">
+      <div class="roi-row on" data-r="visual"     onclick="toggleROI(this)">
+        <div class="roi-dot" style="background:var(--r-visual);"></div>
+        <div class="roi-name">Visual</div>
       </div>
-      <div class="rst-row on"  data-r="visual"     onclick="toggleR('visual')">    <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-visual)"></div>Visual<div class="region-tip"><div class="rt-name">Visual Cortex</div><div class="rt-loc">Occipital lobe · BA 17, 18, 19 · V1–V4/MT</div><div class="rt-fns"><span class="rt-fn-item">V1 detects edges, orientations, spatial frequency</span><span class="rt-fn-item">V4 encodes color, shape, object form</span><span class="rt-fn-item">MT/V5 processes motion and optic flow</span></div><div class="rt-high"><strong>High activation:</strong> visual input, reading, vivid imagery</div></div></span><span class="rst-cell rst-pearson" id="pr-visual">—</span><span class="rst-cell rst-mean" id="mn-visual">—</span><span class="rst-cell rst-std" id="sd-visual">—</span><span class="rst-cell rst-peak" id="pk-visual">—</span><span class="rst-cell rst-status" id="st-visual">ON</span></div>
-      <div class="rst-row"     data-r="auditory"   onclick="toggleR('auditory')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-auditory)"></div>Auditory<div class="region-tip"><div class="rt-name">Auditory Cortex</div><div class="rt-loc">Superior temporal gyrus · BA 41, 42, 22</div><div class="rt-fns"><span class="rt-fn-item">A1 (Heschl's gyrus) maps tones tonotopically</span><span class="rt-fn-item">Auditory belt parses complex sounds, timbre</span><span class="rt-fn-item">Posterior STG → Wernicke's area</span></div><div class="rt-high"><strong>High activation:</strong> speech, music, environmental sounds</div></div></span><span class="rst-cell rst-pearson" id="pr-auditory">—</span><span class="rst-cell rst-mean" id="mn-auditory">—</span><span class="rst-cell rst-std" id="sd-auditory">—</span><span class="rst-cell rst-peak" id="pk-auditory">—</span><span class="rst-cell rst-status" id="st-auditory" style="color:var(--t3)">off</span></div>
-      <div class="rst-row"     data-r="language"   onclick="toggleR('language')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-language)"></div>Language<div class="region-tip"><div class="rt-name">Language Network</div><div class="rt-loc">Left frontal + temporal · BA 44, 45, 22, 39</div><div class="rt-fns"><span class="rt-fn-item">Broca's area (BA44/45): syntax, production</span><span class="rt-fn-item">Wernicke's area (BA22): speech comprehension</span><span class="rt-fn-item">Angular gyrus (BA39): reading, semantics</span></div><div class="rt-high"><strong>High activation:</strong> reading, speech, semantic tasks</div></div></span><span class="rst-cell rst-pearson" id="pr-language">—</span><span class="rst-cell rst-mean" id="mn-language">—</span><span class="rst-cell rst-std" id="sd-language">—</span><span class="rst-cell rst-peak" id="pk-language">—</span><span class="rst-cell rst-status" id="st-language" style="color:var(--t3)">off</span></div>
-      <div class="rst-row"     data-r="prefrontal" onclick="toggleR('prefrontal')"><span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-prefrontal)"></div>Prefrontal<div class="region-tip"><div class="rt-name">Prefrontal Cortex</div><div class="rt-loc">Frontal lobe · BA 9, 10, 11, 46, 47</div><div class="rt-fns"><span class="rt-fn-item">dlPFC (BA9/46): working memory, cognitive control</span><span class="rt-fn-item">vmPFC (BA11): reward, emotional valuation</span><span class="rt-fn-item">ACC monitors conflict, drives attention</span></div><div class="rt-high"><strong>High activation:</strong> complex narratives, inference, attention</div></div></span><span class="rst-cell rst-pearson" id="pr-prefrontal">—</span><span class="rst-cell rst-mean" id="mn-prefrontal">—</span><span class="rst-cell rst-std" id="sd-prefrontal">—</span><span class="rst-cell rst-peak" id="pk-prefrontal">—</span><span class="rst-cell rst-status" id="st-prefrontal" style="color:var(--t3)">off</span></div>
-      <div class="rst-row"     data-r="motor"      onclick="toggleR('motor')">     <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-motor)"></div>Motor<div class="region-tip"><div class="rt-name">Motor Cortex</div><div class="rt-loc">Precentral gyrus · BA 4, 6 · M1 + premotor + SMA</div><div class="rt-fns"><span class="rt-fn-item">M1 (BA4): executes voluntary movements</span><span class="rt-fn-item">Premotor (BA6): plans movements</span><span class="rt-fn-item">SMA: action sequences, self-initiated movement</span></div><div class="rt-high"><strong>Surprising:</strong> reading action verbs ("kick", "run", "grasp")</div></div></span><span class="rst-cell rst-pearson" id="pr-motor">—</span><span class="rst-cell rst-mean" id="mn-motor">—</span><span class="rst-cell rst-std" id="sd-motor">—</span><span class="rst-cell rst-peak" id="pk-motor">—</span><span class="rst-cell rst-status" id="st-motor" style="color:var(--t3)">off</span></div>
-      <div class="rst-row"     data-r="parietal"   onclick="toggleR('parietal')">  <span class="rst-cell rst-name"><div class="rst-dot" style="background:var(--r-parietal)"></div>Parietal<div class="region-tip"><div class="rt-name">Parietal Cortex</div><div class="rt-loc">Parietal lobe · BA 5, 7, 39, 40 · IPS + SPL</div><div class="rt-fns"><span class="rt-fn-item">IPS: spatial attention, saccades, numerosity</span><span class="rt-fn-item">SPL: proprioception, body-in-space</span><span class="rt-fn-item">Angular gyrus: reading, semantics</span></div><div class="rt-high"><strong>High activation:</strong> spatial tasks, sentence comprehension</div></div></span><span class="rst-cell rst-pearson" id="pr-parietal">—</span><span class="rst-cell rst-mean" id="mn-parietal">—</span><span class="rst-cell rst-std" id="sd-parietal">—</span><span class="rst-cell rst-peak" id="pk-parietal">—</span><span class="rst-cell rst-status" id="st-parietal" style="color:var(--t3)">off</span></div>
-    </div>
-
-    <!-- Insight panel -->
-    <div class="insight-panel" id="insightPanel">
-      <div class="insight-inner">
-        <div class="insight-hdr">Brain Activity Insight</div>
-        <div class="insight-summary" id="insightSummary"></div>
-        <div class="insight-cards" id="insightCards"></div>
+      <div class="roi-row on" data-r="auditory"   onclick="toggleROI(this)">
+        <div class="roi-dot" style="background:var(--r-auditory);"></div>
+        <div class="roi-name">Auditory</div>
+      </div>
+      <div class="roi-row on" data-r="language"   onclick="toggleROI(this)">
+        <div class="roi-dot" style="background:var(--r-language);"></div>
+        <div class="roi-name">Language</div>
+      </div>
+      <div class="roi-row on" data-r="prefrontal" onclick="toggleROI(this)">
+        <div class="roi-dot" style="background:var(--r-prefrontal);"></div>
+        <div class="roi-name">Prefrontal</div>
+      </div>
+      <div class="roi-row on" data-r="motor"      onclick="toggleROI(this)">
+        <div class="roi-dot" style="background:var(--r-motor);"></div>
+        <div class="roi-name">Motor</div>
+      </div>
+      <div class="roi-row on" data-r="parietal"   onclick="toggleROI(this)">
+        <div class="roi-dot" style="background:var(--r-parietal);"></div>
+        <div class="roi-name">Parietal</div>
       </div>
     </div>
 
-    <!-- Progress bar + step label -->
-    <div id="inferProgress">
-      <div id="inferBar"></div>
-    </div>
-    <div id="inferStepLabel"></div>
-
-    <!-- Colorbar legend (shown after first prediction) -->
-    <div class="colorbar" id="bColorbar">
-      <div class="cb-title">BOLD Activation</div>
-      <div class="cb-scale"></div>
-      <div class="cb-labels"><span>Suppressed</span><span>0</span><span>Active</span></div>
-      <div id="cbRangeLine" style="font-size:9px;color:var(--t3);margin-top:3px;font-family:var(--mono);text-align:center"></div>
+    <!-- BOLD colorbar — right edge -->
+    <div class="cbar">
+      <div class="cbar-label">+</div>
+      <div class="cbar-track"></div>
+      <div class="cbar-label">&#x2212;</div>
     </div>
 
-    <!-- Post-prediction metadata badge -->
-    <div class="pred-meta" id="predMeta">
-      <span class="pm-label">seq</span><span class="pm-val" id="pmSeq">—</span>
-      <div class="pm-sep"></div>
-      <span class="pm-label">time</span><span class="pm-val" id="pmTime">—</span>
-      <div class="pm-sep"></div>
-      <span class="pm-label">modality</span><span class="pm-val" id="pmMod">—</span>
-    </div>
+    <!-- Result card (shown after prediction) -->
+    <div id="resultCard"></div>
 
-    <!-- Comparison panel (hidden until Pin A is used) -->
-    <div class="compare-panel" id="comparePanel" style="display:none">
-      <div class="cp-header">
-        <span class="cp-title">Compare · <span id="cpStimA">A</span> vs <span id="cpStimB">B</span></span>
-        <button class="cp-close" onclick="clearCompare()">Clear</button>
-      </div>
-      <div class="cp-cols">
-        <span class="cp-col-hdr">Region</span>
-        <span class="cp-col-hdr a">A</span>
-        <span class="cp-col-hdr b">B</span>
-        <span class="cp-col-hdr d">Δ (B−A)</span>
-      </div>
-      <div id="cpRows"></div>
-    </div>
+    <!-- Info slide-in panel -->
+    <div id="infoPanel">
+      <div class="info-title">Encoders</div>
 
-  </main>
-
-  <!-- RIGHT PANEL: Stimulus -->
-  <aside class="side-panel panel-right">
-
-    <div class="modality-tabs">
-      <button class="mod-tab on" data-stim="text"  onclick="selStim('text')">Text</button>
-      <button class="mod-tab" data-stim="image" onclick="selStim('image')">Image</button>
-      <button class="mod-tab" data-stim="video" onclick="selStim('video')">Video</button>
-      <button class="mod-tab" data-stim="audio" onclick="selStim('audio')">Audio</button>
-    </div>
-
-    <!-- Demo banner (hidden by default) -->
-    <div class="demo-banner" id="demoBanner" style="display:none;margin:10px 12px 0">
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm8-3a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 018 5zm0 7a1 1 0 110-2 1 1 0 010 2z" fill="currentColor"/></svg>
-      <span id="demoBannerText"><strong>Demo mode</strong> — hash-based features. Install <a href="https://huggingface.co/meta-llama/Llama-3.2-3B" target="_blank">LLaMA-3.2-3B</a> for accuracy.</span>
-    </div>
-
-    <!-- TEXT panel -->
-    <div class="input-panel on" id="panel-text">
-      <div class="input-meta">
-        <span class="meta-item">modality: <span>text</span></span>
-        <div class="meta-sep"></div>
-        <span class="meta-item">encoder: <span>LLaMA-3.2-3B</span></span>
-        <div class="meta-sep"></div>
-        <span class="meta-item" id="charCount">0 chars</span>
-        <div class="meta-sep"></div>
-        <span class="meta-item" id="tokenEst">~0 tokens</span>
-      </div>
-      <textarea id="textInput"
-        placeholder="Enter stimulus text — prose, poetry, sentences, or any natural language. TRIBE v2 predicts the fMRI BOLD response across selected cortical regions."
-        oninput="debouncedUpdate()"></textarea>
-      <div class="input-footer">
-        <span>UTF-8 · any language</span>
-        <span id="stimBadge" style="font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:.06em">TEXT</span>
-      </div>
-    </div>
-
-    <!-- IMAGE panel -->
-    <div class="input-panel" id="panel-image">
-      <div class="input-meta">
-        <span class="meta-item">encoder: <span id="imageEncoderLabel">CLIP ViT-L/14</span><span id="imgEncDot" title="checking…" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--t3);margin-left:5px;vertical-align:middle"></span><button class="dl-btn" id="dlBtn-clip" onclick="downloadModel('clip')" title="Download CLIP weights (~1.7 GB)">↓ Download</button><span class="dl-bar-wrap" id="dlBar-clip" style="display:none"><span class="dl-bar" id="dlBarFill-clip"></span></span></span>
-        <div class="meta-sep"></div>
-        <span class="meta-item">accepted: <span>JPG · PNG · WebP</span></span>
-      </div>
-      <div class="dropzone" id="dz-image" onclick="document.getElementById('imgFile').click()"
-           ondragover="dzDrag(event,'dz-image')" ondragleave="dzLeave('dz-image')" ondrop="dzDrop(event,'image')">
-        <img id="imgPreview" class="img-preview" alt="">
-        <div class="dz-inner" id="dz-image-inner">
-          <div class="dz-icon">
-            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-              <rect x="4" y="7" width="24" height="18" rx="3"/>
-              <circle cx="11.5" cy="14" r="2.5"/>
-              <path d="M4 21.5L11 14.5L16.5 20.5L21 15.5L28 21.5"/>
-            </svg>
-          </div>
-          <div class="dz-title">Drop image or click to browse</div>
-          <div class="dz-sub">Any common format · no size limit</div>
-          <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('imgFile').click()">Select File</button>
-        </div>
-        <div class="file-badge" id="img-badge"></div>
-        <button class="clear-btn" id="img-clear" onclick="event.stopPropagation();clearInput('image')" title="Clear">✕</button>
-        <input type="file" id="imgFile" accept="image/*" style="display:none" onchange="handleFile(this,'image')">
-      </div>
-    </div>
-
-    <!-- VIDEO panel -->
-    <div class="input-panel" id="panel-video" style="position:relative">
-      <div class="unavail-overlay" id="videoUnavail">
-        <div class="unavail-icon">
-          <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36" stroke-linecap="round">
-            <rect x="2" y="6" width="20" height="20" rx="3"/>
-            <path d="M22 12L30 8V24L22 20Z"/>
-            <line x1="3" y1="3" x2="29" y2="29" stroke="var(--orange)" stroke-width="2"/>
-          </svg>
-        </div>
-        <div class="unavail-title">Video encoder not yet integrated</div>
-        <div class="unavail-sub">V-JEPA2 ViT-G is planned but not loaded. Use text, image, or audio instead.</div>
-      </div>
-      <div class="input-meta">
-        <span class="meta-item">encoder: <span>V-JEPA2 temporal</span></span>
-        <div class="meta-sep"></div>
-        <span class="meta-item">accepted: <span>MP4 · WebM · MOV</span></span>
-      </div>
-      <div class="url-bar">
-        <input class="url-input" id="videoUrl" type="text" placeholder="Video URL (.mp4 / .webm)" oninput="updateAll()">
-        <button class="url-go" onclick="loadVideoUrl()">Load</button>
-      </div>
-      <div class="dropzone" id="dz-video" onclick="document.getElementById('videoFile').click()"
-           ondragover="dzDrag(event,'dz-video')" ondragleave="dzLeave('dz-video')" ondrop="dzDrop(event,'video')">
-        <video id="videoPreview" controls></video>
-        <div class="dz-inner" id="dz-video-inner">
-          <div class="dz-icon">
-            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-              <rect x="2" y="6" width="20" height="20" rx="3"/>
-              <path d="M22 12L30 8V24L22 20Z"/>
-            </svg>
-          </div>
-          <div class="dz-title">Drop video or enter URL above</div>
-          <div class="dz-sub">MP4 · WebM · MOV · AVI</div>
-          <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('videoFile').click()">Select File</button>
-        </div>
-        <div class="file-badge" id="video-badge"></div>
-        <button class="clear-btn" id="video-clear" onclick="event.stopPropagation();clearInput('video')" title="Clear">✕</button>
-        <input type="file" id="videoFile" accept="video/*" style="display:none" onchange="handleFile(this,'video')">
-      </div>
-    </div>
-
-    <!-- AUDIO panel -->
-    <div class="input-panel" id="panel-audio">
-      <div class="input-meta">
-        <span class="meta-item">encoder: <span>Wav2Vec-BERT 2.0</span></span>
-        <div class="meta-sep"></div>
-        <span class="meta-item">accepted: <span>MP3 · WAV · FLAC · M4A</span></span>
-      </div>
-      <div class="dropzone" id="dz-audio" onclick="document.getElementById('audioFile').click()"
-           ondragover="dzDrag(event,'dz-audio')" ondragleave="dzLeave('dz-audio')" ondrop="dzDrop(event,'audio')">
-        <div class="dz-inner" id="dz-audio-inner">
-          <div class="audio-waveform" id="audioWave">
-            <div class="aw-bar"></div><div class="aw-bar"></div><div class="aw-bar"></div>
-          </div>
-          <div class="dz-title">Drop audio or click to browse</div>
-          <div class="dz-sub">MP3 · WAV · FLAC · OGG · M4A</div>
-          <button class="browse-btn" onclick="event.stopPropagation();document.getElementById('audioFile').click()">Select File</button>
-        </div>
-        <audio id="audioPreview" controls></audio>
-        <div class="file-badge" id="audio-badge"></div>
-        <button class="clear-btn" id="audio-clear" onclick="event.stopPropagation();clearInput('audio')" title="Clear">✕</button>
-        <input type="file" id="audioFile" accept="audio/*" style="display:none" onchange="handleFile(this,'audio')">
-      </div>
-    </div>
-
-  </aside>
-
-</div><!-- .app-layout -->
-
-<!-- MODEL INFO MODAL -->
-<div class="info-modal-backdrop" id="infoModalBackdrop" onclick="if(event.target===this)closeInfoModal()">
-  <div class="info-modal">
-    <div class="info-modal-head">
-      <span class="info-modal-title">TRIBE v2 · Model Reference</span>
-      <button class="info-modal-close" onclick="closeInfoModal()">✕</button>
-    </div>
-    <div class="info-modal-body">
-
+      <!-- LLaMA -->
       <div>
-        <div class="info-section-title">Model</div>
-        <div class="info-grid" id="infoGridModel">
-          <div class="info-row"><span class="info-label">Class</span><span class="info-val">FmriEncoder</span></div>
-          <div class="info-row"><span class="info-label">Parameters</span><span class="info-val" id="infoNParams">loading…</span></div>
-          <div class="info-row"><span class="info-label">Checkpoint</span><span class="info-val" style="font-size:10px">facebook/tribev2</span></div>
-          <div class="info-row"><span class="info-label">Output surface</span><span class="info-val">fsaverage5</span></div>
+        <div class="enc-row">
+          <div class="enc-name">LLaMA (text)</div>
+          <div class="enc-status missing" id="llamaStatus">not loaded</div>
+        </div>
+        <button class="dl-btn" id="dlLlama" onclick="startDownload('llama')">Download</button>
+        <div class="dl-progress" id="dlLlamaProgress">
+          <div class="dl-progress-fill" id="dlLlamaFill"></div>
         </div>
       </div>
 
+      <div class="info-sep"></div>
+
+      <!-- CLIP -->
       <div>
-        <div class="info-section-title">Architecture</div>
-        <div class="info-grid">
-          <div class="info-row"><span class="info-label">Hidden dim</span><span class="info-val">1,152</span></div>
-          <div class="info-row"><span class="info-label">Attention heads</span><span class="info-val">8</span></div>
-          <div class="info-row"><span class="info-label">Transformer layers</span><span class="info-val">16 (8 attn + 8 FF)</span></div>
-          <div class="info-row"><span class="info-label">FF multiplier</span><span class="info-val">4×</span></div>
-          <div class="info-row"><span class="info-label">Output vertices</span><span class="info-val">20,484</span></div>
-          <div class="info-row"><span class="info-label">Max sequence</span><span class="info-val">1,024 TR</span></div>
+        <div class="enc-row">
+          <div class="enc-name">CLIP (image)</div>
+          <div class="enc-status missing" id="clipStatus">not loaded</div>
+        </div>
+        <button class="dl-btn" id="dlClip" onclick="startDownload('clip')">Download</button>
+        <div class="dl-progress" id="dlClipProgress">
+          <div class="dl-progress-fill" id="dlClipFill"></div>
         </div>
       </div>
 
+      <div class="info-sep"></div>
+
+      <!-- Wav2Vec -->
       <div>
-        <div class="info-section-title">Encoders</div>
-        <div class="info-encoder-row">
-          <div class="info-encoder-dot" style="background:var(--r-language)"></div>
-          <span class="info-encoder-name">Text</span>
-          <span class="info-encoder-model" id="encoderStatus-text">LLaMA-3.2-3B</span>
-          <span class="info-encoder-dims">6,144 dim</span>
+        <div class="enc-row">
+          <div class="enc-name">Wav2Vec (audio)</div>
+          <div class="enc-status missing" id="wav2vecStatus">not loaded</div>
         </div>
-        <div class="info-encoder-row">
-          <div class="info-encoder-dot" style="background:var(--r-auditory)"></div>
-          <span class="info-encoder-name">Audio</span>
-          <span class="info-encoder-model" id="encoderStatus-audio">Wav2Vec-BERT 2.0</span>
-          <span class="info-encoder-dims">2,048 dim</span>
-        </div>
-        <div class="info-encoder-row">
-          <div class="info-encoder-dot" style="background:var(--r-visual)"></div>
-          <span class="info-encoder-name">Image</span>
-          <span class="info-encoder-model" id="encoderStatus-image">CLIP ViT-L/14</span>
-          <span class="info-encoder-dims">2,816 dim</span>
-        </div>
-        <div class="info-encoder-row">
-          <div class="info-encoder-dot" style="background:var(--r-prefrontal)"></div>
-          <span class="info-encoder-name">Video</span>
-          <span class="info-encoder-model" id="encoderStatus-video">V-JEPA2 ViT-G</span>
-          <span class="info-encoder-dims">2,816 dim</span>
-        </div>
-        <div class="info-row" id="rowDlLlama" style="display:none">
-          <span class="info-lbl">LLaMA encoder</span>
-          <span class="info-val">not loaded
-            <button class="dl-btn" id="dlBtn-llama" onclick="downloadModel('llama')" title="Download LLaMA weights (~6 GB)">↓ Download</button>
-            <span class="dl-bar-wrap" id="dlBar-llama" style="display:none"><span class="dl-bar" id="dlBarFill-llama"></span></span>
-          </span>
-        </div>
-        <div class="info-row" id="rowDlWav2vec" style="display:none">
-          <span class="info-lbl">Wav2Vec encoder</span>
-          <span class="info-val">not loaded
-            <button class="dl-btn" id="dlBtn-wav2vec" onclick="downloadModel('wav2vec')" title="Download Wav2Vec weights (~0.6 GB)">↓ Download</button>
-            <span class="dl-bar-wrap" id="dlBar-wav2vec" style="display:none"><span class="dl-bar" id="dlBarFill-wav2vec"></span></span>
-          </span>
+        <button class="dl-btn" id="dlWav2vec" onclick="startDownload('wav2vec')">Download</button>
+        <div class="dl-progress" id="dlWav2vecProgress">
+          <div class="dl-progress-fill" id="dlWav2vecFill"></div>
         </div>
       </div>
-
-      <div>
-        <div class="info-section-title">Training Data</div>
-        <div class="info-datasets">
-          <span class="info-dataset-pill">Algonauts2025Bold</span>
-          <span class="info-dataset-pill">Lahner2024Bold</span>
-          <span class="info-dataset-pill">Lebel2023Bold</span>
-          <span class="info-dataset-pill">Wen2017</span>
-        </div>
-        <div style="margin-top:8px;font-size:11px;color:var(--t3)">25 subjects · 15 training epochs · fsaverage5 surface</div>
-      </div>
-
-      <div>
-        <div class="info-section-title">Output Metrics</div>
-        <div class="info-metrics-table">
-          <div class="info-metric-row">
-            <span class="info-metric-name">Rel. Act.</span>
-            <span class="info-metric-desc">Regional z-score relative to whole-brain mean. Positive = more active; negative = suppressed.</span>
-          </div>
-          <div class="info-metric-row">
-            <span class="info-metric-name">Mean (z)</span>
-            <span class="info-metric-desc">Mean predicted BOLD amplitude across all vertices in the region, in model z-score units.</span>
-          </div>
-          <div class="info-metric-row">
-            <span class="info-metric-name">σ</span>
-            <span class="info-metric-desc">Vertex-level standard deviation — higher values indicate spatially heterogeneous activation.</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="info-demo-note">
-        ⚠ <strong>Demo mode</strong> — The FmriEncoder runs with real weights (676 MB) but text uses hash-based pseudo-features instead of LLaMA-3.2-3B. Install the full encoder for semantically grounded predictions.
-      </div>
-
     </div>
+
+    <!-- Hidden compatibility stubs (preserve old JS IDs) -->
+    <div id="statusBar"      style="display:none;"></div>
+    <div id="resultPanel"    style="display:none;"></div>
+    <div id="comparePanel"   style="display:none;"></div>
+    <div id="sessionId"      style="display:none;"></div>
+    <div id="demoMode"       style="display:none;"></div>
   </div>
-</div>
 
-<!-- STATE + UI SCRIPT -->
+  <!-- BOTTOM INPUT BAR -->
+  <div class="bottom-bar">
+    <!-- Mode tabs -->
+    <div class="mode-tabs">
+      <div class="mode-tab on" id="tab-text"  onclick="selStim('text')">TEXT</div>
+      <div class="mode-tab"    id="tab-image" onclick="selStim('image')">IMAGE</div>
+      <div class="mode-tab"    id="tab-audio" onclick="selStim('audio')">AUDIO</div>
+    </div>
+
+    <!-- File chip (image/audio mode) -->
+    <div id="fileChip">
+      <span class="fc-ext" id="fcExt"></span>
+      <span class="fc-name" id="fcName"></span>
+      <span class="fc-size" id="fcSize"></span>
+      <span class="fc-rm" onclick="clearInput()">&#x2715;</span>
+    </div>
+
+    <!-- Input row -->
+    <div class="input-row" id="inputRow">
+      <!-- Text mode -->
+      <textarea id="textInput" rows="1" placeholder="Describe a stimulus&#x2026;" oninput="autoResize(this)"></textarea>
+      <!-- Image drop zone msg (hidden when text active) -->
+      <div class="dz-msg" id="dzImage" style="display:none;">Drop an image file here</div>
+      <!-- Audio drop zone msg -->
+      <div class="dz-msg" id="dzAudio" style="display:none;">Drop an audio file here</div>
+
+      <!-- Seq control -->
+      <div class="seq-label" id="seqLabel" onclick="cycleSeq()">seq 16</div>
+      <div class="input-sep"></div>
+      <!-- Run button -->
+      <button class="run-btn" id="runBtn" onclick="runOrCancel()">Run <span class="kbd">&#x21B5;</span></button>
+    </div>
+
+    <!-- Infer progress track -->
+    <div id="inferTrack"><div id="inferFill"></div></div>
+  </div>
+
+</div>
 <script>
 const SUBTYPES = {
   text:  [{v:'narrative',label:'Narrative / Prose'},{v:'poetry',label:'Poetry / Literary'},{v:'technical',label:'Technical / Scientific'},{v:'sentences',label:'Isolated Sentences'}],
