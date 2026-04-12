@@ -807,7 +807,7 @@ function selStim(mode) {
   document.getElementById('textInput').style.display  = mode === 'text'  ? '' : 'none';
   document.getElementById('dzImage').style.display    = mode === 'image' ? '' : 'none';
   document.getElementById('dzAudio').style.display    = mode === 'audio' ? '' : 'none';
-  if (mode !== 'image' && mode !== 'audio') clearInput();
+  clearInput();
   populateSubs(mode);
   updateAll();
 }
