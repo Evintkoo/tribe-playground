@@ -797,22 +797,29 @@ const _blobUrls = {};
 
 function init() { populateSubs(ST.stim); updateAll(); }
 
-function selStim(s) {
-  ST.stim = s;
-  document.querySelectorAll('.mod-tab').forEach(t => t.classList.toggle('on', t.dataset.stim===s));
-  document.querySelectorAll('.input-panel').forEach(p => p.classList.toggle('on', p.id==='panel-'+s));
-  document.getElementById('stimBadge').textContent = s.toUpperCase();
-  populateSubs(s);
+function selStim(mode) {
+  ST.stim = mode;
+  ['text','image','audio'].forEach(m => {
+    document.getElementById('tab-' + m).classList.toggle('on', m === mode);
+  });
+  document.getElementById('textInput').style.display  = mode === 'text'  ? '' : 'none';
+  document.getElementById('dzImage').style.display    = mode === 'image' ? '' : 'none';
+  document.getElementById('dzAudio').style.display    = mode === 'audio' ? '' : 'none';
+  if (mode !== 'image' && mode !== 'audio') clearInput();
+  populateSubs(mode);
   updateAll();
 }
 
 function populateSubs(s) {
   const sel = document.getElementById('subtypeSelect');
-  while (sel.firstChild) sel.removeChild(sel.firstChild);
-  SUBTYPES[s].forEach(o => { const e=document.createElement('option'); e.value=o.v; e.textContent=o.label; sel.appendChild(e); });
-  ST.subtype = SUBTYPES[s][0].v;
+  if (sel) {
+    while (sel.firstChild) sel.removeChild(sel.firstChild);
+    SUBTYPES[s].forEach(o => { const e=document.createElement('option'); e.value=o.v; e.textContent=o.label; sel.appendChild(e); });
+  }
+  if (SUBTYPES[s] && SUBTYPES[s][0]) ST.subtype = SUBTYPES[s][0].v;
   const T={text:'Stimulus Category (Text)',image:'Stimulus Category (Image)',video:'Stimulus Category (Video)',audio:'Stimulus Category (Audio)'};
-  document.getElementById('subtypeLabel').textContent = T[s];
+  const subtypeLbl = document.getElementById('subtypeLabel');
+  if (subtypeLbl) subtypeLbl.textContent = T[s];
 }
 
 function toggleR(r) {
@@ -828,9 +835,20 @@ function selTask(t) {
 }
 
 function flipTog(k) {
-  if (k==='zeroshot') { ST.zeroshot=!ST.zeroshot; document.getElementById('togZS').classList.toggle('on',ST.zeroshot); }
-  else               { ST.crosslang=!ST.crosslang; document.getElementById('togCL').classList.toggle('on',ST.crosslang); }
+  if (k==='zeroshot') { ST.zeroshot=!ST.zeroshot; const el=document.getElementById('togZS'); if(el) el.classList.toggle('on',ST.zeroshot); }
+  else               { ST.crosslang=!ST.crosslang; const el=document.getElementById('togCL'); if(el) el.classList.toggle('on',ST.crosslang); }
   updateAll();
+}
+
+function _showFileChip(file) {
+  const ext = (file.name.split('.').pop() || '').toUpperCase();
+  const kb  = (file.size / 1024).toFixed(0);
+  const mb  = (file.size / 1048576).toFixed(1);
+  const sz  = file.size > 1048576 ? mb + ' MB' : kb + ' KB';
+  document.getElementById('fcExt').textContent  = ext;
+  document.getElementById('fcName').textContent = file.name;
+  document.getElementById('fcSize').textContent = sz;
+  document.getElementById('fileChip').classList.add('visible');
 }
 
 function handleFile(input, type) {
@@ -852,6 +870,7 @@ function handleFile(input, type) {
     document.getElementById('audioWave').classList.add('active'); showBadge('audio',file.name);
     document.getElementById('dz-audio').classList.add('has-content');
   }
+  _showFileChip(file);
   updateAll();
   // Auto-run prediction when a stimulus file is loaded
   if (type === 'audio' || type === 'image' || type === 'video') setTimeout(runPrediction, 200);
@@ -876,6 +895,11 @@ function showBadge(p,name) {
 }
 
 function clearInput(type) {
+  document.getElementById('fileChip').classList.remove('visible');
+  document.getElementById('fcExt').textContent  = '';
+  document.getElementById('fcName').textContent = '';
+  document.getElementById('fcSize').textContent = '';
+  if (!type) return;
   const p=type==='image'?'img':type; ST.fileName=''; ST.videoUrl='';
   document.getElementById(p+'-badge').style.display='none';
   const cb=document.getElementById(p+'-clear'); if(cb) cb.style.display='none';
@@ -891,14 +915,20 @@ function dzLeave(id){document.getElementById(id).classList.remove('drag');}
 function dzDrop(e,type){e.preventDefault();dzLeave('dz-'+type);const f=e.dataTransfer.files[0];if(!f)return;handleFile({files:[f]},type);}
 
 function updateAll() {
-  ST.subjects   = +document.getElementById('subjectSlider').value;
-  ST.confidence = +document.getElementById('confSlider').value/100;
-  ST.subtype    = document.getElementById('subtypeSelect').value;
-  ST.textContent= document.getElementById('textInput').value.trim();
+  const subjectSlider = document.getElementById('subjectSlider');
+  if (subjectSlider) ST.subjects = +subjectSlider.value;
+  const confSlider = document.getElementById('confSlider');
+  if (confSlider) ST.confidence = +confSlider.value/100;
+  const subtypeSelect = document.getElementById('subtypeSelect');
+  if (subtypeSelect) ST.subtype = subtypeSelect.value;
+  const textInputVal = document.getElementById('textInput');
+  if (textInputVal) ST.textContent = textInputVal.value.trim();
 
-  const len = document.getElementById('textInput').value.length;
-  document.getElementById('charCount').textContent = len.toLocaleString()+' chars';
-  document.getElementById('tokenEst').textContent  = '~'+Math.ceil(len/4)+' tokens';
+  const len = textInputVal ? textInputVal.value.length : 0;
+  const charCount = document.getElementById('charCount');
+  if (charCount) charCount.textContent = len.toLocaleString()+' chars';
+  const tokenEst = document.getElementById('tokenEst');
+  if (tokenEst) tokenEst.textContent = '~'+Math.ceil(len/4)+' tokens';
 
   // ROI rows (both panels)
   const allRois = ['visual','auditory','language','prefrontal','motor','parietal'];
@@ -912,8 +942,10 @@ function updateAll() {
   });
 
   const n = ST.regions.length;
-  document.getElementById('roiCount').textContent  = n+' active';
-  document.getElementById('roiBadge').textContent  = n+' / 6';
+  const roiCount = document.getElementById('roiCount');
+  if (roiCount) roiCount.textContent = n+' active';
+  const roiBadge = document.getElementById('roiBadge');
+  if (roiBadge) roiBadge.textContent = n+' / 6';
 
   if (window.updateBrainRegions) window.updateBrainRegions(ST.regions);
 }
@@ -930,12 +962,15 @@ function applyPreset(name) {
   ST.regions=[...p.regions]; ST.zeroshot=p.zeroshot; ST.crosslang=p.crosslang;
   ST.resolution=p.resolution; ST.confidence=p.confidence; ST.task=p.task;
   selStim(p.stim);
-  setTimeout(()=>{document.getElementById('subtypeSelect').value=p.sub;ST.subtype=p.sub;},0);
-  document.getElementById('subjectSlider').value=p.subjects; document.getElementById('subjectVal').textContent=p.subjects;
-  document.getElementById('togZS').classList.toggle('on',p.zeroshot);
-  document.getElementById('togCL').classList.toggle('on',p.crosslang);
-  document.getElementById('resSlider').value=p.resolution; document.getElementById('resVal').textContent=p.resolution+'\u00d7';
-  document.getElementById('confSlider').value=Math.round(p.confidence*100); document.getElementById('confVal').textContent=p.confidence.toFixed(2);
+  setTimeout(()=>{ const ss=document.getElementById('subtypeSelect'); if(ss){ss.value=p.sub;} ST.subtype=p.sub; },0);
+  const aSlider=document.getElementById('subjectSlider'); if(aSlider) aSlider.value=p.subjects;
+  const aVal=document.getElementById('subjectVal'); if(aVal) aVal.textContent=p.subjects;
+  const apTogZS=document.getElementById('togZS'); if(apTogZS) apTogZS.classList.toggle('on',p.zeroshot);
+  const apTogCL=document.getElementById('togCL'); if(apTogCL) apTogCL.classList.toggle('on',p.crosslang);
+  const apRSlider=document.getElementById('resSlider'); if(apRSlider) apRSlider.value=p.resolution;
+  const apRVal=document.getElementById('resVal'); if(apRVal) apRVal.textContent=p.resolution+'\u00d7';
+  const apCSlider=document.getElementById('confSlider'); if(apCSlider) apCSlider.value=Math.round(p.confidence*100);
+  const apCVal=document.getElementById('confVal'); if(apCVal) apCVal.textContent=p.confidence.toFixed(2);
   selTask(p.task);
   document.querySelectorAll('.tpl-btn').forEach(b=>b.classList.toggle('on',b.getAttribute('onclick').includes("'"+name+"'")));
   updateAll();
@@ -970,15 +1005,18 @@ function debouncedUpdate() {
 function newSession() {
   const num = String(Math.floor(Math.random()*998)+1).padStart(3,'0');
   const name = 'untitled-'+num;
-  document.getElementById('sessionName').textContent = name;
+  const snEl = document.getElementById('sessionName'); if(snEl) snEl.textContent = name;
   ST.regions=['visual']; ST.zeroshot=false; ST.crosslang=false;
   ST.resolution=70; ST.confidence=0.85; ST.task='passive';
   ST.textContent=''; ST.fileName=''; ST.videoUrl='';
-  document.getElementById('subjectSlider').value=12; document.getElementById('subjectVal').textContent='12';
-  document.getElementById('resSlider').value=70; document.getElementById('resVal').textContent='70×';
-  document.getElementById('confSlider').value=85; document.getElementById('confVal').textContent='0.85';
-  document.getElementById('togZS').classList.remove('on');
-  document.getElementById('togCL').classList.remove('on');
+  const sSlider=document.getElementById('subjectSlider'); if(sSlider) sSlider.value=12;
+  const sVal=document.getElementById('subjectVal'); if(sVal) sVal.textContent='12';
+  const rSlider=document.getElementById('resSlider'); if(rSlider) rSlider.value=70;
+  const rVal=document.getElementById('resVal'); if(rVal) rVal.textContent='70\u00d7';
+  const cSlider=document.getElementById('confSlider'); if(cSlider) cSlider.value=85;
+  const cVal=document.getElementById('confVal'); if(cVal) cVal.textContent='0.85';
+  const togZS=document.getElementById('togZS'); if(togZS) togZS.classList.remove('on');
+  const togCL=document.getElementById('togCL'); if(togCL) togCL.classList.remove('on');
   document.querySelectorAll('.tpl-btn').forEach(b=>b.classList.remove('on'));
   selStim('text');
   selTask('passive');
@@ -1036,6 +1074,23 @@ function exportCSV() {
 }
 
 // ── STATUS / PROGRESS ─────────────────────────────────────────
+function _setRunning(running) {
+  const btn   = document.getElementById('runBtn');
+  const track = document.getElementById('inferTrack');
+  if (running) {
+    btn.classList.add('cancelling');
+    btn.textContent = 'Cancel';
+    btn.disabled = false;
+    track.classList.add('active');
+    document.getElementById('inferFill').style.width = '0%';
+  } else {
+    btn.classList.remove('cancelling');
+    btn.textContent = 'Run \u21B5';
+    btn.disabled = false;
+    track.classList.remove('active');
+  }
+}
+
 function _setStatus(running) {
   const prog = document.getElementById('inferProgress');
   if (prog) prog.style.display = running ? 'block' : 'none';
@@ -1051,6 +1106,7 @@ function cancelPrediction() {
   if (!_predRunning) return;
   _predRunning = false;
   _setStatus(false);
+  _setRunning(false);
   const bar = document.getElementById('inferBar');
   if (bar) bar.style.width = '0%';
   // Close WS to flush in-flight response; auto-reconnect fires in 2 s
@@ -1152,6 +1208,9 @@ function _applyResult(data) {
   // Update educational insight panel
   _updateInsight(data);
 
+  // Update result card
+  _showResultCard(data);
+
   // Update comparison panel if A is pinned
   if (_pinnedA) _showComparison(_pinnedA, data);
 
@@ -1170,6 +1229,57 @@ function _applyResult(data) {
     const ctrl = document.getElementById('temporalControls');
     if (ctrl) ctrl.style.display = 'flex';
   }
+}
+
+// ── RESULT CARD ───────────────────────────────────────────────
+function _showResultCard(resp) {
+  const regionNames  = ['Visual','Auditory','Language','Prefrontal','Motor','Parietal'];
+  const regionColors = ['var(--r-visual)','var(--r-auditory)','var(--r-language)','var(--r-prefrontal)','var(--r-motor)','var(--r-parietal)'];
+
+  const acts = resp.temporal_acts;
+  if (!acts || acts.length === 0) return;
+
+  const T = acts.length;
+  const means = Array(6).fill(0);
+  acts.forEach(row => { if (row) row.forEach((v, i) => { means[i] += v; }); });
+  means.forEach((_, i) => { means[i] /= T; });
+
+  const sorted = means.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v).slice(0, 3);
+
+  const card = document.getElementById('resultCard');
+  if (!card) return;
+  while (card.firstChild) card.removeChild(card.firstChild);
+
+  sorted.forEach(({ v, i }) => {
+    const stat = document.createElement('div');
+    stat.className = 'rc-stat';
+    const val = document.createElement('div');
+    val.className = 'rc-val';
+    val.style.color = regionColors[i];
+    val.textContent = v.toFixed(2);
+    const key = document.createElement('div');
+    key.className = 'rc-key';
+    key.textContent = regionNames[i];
+    stat.appendChild(val);
+    stat.appendChild(key);
+    card.appendChild(stat);
+  });
+
+  if (resp.infer_ms != null) {
+    const stat = document.createElement('div');
+    stat.className = 'rc-stat';
+    const val = document.createElement('div');
+    val.className = 'rc-val';
+    val.textContent = Math.round(resp.infer_ms).toString();
+    const key = document.createElement('div');
+    key.className = 'rc-key';
+    key.textContent = 'ms';
+    stat.appendChild(val);
+    stat.appendChild(key);
+    card.appendChild(stat);
+  }
+
+  card.classList.add('visible');
 }
 
 // ── Comparison state ──────────────────────────────────────────
@@ -1345,6 +1455,78 @@ async function downloadModel(model) {
   };
 }
 
+async function startDownload(model) {
+  const ids = {
+    llama:   { btn: 'dlLlama',   prog: 'dlLlamaProgress',   fill: 'dlLlamaFill'   },
+    clip:    { btn: 'dlClip',    prog: 'dlClipProgress',    fill: 'dlClipFill'    },
+    wav2vec: { btn: 'dlWav2vec', prog: 'dlWav2vecProgress', fill: 'dlWav2vecFill' },
+  }[model];
+  if (!ids) return;
+
+  const btn  = document.getElementById(ids.btn);
+  const prog = document.getElementById(ids.prog);
+  const fill = document.getElementById(ids.fill);
+
+  if (btn)  btn.disabled = true;
+  if (prog) prog.classList.add('active');
+  if (fill) fill.style.width = '0%';
+
+  showToast('Starting download: ' + model + '\u2026', 4000);
+
+  let jobId;
+  try {
+    const r = await fetch('/api/download/' + model, { method: 'POST' });
+    if (r.status === 409) {
+      showToast(model + ' download already in progress');
+      if (btn)  btn.disabled = false;
+      if (prog) prog.classList.remove('active');
+      return;
+    }
+    if (!r.ok) { throw new Error(await r.text()); }
+    const d = await r.json();
+    jobId = d.job_id;
+  } catch (e) {
+    showToast('Download failed: ' + e.message, 5000);
+    if (btn)  btn.disabled = false;
+    if (prog) prog.classList.remove('active');
+    return;
+  }
+
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(proto + '://' + location.host + '/ws/jobs/' + jobId);
+  ws.onmessage = (ev) => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch { return; }
+    if (msg.type === 'progress') {
+      if (fill) fill.style.width = (msg.pct || 0).toFixed(1) + '%';
+    } else if (msg.type === 'done') {
+      showToast('\u2713 ' + model + ' downloaded \u2014 encoder now active', 5000);
+      if (fill) fill.style.width = '100%';
+      setTimeout(() => {
+        if (prog) prog.classList.remove('active');
+        if (btn)  { btn.disabled = false; }
+        fetchModelInfo();
+      }, 1200);
+    } else if (msg.type === 'error') {
+      showToast('Download error: ' + msg.message, 6000);
+      if (btn)  btn.disabled = false;
+      if (prog) prog.classList.remove('active');
+    }
+  };
+  ws.onerror = () => {
+    showToast('WebSocket error tracking ' + model + ' download', 4000);
+    if (btn)  btn.disabled = false;
+    if (prog) prog.classList.remove('active');
+  };
+  ws.onclose = (ev) => {
+    if (!ev.wasClean) {
+      showToast('Connection lost tracking ' + model + ' download', 5000);
+      if (btn)  btn.disabled = false;
+      if (prog) prog.classList.remove('active');
+    }
+  };
+}
+
 function _showComparison(a, b) {
   const panel = document.getElementById('comparePanel');
   panel.style.display = '';
@@ -1397,6 +1579,9 @@ function _handleWSMsg(msg) {
   const lbl = document.getElementById('inferStepLabel');
   if (msg.type === 'progress') {
     if (bar) _animateBar(bar, msg.pct, 300);
+    if (msg.pct != null) {
+      document.getElementById('inferFill').style.width = msg.pct + '%';
+    }
     if (lbl && msg.msg) {
       lbl.textContent = msg.msg + (msg.pct < 100 ? ' · ' + msg.pct + '%' : '');
       lbl.classList.add('visible');
@@ -1406,11 +1591,13 @@ function _handleWSMsg(msg) {
     _applyResult(msg);
     _predRunning = false;
     _setStatus(false);
+    _setRunning(false);
     setTimeout(() => { if (bar) bar.style.width = '0%'; }, 500);
   } else if (msg.type === 'error') {
     console.error('[tribe] server error:', msg.message);
     _predRunning = false;
     _setStatus(false);
+    _setRunning(false);
     setTimeout(() => { if (bar) bar.style.width = '0%'; }, 300);
   }
 }
@@ -1438,6 +1625,7 @@ async function runPrediction() {
 
   _predRunning = true;
   _setStatus(true);
+  _setRunning(true);
   const bar = document.getElementById('inferBar');
   if (bar) { bar.style.width = '0%'; _animateBar(bar, 8, 200); }
 
@@ -1469,8 +1657,17 @@ async function runPrediction() {
     } finally {
       _predRunning = false;
       _setStatus(false);
+      _setRunning(false);
       setTimeout(() => { if (bar) bar.style.width = '0%'; }, 500);
     }
+  }
+}
+
+// ── INFO PANEL TOGGLE ─────────────────────────────────────────
+function toggleInfoPanel() {
+  document.getElementById('infoPanel').classList.toggle('open');
+  if (document.getElementById('infoPanel').classList.contains('open')) {
+    fetchModelInfo();
   }
 }
 
@@ -1486,9 +1683,30 @@ function closeInfoModal() {
   document.getElementById('infoModalBackdrop').classList.remove('open');
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeInfoModal();
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); runPrediction(); }
+  if (e.key === 'Escape') {
+    closeInfoModal();
+    const ip = document.getElementById('infoPanel');
+    if (ip) ip.classList.remove('open');
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); runOrCancel(); }
 });
+function _applyModelInfo(info) {
+  const setStatus = (id, loaded) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = loaded ? 'loaded' : 'not loaded';
+    el.className = 'enc-status ' + (loaded ? 'loaded' : 'missing');
+  };
+  setStatus('llamaStatus',   info.text_enc);
+  setStatus('clipStatus',    info.clip_enc);
+  setStatus('wav2vecStatus', info.audio_enc);
+
+  const d = (id, hide) => { const el = document.getElementById(id); if (el) el.style.display = hide ? 'none' : ''; };
+  d('dlLlama',   info.text_enc);
+  d('dlClip',    info.clip_enc);
+  d('dlWav2vec', info.audio_enc);
+}
+
 async function fetchModelInfo() {
   try {
     const r = await fetch('/api/info');
@@ -1500,6 +1718,13 @@ async function fetchModelInfo() {
     // Hide demo banner — demo_mode only when LLaMA not loaded
     const banner = document.getElementById('demoBanner');
     if (banner) banner.style.display = d.demo_mode ? '' : 'none';
+
+    // Update new info panel encoder status
+    _applyModelInfo({
+      text_enc:  d.encoders?.text?.includes('loaded')  || false,
+      clip_enc:  d.encoders?.image?.includes('loaded') || false,
+      audio_enc: d.encoders?.audio?.includes('loaded') || false,
+    });
 
     // Update encoder status in info modal if present
     if (d.encoders) {
@@ -1536,10 +1761,36 @@ async function fetchModelInfo() {
   } catch(_) {}
 }
 
+// ── AUTO RESIZE TEXTAREA ──────────────────────────────────────
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── RUN OR CANCEL ─────────────────────────────────────────────
+function runOrCancel() {
+  const btn = document.getElementById('runBtn');
+  if (btn.classList.contains('cancelling')) {
+    cancelPrediction();
+  } else {
+    runPrediction();
+  }
+}
+
+// ── SEQ CYCLE ─────────────────────────────────────────────────
+const SEQ_STEPS = [4, 8, 16, 32, 64];
+function cycleSeq() {
+  const label = document.getElementById('seqLabel');
+  const cur = parseInt(label.textContent.replace('seq ',''), 10);
+  const idx  = SEQ_STEPS.indexOf(cur);
+  const next = SEQ_STEPS[(idx + 1) % SEQ_STEPS.length];
+  label.textContent = 'seq ' + next;
+}
+
 // ── VIZ TOOLBAR ──────────────────────────────────────────────
 function setCamView(v) {
   ['lateral','medial','dorsal'].forEach(n => {
-    const el = document.getElementById('vt-'+n);
+    const el = document.getElementById('vc-'+n);
     if (el) el.classList.toggle('on', n===v);
   });
   if (window.setCameraView) window.setCameraView(v);
@@ -1553,9 +1804,14 @@ function setHem(h) {
 }
 
 let _roiGlow = true;
-function toggleROI() {
+function toggleROI(el) {
+  if (el && el.dataset && el.dataset.r) {
+    toggleR(el.dataset.r);
+    return;
+  }
   _roiGlow = !_roiGlow;
-  document.getElementById('vt-roi').classList.toggle('on', _roiGlow);
+  const vtRoi = document.getElementById('vt-roi');
+  if (vtRoi) vtRoi.classList.toggle('on', _roiGlow);
   if (window.toggleROIGlow) window.toggleROIGlow(_roiGlow);
 }
 
@@ -1564,6 +1820,36 @@ function toggleLabels() {
   _labelsOn = !_labelsOn;
   document.getElementById('vt-labels').classList.toggle('on', _labelsOn);
   if (window.toggleBrainLabels) window.toggleBrainLabels(_labelsOn);
+}
+
+// ── DRAG-AND-DROP on #inputRow ────────────────────────────────
+const inputRow = document.getElementById('inputRow');
+if (inputRow) {
+  inputRow.addEventListener('dragover', e => {
+    e.preventDefault();
+    inputRow.classList.add('drag-over');
+  });
+  inputRow.addEventListener('dragleave', () => inputRow.classList.remove('drag-over'));
+  inputRow.addEventListener('drop', e => {
+    e.preventDefault();
+    inputRow.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const isAudio = file.type.startsWith('audio/');
+    selStim(isAudio ? 'audio' : 'image');
+    handleFile({ files: [file] }, isAudio ? 'audio' : 'image');
+  });
+}
+
+// ── KEYBOARD SHORTCUT on #textInput ──────────────────────────
+const textInputEl = document.getElementById('textInput');
+if (textInputEl) {
+  textInputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      runOrCancel();
+    }
+  });
 }
 
 init();
@@ -1808,6 +2094,7 @@ function onGeoReady(geo, isReal){
 
   brainReady=true;
   const lo=document.getElementById('brainLoading');if(lo)lo.style.display='none';
+  const lov=document.getElementById('loadingOverlay');if(lov)lov.style.display='none';
   window.updateBrainRegions(activeRegions);
 }
 
@@ -2125,6 +2412,7 @@ new OBJLoader().load('/brain.obj',
     console.warn('brain.obj load failed, using procedural fallback.',err);
     const lo=document.getElementById('brainLoading');
     if(lo){const lbl=lo.querySelector('.bl-label');if(lbl)lbl.textContent='Using procedural model';}
+    const lov=document.getElementById('loadingOverlay');if(lov)lov.style.display='none';
     onGeoReady(buildProceduralGeo(),false);
   }
 );
