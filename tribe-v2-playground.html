@@ -2367,15 +2367,18 @@ function _applyResult(data) {
   const banner = document.getElementById('demoBanner');
   if (banner) banner.style.display = data.demo_mode ? '' : 'none';
 
-  // Drive per-vertex brain coloring from the 512-sample activation vector
-  if (window.setBrainVertexSample && data.vertex_sample?.length > 0) {
-    window.setBrainVertexSample(
-      data.vertex_sample,
-      data.global_stats.global_min,
-      data.global_stats.global_max,
-      ST.regions,
-      data.region_stats
-    );
+  // Drive per-vertex brain coloring from full 20484-vertex activation vector
+  if (window.setBrainVertexSample) {
+    const verts = data.vertex_acts?.length > 0 ? data.vertex_acts : data.vertex_sample;
+    if (verts?.length > 0) {
+      window.setBrainVertexSample(
+        verts,
+        data.global_stats.global_min,
+        data.global_stats.global_max,
+        ST.regions,
+        data.region_stats
+      );
+    }
   }
 
   // Update label activation bars on 3D brain
@@ -2419,8 +2422,9 @@ function toggleDiff() {
     if (window.setDiffColors) window.setDiffColors(_pinnedA.region_stats, _lastResult.region_stats);
   } else {
     // Restore normal coloring
-    if (window.setBrainVertexSample && _lastResult.vertex_sample?.length > 0) {
-      window.setBrainVertexSample(_lastResult.vertex_sample, _lastResult.global_stats.global_min, _lastResult.global_stats.global_max, ST.regions, _lastResult.region_stats);
+    if (window.setBrainVertexSample) {
+      const verts = _lastResult.vertex_acts?.length > 0 ? _lastResult.vertex_acts : _lastResult.vertex_sample;
+      if (verts?.length > 0) window.setBrainVertexSample(verts, _lastResult.global_stats.global_min, _lastResult.global_stats.global_max, ST.regions, _lastResult.region_stats);
     }
   }
 }
@@ -2434,8 +2438,9 @@ function clearCompare() {
   if (diff) { diff.classList.remove('diff-on'); diff.style.display = 'none'; }
   document.getElementById('vt-clear-cmp').style.display = 'none';
   // Restore normal brain coloring
-  if (_lastResult && window.setBrainVertexSample && _lastResult.vertex_sample?.length > 0) {
-    window.setBrainVertexSample(_lastResult.vertex_sample, _lastResult.global_stats.global_min, _lastResult.global_stats.global_max, ST.regions, _lastResult.region_stats);
+  if (_lastResult && window.setBrainVertexSample) {
+    const verts = _lastResult.vertex_acts?.length > 0 ? _lastResult.vertex_acts : _lastResult.vertex_sample;
+    if (verts?.length > 0) window.setBrainVertexSample(verts, _lastResult.global_stats.global_min, _lastResult.global_stats.global_max, ST.regions, _lastResult.region_stats);
   }
 }
 
@@ -2657,6 +2662,15 @@ function getRegion(x,y,z){
 }
 
 const REGION_HEX={visual:0xFF5252,auditory:0xFF9142,language:0x4F8EFF,prefrontal:0x3ECF70,motor:0xCC5CFF,parietal:0xFFD042};
+// Mirrors Python REGION_RANGES in inference_server.py
+const REGION_RANGES_JS = {
+  visual:     [0,     3600],
+  auditory:   [3600,  6800],
+  language:   [6800,  10500],
+  prefrontal: [10500, 14000],
+  motor:      [14000, 17200],
+  parietal:   [17200, 20484],
+};
 const BASE_COL={r:0.56,g:0.50,b:0.48};
 const ALL_R=['visual','auditory','language','prefrontal','motor','parietal'];
 const regionVerts={}, regionCentroids={};
@@ -2833,6 +2847,16 @@ function onGeoReady(geo, isReal){
     col[i*3]=BASE_COL.r;col[i*3+1]=BASE_COL.g;col[i*3+2]=BASE_COL.b;
   }
   ALL_R.forEach(r=>{const n=regionVerts[r].length;if(n>0)regionCentroids[r].divideScalar(n);});
+  // Precompute each vertex's ordinal rank within its region for O(1) model-vertex lookup
+  const _rankArr   = new Int32Array(N);
+  const _regCntMap = {};
+  ALL_R.forEach(r => { _regCntMap[r] = 0; });
+  for (let vi = 0; vi < N; vi++) {
+    const r = vertRegion[vi];
+    _rankArr[vi] = _regCntMap[r]++;
+  }
+  window._vertRankInRegion = _rankArr;
+  window._regionVertCount  = _regCntMap;
   geo.setAttribute('color',new THREE.BufferAttribute(col,3));
 
   brain=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.76,metalness:0,side:THREE.DoubleSide}));
@@ -2993,31 +3017,34 @@ function vertexNoise(i){
   return ((x-Math.floor(x))+(y-Math.floor(y)))*0.5*2-1;
 }
 
-// setBrainVertexSample: uses region stats + spatial noise for realistic BOLD coloring.
-// The vertex_sample / gMin / gMax params are retained for API compatibility but unused —
-// regional mean (rel_activation) + std-scaled noise is more accurate than y-position sampling.
-window.setBrainVertexSample=function(samples, gMin, gMax, activeRegs, regionStats){
-  if(!brainReady||!vertRegion)return;
-  const N=colTgt.length/3;
-  const activeSet=new Set(activeRegs);
-  for(let i=0;i<N;i++){
-    const r=vertRegion[i];
-    if(!activeSet.has(r)){
-      colTgt[i*3  ]=BASE_COL.r*0.36;
-      colTgt[i*3+1]=BASE_COL.g*0.36;
-      colTgt[i*3+2]=BASE_COL.b*0.36;
+window.setBrainVertexSample = function(vertexActs, gMin, gMax, activeRegs, regionStats) {
+  if (!brainReady || !vertRegion) return;
+  const N         = colTgt.length / 3;
+  const range     = Math.max(Math.abs(gMin), Math.abs(gMax), 0.001);
+  const activeSet = new Set(activeRegs);
+  const MODEL_N   = 20484;
+  const rankArr   = window._vertRankInRegion;
+  const regCntMap = window._regionVertCount;
+
+  for (let i = 0; i < N; i++) {
+    const r = vertRegion[i];
+    if (!activeSet.has(r)) {
+      colTgt[i*3]   = BASE_COL.r * 0.36;
+      colTgt[i*3+1] = BASE_COL.g * 0.36;
+      colTgt[i*3+2] = BASE_COL.b * 0.36;
       continue;
     }
-    const s=regionStats&&regionStats[r];
-    const rel=s?s.rel_activation??0:0;
-    const std=s?Math.min(s.std??0.15,0.45):0.15;
-    // Per-vertex noise proportional to regional std → heterogeneous within-region pattern
-    const noise=vertexNoise(i)*std*0.55;
-    const t=Math.max(-1,Math.min(1, rel + noise));
-    const c=boldColormap(t);
-    colTgt[i*3  ]=c.r;
-    colTgt[i*3+1]=c.g;
-    colTgt[i*3+2]=c.b;
+    // Map mesh vertex rank -> model vertex index proportionally within region
+    const lo  = REGION_RANGES_JS[r][0];
+    const hi  = REGION_RANGES_JS[r][1];
+    const cnt = regCntMap ? (regCntMap[r] || 1) : 1;
+    const modelIdx = lo + Math.round((rankArr[i] / cnt) * (hi - lo));
+    const act = vertexActs[Math.min(modelIdx, MODEL_N - 1)] ?? 0;
+    const t   = Math.max(-1, Math.min(1, act / range));
+    const c   = boldColormap(t);
+    colTgt[i*3]   = c.r;
+    colTgt[i*3+1] = c.g;
+    colTgt[i*3+2] = c.b;
   }
 };
 
@@ -3069,7 +3096,7 @@ controls.addEventListener('start',()=>{controls.autoRotate=false;lastInteract=Da
 controls.addEventListener('end',()=>{lastInteract=Date.now();});
 
 const clock=new THREE.Clock();
-const LERP=0.04;
+const LERP = 0.10;
 
 function animate(){
   requestAnimationFrame(animate);
