@@ -1,0 +1,84 @@
+<h2>Input bar style</h2>
+<p class="subtitle">The bottom bar is where you feed the brain — text, image, or audio. How should modality switching feel?</p>
+
+<div style="display:flex; flex-direction:column; gap:24px; margin-top:24px;">
+
+  <!-- Option A -->
+  <div class="card" data-choice="A" onclick="toggleSelect(this)" style="max-width:100%;">
+    <div class="card-image" style="background:#080b14; padding:20px; border-radius:6px 6px 0 0;">
+      <p style="font-size:9px;color:rgba(255,255,255,0.25);font-family:monospace;margin-bottom:12px;letter-spacing:.08em;">OPTION A · ICON TABS</p>
+      <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px;">
+        <!-- mode icons -->
+        <div style="display:flex;gap:3px; flex-shrink:0;">
+          <div style="width:26px;height:26px;background:rgba(79,122,255,0.2);border:1px solid rgba(79,122,255,0.4);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;">T</div>
+          <div style="width:26px;height:26px;background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,0.3);">🖼</div>
+          <div style="width:26px;height:26px;background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,0.3);">🎵</div>
+        </div>
+        <div style="width:1px;height:20px;background:rgba(255,255,255,0.08);"></div>
+        <!-- text input -->
+        <div style="flex:1; font-size:12px; color:rgba(255,255,255,0.25); font-family:monospace;">visual cortex responds to bright red…</div>
+        <!-- run -->
+        <div style="width:68px;height:28px;background:linear-gradient(135deg,#4f7aff,#7c55ff);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;flex-shrink:0;">Run ↵</div>
+      </div>
+      <p style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:10px;text-align:center;">Click an icon to switch — T active, drops change to image or audio mode</p>
+    </div>
+    <div class="card-body">
+      <h3>A · Icon tabs</h3>
+      <p>Three small icon buttons (T / 🖼 / 🎵) on the left of the bar select the active input mode. The bar content shifts to show a textarea, drop zone, or file picker. Simple and explicit.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="B" onclick="toggleSelect(this)" style="max-width:100%;">
+    <div class="card-image" style="background:#080b14; padding:20px; border-radius:6px 6px 0 0;">
+      <p style="font-size:9px;color:rgba(255,255,255,0.25);font-family:monospace;margin-bottom:12px;letter-spacing:.08em;">OPTION B · ADAPTIVE BAR</p>
+      <!-- text state -->
+      <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <div style="flex:1; font-size:12px; color:rgba(255,255,255,0.25); font-family:monospace;">visual cortex responds to bright red…</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.2);">drag file to switch</div>
+        <div style="width:68px;height:28px;background:linear-gradient(135deg,#4f7aff,#7c55ff);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;flex-shrink:0;">Run ↵</div>
+      </div>
+      <!-- image state -->
+      <div style="background:rgba(255,255,255,0.04); border:1px dashed rgba(79,122,255,0.4); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px;">
+        <div style="width:32px;height:32px;background:rgba(79,122,255,0.1);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;">🖼</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);">photo.jpg</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.25);">1.4 MB · JPEG</div>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);">✕</div>
+        <div style="width:68px;height:28px;background:linear-gradient(135deg,#4f7aff,#7c55ff);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;flex-shrink:0;">Run ↵</div>
+      </div>
+      <p style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:10px;text-align:center;">Top = text mode (type to activate). Bottom = after dropping a file (auto-detects image vs audio).</p>
+    </div>
+    <div class="card-body">
+      <h3>B · Adaptive</h3>
+      <p>A single bar that starts in text mode. Dragging a file onto the page or clicking an attach icon transforms it to show the file. Auto-detects image vs audio. No explicit mode switching — the input adapts to what you give it.</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="C" onclick="toggleSelect(this)" style="max-width:100%;">
+    <div class="card-image" style="background:#080b14; padding:20px; border-radius:6px 6px 0 0;">
+      <p style="font-size:9px;color:rgba(255,255,255,0.25);font-family:monospace;margin-bottom:12px;letter-spacing:.08em;">OPTION C · PILL SELECTOR + EXPANDABLE</p>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <!-- pill row -->
+        <div style="display:flex;gap:4px;justify-content:center;">
+          <div style="padding:3px 12px;background:rgba(79,122,255,0.18);border:1px solid rgba(79,122,255,0.4);border-radius:20px;font-size:10px;color:rgba(79,122,255,0.9);font-family:monospace;">TEXT</div>
+          <div style="padding:3px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:20px;font-size:10px;color:rgba(255,255,255,0.3);font-family:monospace;">IMAGE</div>
+          <div style="padding:3px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:20px;font-size:10px;color:rgba(255,255,255,0.3);font-family:monospace;">AUDIO</div>
+        </div>
+        <!-- input -->
+        <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px;">
+          <div style="flex:1; font-size:12px; color:rgba(255,255,255,0.25); font-family:monospace;">visual cortex responds to bright red…</div>
+          <div style="width:68px;height:28px;background:linear-gradient(135deg,#4f7aff,#7c55ff);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;flex-shrink:0;">Run ↵</div>
+        </div>
+      </div>
+      <p style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:10px;text-align:center;">Pill row above the bar selects mode. Bar content switches below.</p>
+    </div>
+    <div class="card-body">
+      <h3>C · Pill selector</h3>
+      <p>Three pill chips (TEXT / IMAGE / AUDIO) sit above the input bar. Active chip highlights. The input area below morphs — textarea for text, drop zone for image/audio. Clear, discoverable, always visible.</p>
+    </div>
+  </div>
+
+</div>

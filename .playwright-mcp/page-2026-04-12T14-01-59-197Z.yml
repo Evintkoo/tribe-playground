@@ -1,0 +1,52 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]: TRIBEv2
+    - generic [ref=e6]:
+      - generic [ref=e7] [cursor=pointer]: LATERAL
+      - generic [ref=e8] [cursor=pointer]: MEDIAL
+      - generic [ref=e9] [cursor=pointer]: DORSAL
+    - generic [ref=e10]:
+      - generic "Export" [ref=e11] [cursor=pointer]: ↓
+      - generic "Info" [ref=e12] [cursor=pointer]: "?"
+  - generic [ref=e13]:
+    - generic:
+      - img
+      - generic:
+        - generic: Visual Cortex
+        - generic: —
+      - generic:
+        - generic: Auditory Cortex
+        - generic: —
+      - generic:
+        - generic: Language
+        - generic: —
+      - generic:
+        - generic: Prefrontal
+        - generic: —
+      - generic:
+        - generic: Motor Cortex
+        - generic: —
+      - generic:
+        - generic: Parietal
+        - generic: —
+    - generic [ref=e15]:
+      - generic [ref=e18] [cursor=pointer]: Visual
+      - generic [ref=e21] [cursor=pointer]: Auditory
+      - generic [ref=e24] [cursor=pointer]: Language
+      - generic [ref=e27] [cursor=pointer]: Prefrontal
+      - generic [ref=e30] [cursor=pointer]: Motor
+      - generic [ref=e33] [cursor=pointer]: Parietal
+    - generic [ref=e34]:
+      - generic [ref=e35]: +
+      - generic [ref=e37]: −
+  - generic [ref=e38]:
+    - generic [ref=e39]:
+      - generic [ref=e40] [cursor=pointer]: TEXT
+      - generic [ref=e41] [cursor=pointer]: IMAGE
+      - generic [ref=e42] [cursor=pointer]: AUDIO
+    - generic [ref=e43]:
+      - textbox "Describe a stimulus…" [ref=e44]
+      - generic [ref=e45] [cursor=pointer]: seq 16
+      - button "Run ↵" [ref=e47] [cursor=pointer]:
+        - text: Run
+        - generic [ref=e48]: ↵

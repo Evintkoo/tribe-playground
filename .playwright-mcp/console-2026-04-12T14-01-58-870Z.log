@@ -1,0 +1,36 @@
+[    4546ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[    8375ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   12302ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   17341ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   20576ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   24859ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   30925ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   37810ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   42968ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   48929ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   52160ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   59159ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   65993ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   70566ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   72569ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   74577ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   76579ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   78581ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   80586ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   82599ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   84612ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   86643ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   88669ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   90749ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   92817ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   94926ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   97259ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[   99529ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[  102447ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[  108727ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[  110428ms] [ERROR] Failed to load resource: the server responded with a status of 501 (Unsupported method ('POST')) @ http://localhost:8090/api/predict:0
+[  110428ms] [ERROR] [tribe] predict error: HTTP 501 @ http://localhost:8090/tribe-v2-playground.html:1659
+[  112609ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[  117009ms] [ERROR] WebSocket connection to 'ws://localhost:8090/ws' failed: Error during WebSocket handshake: Unexpected response code: 404 @ http://localhost:8090/tribe-v2-playground.html:1570
+[  118362ms] [ERROR] Failed to load resource: the server responded with a status of 501 (Unsupported method ('POST')) @ http://localhost:8090/api/predict:0
+[  118362ms] [ERROR] [tribe] predict error: HTTP 501 @ http://localhost:8090/tribe-v2-playground.html:1659

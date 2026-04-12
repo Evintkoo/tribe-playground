@@ -1,0 +1,210 @@
+<style>
+  .preview-wrap {
+    background: #050709;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .preview-brain {
+    height: 120px;
+    background: radial-gradient(ellipse at 50% 60%, rgba(79,122,255,0.12) 0%, transparent 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .brain-dot {
+    width: 80px; height: 54px;
+    background: radial-gradient(ellipse, rgba(79,122,255,0.22) 0%, rgba(62,207,112,0.06) 50%, transparent 75%);
+    border-radius: 50%;
+    border: 1px solid rgba(79,122,255,0.15);
+  }
+  .bar-area {
+    padding: 12px 16px;
+  }
+  .seg {
+    display: inline-flex;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .seg-item {
+    padding: 4px 14px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,0.28);
+    cursor: pointer;
+    border-right: 1px solid rgba(255,255,255,0.07);
+    transition: all .12s;
+  }
+  .seg-item:last-child { border-right: none; }
+  .seg-item.active {
+    background: rgba(255,255,255,0.09);
+    color: rgba(255,255,255,0.85);
+  }
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 8px;
+    padding: 9px 14px;
+  }
+  .input-text {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255,255,255,0.22);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .run-pill {
+    height: 28px;
+    padding: 0 16px;
+    background: linear-gradient(135deg, #4f7aff 0%, #7c55ff 100%);
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    letter-spacing: .02em;
+  }
+  .run-key {
+    font-size: 9px;
+    opacity: 0.6;
+    font-family: monospace;
+    background: rgba(255,255,255,0.15);
+    border-radius: 3px;
+    padding: 1px 4px;
+  }
+  /* underline tab style */
+  .tab-row {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    margin-bottom: 8px;
+  }
+  .tab-item {
+    padding: 6px 14px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,0.25);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab-item.active {
+    color: rgba(255,255,255,0.85);
+    border-bottom-color: #4f7aff;
+  }
+  /* attached file chip */
+  .file-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px 5px 8px;
+    background: rgba(79,122,255,0.08);
+    border: 1px solid rgba(79,122,255,0.2);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 11px;
+  }
+  .file-chip-ext {
+    font-family: monospace;
+    font-size: 9px;
+    background: rgba(79,122,255,0.2);
+    color: rgba(79,122,255,0.9);
+    padding: 2px 5px;
+    border-radius: 3px;
+    letter-spacing: .04em;
+  }
+  .file-chip-name { color: rgba(255,255,255,0.65); flex: 1; }
+  .file-chip-size { color: rgba(255,255,255,0.2); font-size: 10px; }
+  .file-chip-rm { color: rgba(255,255,255,0.2); cursor: pointer; font-size: 12px; }
+</style>
+
+<h2>Input bar — refined approaches</h2>
+<p class="subtitle">No icons. Three typographic approaches to modality switching.</p>
+
+<div class="cards" style="gap:20px; margin-top:24px; grid-template-columns: repeat(3,1fr);">
+
+  <!-- A: Segmented control -->
+  <div class="card" data-choice="A" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px; background:#050709; border-radius:6px 6px 0 0;">
+      <div class="preview-wrap">
+        <div class="preview-brain"><div class="brain-dot"></div></div>
+        <div class="bar-area">
+          <div class="seg">
+            <div class="seg-item active">TEXT</div>
+            <div class="seg-item">IMAGE</div>
+            <div class="seg-item">AUDIO</div>
+          </div>
+          <div class="input-row">
+            <div class="input-text">visual cortex, motion, bright red…</div>
+            <div class="run-pill">Run <span class="run-key">↵</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · Segmented control</h3>
+      <p>A compact segmented button group with all-caps labels sits above the input field. Clicking switches the mode. Familiar, unambiguous, no icons needed.</p>
+    </div>
+  </div>
+
+  <!-- B: Underline tabs -->
+  <div class="card" data-choice="B" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px; background:#050709; border-radius:6px 6px 0 0;">
+      <div class="preview-wrap">
+        <div class="preview-brain"><div class="brain-dot"></div></div>
+        <div class="bar-area">
+          <div class="tab-row">
+            <div class="tab-item active">TEXT</div>
+            <div class="tab-item">IMAGE</div>
+            <div class="tab-item">AUDIO</div>
+          </div>
+          <div class="input-row">
+            <div class="input-text">visual cortex, motion, bright red…</div>
+            <div class="run-pill">Run <span class="run-key">↵</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · Underline tabs</h3>
+      <p>Tab labels with a blue underline indicator. Lighter weight than segments — feels more like a document editor. Active tab is bold-white, inactive tabs fade to dim.</p>
+    </div>
+  </div>
+
+  <!-- C: File attaches to bar -->
+  <div class="card" data-choice="C" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px; background:#050709; border-radius:6px 6px 0 0;">
+      <div class="preview-wrap">
+        <div class="preview-brain"><div class="brain-dot"></div></div>
+        <div class="bar-area">
+          <div class="file-chip">
+            <span class="file-chip-ext">JPG</span>
+            <span class="file-chip-name">stimulus-001.jpg</span>
+            <span class="file-chip-size">2.1 MB</span>
+            <span class="file-chip-rm">✕</span>
+          </div>
+          <div class="input-row" style="border-style: dashed; border-color: rgba(255,255,255,0.06);">
+            <div class="input-text" style="font-size:11px; color:rgba(255,255,255,0.15);">Drop image or audio file, or type a prompt…</div>
+            <div class="run-pill">Run <span class="run-key">↵</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C · Unified drop bar</h3>
+      <p>A single bar. Drop a file and it attaches above as a chip (showing file type, name, size). Type text and run. Both can coexist — multi-modal input in one pass. No explicit mode switching at all.</p>
+    </div>
+  </div>
+
+</div>

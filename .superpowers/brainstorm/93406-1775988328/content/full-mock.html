@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRIBE v2 — UI Mock</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0c0c0e;
+  --surface: #141416;
+  --overlay: #1a1a1d;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+
+  --t1: #f0f0f2;
+  --t2: #888892;
+  --t3: #44444e;
+
+  --ac:    #5b7fff;
+  --ac-bg: rgba(91,127,255,0.1);
+
+  --red:    #e05252;
+  --orange: #e07a42;
+  --blue:   #5b7fff;
+  --green:  #3db870;
+  --purple: #a855f7;
+  --yellow: #d4a429;
+
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --r: 6px;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--t1);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────── */
+.topbar {
+  height: 44px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  background: var(--bg);
+}
+
+.brand {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .05em;
+  color: var(--t1);
+}
+.brand-v {
+  color: var(--t3);
+  margin-left: 4px;
+  font-size: 11px;
+}
+
+.topbar-mid {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.view-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  color: var(--t3);
+  padding: 3px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .12s;
+}
+.view-chip:hover { color: var(--t2); border-color: var(--border); }
+.view-chip.on { color: var(--t1); border-color: var(--border2); background: var(--overlay); }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.icon-btn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  color: var(--t3);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all .1s;
+}
+.icon-btn:hover { color: var(--t2); border-color: var(--border2); background: var(--overlay); }
+
+/* ── MAIN ───────────────────────────────────────────── */
+.main {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* brain viewport */
+.brain-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.brain-mesh {
+  width: 380px;
+  height: 260px;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 38% 42%, rgba(91,127,255,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 62% 55%, rgba(61,184,112,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(224,82,82,0.07) 0%, transparent 70%);
+  border: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+}
+
+/* colorbar — right edge of viewport */
+.colorbar {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.cbar-track {
+  width: 6px;
+  height: 100px;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #e05252, #888, #3db870);
+  opacity: 0.5;
+}
+.cbar-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--t3);
+  letter-spacing: .04em;
+}
+
+/* ROI strip — left edge of viewport */
+.roi-strip {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.roi-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity .12s;
+}
+.roi-row:hover { opacity: 1; }
+.roi-row.on { opacity: 1; }
+.roi-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.roi-name {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .06em;
+  color: var(--t2);
+  text-transform: uppercase;
+}
+
+/* ── BOTTOM BAR ─────────────────────────────────────── */
+.bottom-bar {
+  border-top: 1px solid var(--border);
+  padding: 10px 16px 12px;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.mode-tab {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--t3);
+  padding: 4px 14px 6px;
+  cursor: pointer;
+  border-bottom: 1.5px solid transparent;
+  margin-bottom: -1px;
+  transition: all .1s;
+}
+.mode-tab:hover { color: var(--t2); }
+.mode-tab.on { color: var(--t1); border-bottom-color: var(--ac); }
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.input-field {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--t2);
+}
+.seq-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+  white-space: nowrap;
+}
+.run-btn {
+  height: 28px;
+  padding: 0 16px;
+  background: var(--ac);
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  letter-spacing: .01em;
+  cursor: pointer;
+}
+.kbd {
+  font-size: 9px;
+  opacity: 0.55;
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: var(--mono);
+}
+
+/* ── RESULT OVERLAY ─────────────────────────────────── */
+.result-badge {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--overlay);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 8px 16px;
+  display: flex;
+  gap: 18px;
+  white-space: nowrap;
+}
+.rb-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.rb-val {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--t1);
+}
+.rb-key {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--t3);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">TRIBE<span class="brand-v">v2</span></div>
+
+    <div style="width:1px;height:18px;background:var(--border);"></div>
+
+    <div class="topbar-mid">
+      <div class="view-chip on">LATERAL</div>
+      <div class="view-chip">MEDIAL</div>
+      <div class="view-chip">DORSAL</div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="icon-btn" title="Export">↓</div>
+      <div class="icon-btn" title="Info">?</div>
+    </div>
+  </div>
+
+  <!-- MAIN BRAIN VIEW -->
+  <div class="main">
+    <div class="brain-view">
+      <div class="brain-mesh"></div>
+    </div>
+
+    <!-- ROI strip left -->
+    <div class="roi-strip">
+      <div class="roi-row on">
+        <div class="roi-dot" style="background:#e05252;"></div>
+        <div class="roi-name">Visual</div>
+      </div>
+      <div class="roi-row on">
+        <div class="roi-dot" style="background:#e07a42;"></div>
+        <div class="roi-name">Auditory</div>
+      </div>
+      <div class="roi-row on">
+        <div class="roi-dot" style="background:#5b7fff;"></div>
+        <div class="roi-name">Language</div>
+      </div>
+      <div class="roi-row on">
+        <div class="roi-dot" style="background:#3db870;"></div>
+        <div class="roi-name">Prefrontal</div>
+      </div>
+      <div class="roi-row on">
+        <div class="roi-dot" style="background:#a855f7;"></div>
+        <div class="roi-name">Motor</div>
+      </div>
+      <div class="roi-row on">
+        <div class="roi-dot" style="background:#d4a429;"></div>
+        <div class="roi-name">Parietal</div>
+      </div>
+    </div>
+
+    <!-- Colorbar right -->
+    <div class="colorbar">
+      <div class="cbar-label">+</div>
+      <div class="cbar-track"></div>
+      <div class="cbar-label">−</div>
+    </div>
+
+    <!-- Result stats overlay (shown after prediction) -->
+    <div class="result-badge">
+      <div class="rb-stat">
+        <div class="rb-val" style="color:#e05252;">0.82</div>
+        <div class="rb-key">Visual</div>
+      </div>
+      <div class="rb-stat">
+        <div class="rb-val" style="color:#5b7fff;">0.61</div>
+        <div class="rb-key">Language</div>
+      </div>
+      <div class="rb-stat">
+        <div class="rb-val" style="color:#3db870;">0.34</div>
+        <div class="rb-key">Prefrontal</div>
+      </div>
+      <div class="rb-stat">
+        <div class="rb-val">127</div>
+        <div class="rb-key">ms</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM INPUT BAR -->
+  <div class="bottom-bar">
+    <div class="mode-tabs">
+      <div class="mode-tab on">TEXT</div>
+      <div class="mode-tab">IMAGE</div>
+      <div class="mode-tab">AUDIO</div>
+    </div>
+    <div class="input-row">
+      <div class="input-field">visual cortex responds to bright red, high contrast motion…</div>
+      <div class="seq-label">seq 16</div>
+      <div style="width:1px;height:16px;background:var(--border);"></div>
+      <div class="run-btn">Run <span class="kbd">↵</span></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

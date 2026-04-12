@@ -1,0 +1,19 @@
+{"type":"server-started","port":57349,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:57349","screen_dir":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content","state_dir":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/state"}
+{"type":"screen-added","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/layout.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/layout.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/layout.html"}
+{"source":"user-event","type":"click","text":"C · Command\n      Thin topbar (brand + 2 icon buttons), brain center, collapsible ROI mini-panel on the right edge, input bar at the bottom. Like a scientific instrument — everything subordinate to the visualization.","choice":"C","id":null,"timestamp":1775988602407}
+{"type":"screen-added","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/input-bar.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/input-bar.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/input-bar.html"}
+{"type":"screen-added","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/input-bar-v2.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/input-bar-v2.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/input-bar-v2.html"}
+{"type":"screen-added","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/full-mock.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/full-mock.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/full-mock.html"}
+{"type":"screen-added","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/waiting.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/waiting.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/waiting.html"}
+{"type":"screen-updated","file":"/Users/evintleovonzko/Documents/research/tribe-playground/.superpowers/brainstorm/93406-1775988328/content/waiting.html"}
+{"type":"server-stopped","reason":"idle timeout"}

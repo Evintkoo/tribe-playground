@@ -1,0 +1,34 @@
+<h2>3 approaches to improve interactivity</h2>
+<p class="subtitle">Brain (A) + Stimulus input (C) — pick a scope</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Focused</h3>
+      <p><strong>Brain:</strong> click mesh to toggle region, cursor changes to pointer on hover, hover tooltip shows region name + live activation value</p>
+      <p style="margin-top:8px"><strong>Stimulus:</strong> sample text snippets (3–4 quick-fill buttons), Ctrl+V paste image from clipboard, show ⌘↵ hint in text footer</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Recommended — A + polish</h3>
+      <p>Everything in A, plus:</p>
+      <p style="margin-top:8px"><strong>Brain:</strong> hover popover floats near cursor (not just status bar) with region name, BA label, and current σ value. Auto-rotation pauses on any brain interaction (not just drag). Brief flash/ring effect on region click.</p>
+      <p style="margin-top:8px"><strong>Stimulus:</strong> 2–3 demo images (gallery of quick-load thumbnails). Video URL auto-loads on Enter key (no separate Load button click).</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Ambitious — B + extras</h3>
+      <p>Everything in B, plus:</p>
+      <p style="margin-top:8px"><strong>Brain:</strong> right-click context menu on region (Select, Zoom to, View info). Paint-select by dragging across brain surface.</p>
+      <p style="margin-top:8px"><strong>Stimulus:</strong> browser mic recording for audio input. URL auto-fetch preview for image URLs.</p>
+      <p style="margin-top:8px; color: #f59440; font-size: 11px;">⚠ Significantly more code — higher risk of regressions</p>
+    </div>
+  </div>
+</div>

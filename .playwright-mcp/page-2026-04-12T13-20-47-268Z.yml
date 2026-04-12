@@ -1,0 +1,33 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]: TRIBEv2
+    - generic [ref=e6]:
+      - generic [ref=e7] [cursor=pointer]: LATERAL
+      - generic [ref=e8] [cursor=pointer]: MEDIAL
+      - generic [ref=e9] [cursor=pointer]: DORSAL
+    - generic [ref=e10]:
+      - generic "Export" [ref=e11] [cursor=pointer]: ↓
+      - generic "Info" [ref=e12] [cursor=pointer]: "?"
+  - generic [ref=e13]:
+    - generic [ref=e15]: LOADING BRAIN MESH…
+    - generic [ref=e16]:
+      - generic [ref=e19] [cursor=pointer]: Visual
+      - generic [ref=e22] [cursor=pointer]: Auditory
+      - generic [ref=e25] [cursor=pointer]: Language
+      - generic [ref=e28] [cursor=pointer]: Prefrontal
+      - generic [ref=e31] [cursor=pointer]: Motor
+      - generic [ref=e34] [cursor=pointer]: Parietal
+    - generic [ref=e35]:
+      - generic [ref=e36]: +
+      - generic [ref=e38]: −
+  - generic [ref=e39]:
+    - generic [ref=e40]:
+      - generic [ref=e41] [cursor=pointer]: TEXT
+      - generic [ref=e42] [cursor=pointer]: IMAGE
+      - generic [ref=e43] [cursor=pointer]: AUDIO
+    - generic [ref=e44]:
+      - textbox "Describe a stimulus…" [ref=e45]
+      - generic [ref=e46] [cursor=pointer]: seq 32
+      - button "Run ↵" [ref=e48] [cursor=pointer]:
+        - text: Run
+        - generic [ref=e49]: ↵
