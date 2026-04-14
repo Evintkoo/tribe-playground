@@ -189,6 +189,20 @@ impl ClipVisualEncoder {
         })
     }
 
+    pub fn n_params(&self) -> usize {
+        let cls_token  = HIDDEN;                           // class_embedding
+        let patch_emb  = 3 * HIDDEN * PATCH * PATCH;      // conv2d weight, no bias
+        let pos_emb    = N_TOKENS * HIDDEN;                // position_embedding
+        let pre_ln     = HIDDEN * 2;                       // weight + bias
+        let per_layer  = HIDDEN * HIDDEN * 4              // q,k,v,out projections
+            + HIDDEN * 2                                   // q_bias, v_bias (CLIP has these)
+            + HIDDEN * FF_INNER + FF_INNER * HIDDEN        // fc1 + fc2
+            + FF_INNER + HIDDEN                            // fc1_bias + fc2_bias
+            + HIDDEN * 2 * 2;                              // ln1 + ln2 weight+bias
+        let post_ln    = HIDDEN * 2;
+        cls_token + patch_emb + pos_emb + pre_ln + N_LAYERS * per_layer + post_ln
+    }
+
     /// Encode raw image bytes → [1, 1, PROJ_OUT].
     /// Call this once per image; tile across seq_len in `visual_features_clip`.
     pub fn encode_image(&self, bytes: &[u8]) -> AResult<Tensor> {

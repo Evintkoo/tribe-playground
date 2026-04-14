@@ -180,7 +180,7 @@ async fn hot_swap(model: ModelKind, weights_dir: &Path, state: &AppState) -> Res
         }
         ModelKind::Llama => {
             let dir = weights_dir.join("llama");
-            let enc = crate::llama_encoder::LlamaTextEncoder::load(&dir, &state.device)?;
+            let enc = crate::llama_encoder::LlamaTextEncoder::load(&dir, &candle_core::Device::Cpu)?;
             *state.text_enc.write().await = Some(enc);
             info!("LLaMA text encoder hot-swapped ✓");
         }

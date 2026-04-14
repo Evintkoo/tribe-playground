@@ -274,6 +274,26 @@ impl Wav2Vec2Bert {
         Ok(Self { feat_proj, layers, extract_at: [12, 18, 24] })
     }
 
+    pub fn n_params(&self) -> usize {
+        let feat_proj  = FEAT_IN * HIDDEN + HIDDEN         // projection weight+bias
+            + FEAT_IN * 2;                                 // layer_norm weight+bias
+        let per_layer  = HIDDEN * HIDDEN * 4              // lq,lk,lv,lo
+            + HIDDEN * 4                                   // their biases
+            + N_DIST * HEAD_DIM                            // distance_embedding
+            + HIDDEN * 2                                   // self_attn layer_norm
+            + HIDDEN * FF_INNER + FF_INNER + FF_INNER * HIDDEN + HIDDEN  // ffn1 w+b
+            + HIDDEN * 2                                   // ffn1 layer_norm
+            + HIDDEN * FF_INNER + FF_INNER + FF_INNER * HIDDEN + HIDDEN  // ffn2 w+b
+            + HIDDEN * 2                                   // ffn2 layer_norm
+            + HIDDEN * 2 * HIDDEN + HIDDEN * 2             // conv pw1 (gated) w+b
+            + HIDDEN * DW_K                                // depthwise conv weight
+            + HIDDEN                                       // depthwise conv bias
+            + HIDDEN * 2                                   // depthwise layer_norm
+            + HIDDEN * HIDDEN + HIDDEN                     // pointwise_conv2 w+b
+            + HIDDEN * 2;                                  // final layer_norm
+        feat_proj + N_LAYERS * per_layer
+    }
+
     /// Encode stacked-mel features `x` of shape [1, T, 160].
     /// Returns three hidden-state tensors at conformer layers 12, 18, 24
     /// (each [1, T, 1024]).

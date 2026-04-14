@@ -612,9 +612,6 @@ html, body {
 
       <!-- Seq control -->
       <div class="seq-label" id="seqLabel" onclick="cycleSeq()">seq 16</div>
-      <div class="input-sep"></div>
-      <!-- Run button -->
-      <button class="run-btn" id="runBtn" onclick="runOrCancel()">Run <span class="kbd">&#x21B5;</span></button>
     </div>
 
     <!-- Infer progress track -->
@@ -798,7 +795,7 @@ window.ST = {
 
 const _blobUrls = {};
 let _currentFile = null;   // holds the File object last loaded via handleFile
-let seqLen = 16;           // current seq_len; updated by cycleSeq()
+let seqLen = 1;            // current seq_len; updated by cycleSeq()
 
 function init() { populateSubs(ST.stim); updateAll(); }
 
@@ -999,7 +996,7 @@ function debouncedUpdate() {
     if (ST.stim === 'text' && document.getElementById('textInput').value.trim()) {
       runPrediction();
     }
-  }, 1500);
+  }, 300);
 }
 
 // ── SESSION MANAGEMENT ───────────────────────────────────────
@@ -1079,19 +1076,11 @@ function exportCSV() {
 
 // ── STATUS / PROGRESS ─────────────────────────────────────────
 function _setRunning(running) {
-  const btn   = document.getElementById('runBtn');
   const track = document.getElementById('inferTrack');
+  if (track) track.classList.toggle('active', running);
   if (running) {
-    btn.classList.add('cancelling');
-    btn.textContent = 'Cancel';
-    btn.disabled = false;
-    track.classList.add('active');
-    document.getElementById('inferFill').style.width = '0%';
-  } else {
-    btn.classList.remove('cancelling');
-    btn.innerHTML = 'Run <span class="kbd">&#x21B5;</span>';
-    btn.disabled = false;
-    track.classList.remove('active');
+    const fill = document.getElementById('inferFill');
+    if (fill) fill.style.width = '0%';
   }
 }
 
@@ -1599,6 +1588,7 @@ function _handleWSMsg(msg) {
     setTimeout(() => { if (bar) bar.style.width = '0%'; }, 500);
   } else if (msg.type === 'error') {
     console.error('[tribe] server error:', msg.message);
+    showToast('Prediction error: ' + (msg.message || 'unknown'), 5000);
     _predRunning = false;
     _setStatus(false);
     _setRunning(false);
@@ -1658,6 +1648,7 @@ async function runPrediction() {
       _applyResult(data);
     } catch (err) {
       console.error('[tribe] predict error:', err.message);
+      showToast('Server unreachable — is cargo run running?', 5000);
     } finally {
       _predRunning = false;
       _setStatus(false);
@@ -1773,16 +1764,11 @@ function autoResize(el) {
 
 // ── RUN OR CANCEL ─────────────────────────────────────────────
 function runOrCancel() {
-  const btn = document.getElementById('runBtn');
-  if (btn.classList.contains('cancelling')) {
-    cancelPrediction();
-  } else {
-    runPrediction();
-  }
+  if (_predRunning) cancelPrediction(); else runPrediction();
 }
 
 // ── SEQ CYCLE ─────────────────────────────────────────────────
-const SEQ_STEPS = [4, 8, 16, 32, 64];
+const SEQ_STEPS = [1, 4, 8, 16, 32];
 function cycleSeq() {
   const label = document.getElementById('seqLabel');
   const cur = parseInt(label.textContent.replace('seq ',''), 10);
@@ -2100,6 +2086,11 @@ function onGeoReady(geo, isReal){
   brainReady=true;
   const lo=document.getElementById('brainLoading');if(lo)lo.style.display='none';
   const lov=document.getElementById('loadingOverlay');if(lov)lov.style.display='none';
+  if(!isReal){
+    const allR=['visual','auditory','language','prefrontal','motor','parietal'];
+    activeRegions=[...allR];
+    if(window.ST){ window.ST.regions=[...allR]; if(window.updateAll)window.updateAll(); }
+  }
   window.updateBrainRegions(activeRegions);
 }
 
@@ -2264,6 +2255,8 @@ window.setBrainVertexSample = function(vertexActs, gMin, gMax, activeRegs, regio
     colTgt[i*3+1] = c.g;
     colTgt[i*3+2] = c.b;
   }
+  // Force immediate GPU upload — don't wait for LERP threshold
+  if (colAttr) colAttr.needsUpdate = true;
 };
 
 window.setCameraView=function(view){
@@ -2314,7 +2307,7 @@ controls.addEventListener('start',()=>{controls.autoRotate=false;lastInteract=Da
 controls.addEventListener('end',()=>{lastInteract=Date.now();});
 
 const clock=new THREE.Clock();
-const LERP = 0.10;
+const LERP = 0.30;
 
 function animate(){
   requestAnimationFrame(animate);

@@ -9,7 +9,7 @@
 //!
 //! No Python process is spawned at runtime.
 
-use std::{net::SocketAddr, path::PathBuf, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, path::PathBuf, sync::Arc};
 use tracing::{info, warn, error};
 
 use anyhow::{Context, Result};
@@ -57,6 +57,9 @@ pub struct AppState {
     pub device:    Device,
     pub job_store: JobStore,
     pub job_tx:    mpsc::Sender<Uuid>,
+    /// Cache: (text, seq_len) → encoded F32 tensor data on CPU.
+    /// Avoids re-running 28-layer LLaMA for repeated/unchanged text.
+    pub text_feat_cache: Arc<RwLock<HashMap<(String, usize), Vec<f32>>>>,
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -93,7 +96,9 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(
+                    "info,tribe_server::llama_encoder=debug,tokenizers=error"
+                )),
         )
         .init();
 
@@ -136,7 +141,7 @@ async fn main() -> Result<()> {
         let p = w2v_path.to_str().context("invalid w2v path")?;
         info!("loading Wav2Vec2Bert");
         match Wav2Vec2Bert::load(p, &device) {
-            Ok(enc) => { info!("Wav2Vec2Bert loaded"); Some(enc) }
+            Ok(enc) => { info!(params_m = format!("{:.1}", enc.n_params() as f64 / 1e6), "Wav2Vec2Bert loaded"); Some(enc) }
             Err(e)  => { error!(error = %e, "Wav2Vec2Bert failed"); None }
         }
     } else {
@@ -144,13 +149,14 @@ async fn main() -> Result<()> {
         None
     };
 
-    // ── LlamaTextEncoder ─────────────────────────────────────────────────────
+    // ── LlamaTextEncoder — always on CPU (Metal has high per-kernel overhead
+    //    for small sequential matmuls; CPU/BLAS is ~10-50× faster for short text)
     let llama_dir = weights_dir.join("llama");
     let text_enc: Option<LlamaTextEncoder> = if llama_dir.exists() {
-        info!("loading LLaMA text encoder");
-        match LlamaTextEncoder::load(&llama_dir, &device) {
-            Ok(enc) => { info!("LLaMA text encoder loaded"); Some(enc) }
-            Err(e)  => { error!(error = %e, "LLaMA text encoder failed"); None }
+        info!("loading LLaMA text encoder (CPU)");
+        match LlamaTextEncoder::load(&llama_dir, &Device::Cpu) {
+            Ok(enc) => { info!(params_m = format!("{:.1}", enc.n_params() as f64 / 1e6), "LLaMA text encoder loaded (CPU)"); Some(enc) }
+            Err(e)  => { error!("LLaMA text encoder failed: {e:#}"); None }
         }
     } else {
         warn!("tribe-v2-weights/llama/ not found — run POST /api/download/llama");
@@ -163,7 +169,7 @@ async fn main() -> Result<()> {
         let p = clip_path.to_str().context("invalid clip path")?;
         info!("loading CLIP ViT-L/14");
         match ClipVisualEncoder::load(p, &device) {
-            Ok(enc) => { info!("CLIP encoder loaded"); Some(enc) }
+            Ok(enc) => { info!(params_m = format!("{:.1}", enc.n_params() as f64 / 1e6), "CLIP encoder loaded"); Some(enc) }
             Err(e)  => { error!(error = %e, "CLIP encoder failed"); None }
         }
     } else {
@@ -194,6 +200,7 @@ async fn main() -> Result<()> {
         device,
         job_store: job_store.clone(),
         job_tx:    job_tx.clone(),
+        text_feat_cache: Arc::new(RwLock::new(HashMap::new())),
     });
 
     // ── Background download worker ────────────────────────────────────────────

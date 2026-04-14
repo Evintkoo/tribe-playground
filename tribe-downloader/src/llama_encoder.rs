@@ -13,6 +13,7 @@ use candle_core::{DType, Device, Module, Result, Tensor, D};
 use candle_nn::{embedding, linear_no_bias, VarBuilder};
 use std::path::Path;
 use tokenizers::Tokenizer;
+use tracing::{debug, info};
 
 // ── Architecture constants (meta-llama/Llama-3.2-3B) ─────────────────────────
 const HIDDEN:      usize = 3072;
@@ -154,8 +155,7 @@ impl MLP {
     }
 
     fn forward(&self, x: &Tensor) -> Result<Tensor> {
-        let gate = self.gate.forward(x)?;
-        let gate = gate.mul(&candle_nn::ops::sigmoid(&gate)?)?;  // silu
+        let gate = candle_nn::ops::silu(&self.gate.forward(x)?)?;
         self.down.forward(&(gate * self.up.forward(x)?)?)
     }
 }
@@ -214,29 +214,53 @@ impl LlamaTextEncoder {
         anyhow::ensure!(!shards.is_empty(),
             "No model safetensors in {}", dir.display());
 
+        info!("LLaMA: found {} shard(s)", shards.len());
+        for s in &shards {
+            debug!("  shard: {s}");
+        }
+
         let refs: Vec<&str> = shards.iter().map(String::as_str).collect();
+        info!("LLaMA: mmap-loading weights (dtype=f32)");
         let vb = unsafe {
             VarBuilder::from_mmaped_safetensors(&refs, DType::F32, device)
                 .context("loading LLaMA weights")?
         };
         let m = vb.pp("model");
 
+        info!("LLaMA: loading embed_tokens ({VOCAB}×{HIDDEN})");
         let embed_t = embedding(VOCAB, HIDDEN, m.pp("embed_tokens"))
             .context("embed_tokens")?;
 
         let mut layers = Vec::with_capacity(N_LAYERS);
         for i in 0..N_LAYERS {
+            debug!("LLaMA: loading layer {i}/{N_LAYERS}");
             layers.push(
                 LlamaLayer::load(m.pp("layers").pp(&i.to_string()))
                     .with_context(|| format!("layers.{i}"))?,
             );
         }
+        info!("LLaMA: all {N_LAYERS} layers loaded");
 
         let tok_path = dir.join("tokenizer.json");
+        info!("LLaMA: loading tokenizer from {}", tok_path.display());
         let tokenizer = Tokenizer::from_file(&tok_path)
             .map_err(|e| anyhow::anyhow!("tokenizer: {e}"))?;
 
         Ok(Self { embed: embed_t, layers, tokenizer, device: device.clone() })
+    }
+
+    pub fn n_params(&self) -> usize {
+        let embed      = VOCAB * HIDDEN;
+        let per_layer  = HIDDEN * HIDDEN                    // q_proj
+            + HIDDEN * (N_KV_HEADS * HEAD_DIM)             // k_proj
+            + HIDDEN * (N_KV_HEADS * HEAD_DIM)             // v_proj
+            + HIDDEN * HIDDEN                              // o_proj
+            + HIDDEN * FF_INNER                            // gate_proj
+            + HIDDEN * FF_INNER                            // up_proj
+            + FF_INNER * HIDDEN                            // down_proj
+            + HIDDEN                                       // input_layernorm
+            + HIDDEN;                                      // post_attention_layernorm
+        embed + N_LAYERS * per_layer
     }
 
     /// Encode text → [1, seq_len, 6144].
@@ -248,7 +272,7 @@ impl LlamaTextEncoder {
 
         let input = Tensor::from_vec(ids, (1, t), &self.device)?;
         let mut h = self.embed.forward(&input)
-            .map_err(|e| anyhow::anyhow!("embed: {e}"))?;  // [1, T, HIDDEN]
+            .map_err(|e| anyhow::anyhow!("embed: {e}"))?;  // [1, T, HIDDEN] bf16
 
         let (cos, sin) = build_rope(t, &self.device)
             .map_err(|e| anyhow::anyhow!("rope: {e}"))?;

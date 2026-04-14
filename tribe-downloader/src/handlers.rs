@@ -81,7 +81,28 @@ where
         progress(15, "Encoding text…");
         let guard = st.text_enc.read().await;
         if let Some(ref enc) = *guard {
-            enc.encode(txt, seq).map(Some).map_err(|e| format!("LLaMA: {e}"))?
+            let cache_key = (txt.clone(), seq);
+            // Check cache first
+            let cached = st.text_feat_cache.read().await.get(&cache_key).cloned();
+            let feat_vec = if let Some(v) = cached {
+                v
+            } else {
+                let t = enc.encode(txt, seq).map_err(|e| format!("LLaMA: {e}"))?;
+                let v = t.flatten_all()
+                    .and_then(|f| f.to_vec1::<f32>())
+                    .map_err(|e| format!("LLaMA to_vec: {e}"))?;
+                // Cache up to 32 entries (drop all on overflow)
+                let mut cache = st.text_feat_cache.write().await;
+                if cache.len() >= 32 { cache.clear(); }
+                cache.insert(cache_key, v.clone());
+                v
+            };
+            drop(guard);
+            let shape = (1usize, seq, feat_vec.len() / seq);
+            Tensor::from_vec(feat_vec, shape, device)
+                .and_then(|t| t.to_device(device))
+                .map(Some)
+                .map_err(|e| format!("LLaMA tensor: {e}"))?
         } else {
             demo_mode = true;
             drop(guard);
