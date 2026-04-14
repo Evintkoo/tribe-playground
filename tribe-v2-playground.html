@@ -1280,30 +1280,32 @@ function _applyResult(data) {
 
 // ── RESULT CARD ───────────────────────────────────────────────
 function _showResultCard(resp) {
+  const regionKeys   = ['visual','auditory','language','prefrontal','motor','parietal'];
   const regionNames  = ['Visual','Auditory','Language','Prefrontal','Motor','Parietal'];
   const regionColors = ['var(--r-visual)','var(--r-auditory)','var(--r-language)','var(--r-prefrontal)','var(--r-motor)','var(--r-parietal)'];
 
-  const acts = resp.temporal_acts;
-  if (!acts || acts.length === 0) return;
+  // Use rel_activation (σ-normalised) from region_stats — far more readable than raw means
+  const stats = resp.region_stats;
+  if (!stats) return;
 
-  const T = acts.length;
-  const means = Array(6).fill(0);
-  acts.forEach(row => { if (row) row.forEach((v, i) => { means[i] += v; }); });
-  means.forEach((_, i) => { means[i] /= T; });
-
-  const sorted = means.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v).slice(0, 3);
+  const entries = regionKeys.map((k, i) => ({
+    v: stats[k]?.rel_activation ?? 0,
+    i,
+  })).sort((a, b) => b.v - a.v).slice(0, 3);
 
   const card = document.getElementById('resultCard');
   if (!card) return;
   while (card.firstChild) card.removeChild(card.firstChild);
 
-  sorted.forEach(({ v, i }) => {
+  entries.forEach(({ v, i }) => {
     const stat = document.createElement('div');
     stat.className = 'rc-stat';
     const val = document.createElement('div');
     val.className = 'rc-val';
     val.style.color = regionColors[i];
-    val.textContent = v.toFixed(2);
+    // Prevent -0.00: if rounded to 0, drop the sign
+    const fmt = v.toFixed(2).replace(/^-0\.00$/, '0.00');
+    val.textContent = (v > 0 ? '+' : '') + fmt + 'σ';
     const key = document.createElement('div');
     key.className = 'rc-key';
     key.textContent = regionNames[i];
