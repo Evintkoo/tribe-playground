@@ -604,14 +604,14 @@ html, body {
     <!-- Input row -->
     <div class="input-row" id="inputRow">
       <!-- Text mode -->
-      <textarea id="textInput" rows="1" placeholder="Describe a stimulus&#x2026;" oninput="autoResize(this)"></textarea>
+      <textarea id="textInput" rows="1" placeholder="Describe a stimulus&#x2026;" oninput="autoResize(this); debouncedUpdate();"></textarea>
       <!-- Image drop zone msg (hidden when text active) -->
       <div class="dz-msg" id="dzImage" style="display:none;">Drop an image file here</div>
       <!-- Audio drop zone msg -->
       <div class="dz-msg" id="dzAudio" style="display:none;">Drop an audio file here</div>
 
       <!-- Seq control -->
-      <div class="seq-label" id="seqLabel" onclick="cycleSeq()">seq 16</div>
+      <div class="seq-label" id="seqLabel" onclick="cycleSeq()">seq 1</div>
     </div>
 
     <!-- Infer progress track -->
