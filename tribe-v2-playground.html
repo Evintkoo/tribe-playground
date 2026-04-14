@@ -460,6 +460,21 @@ html, body {
   color: var(--t3);
   pointer-events: none;
 }
+.dz-clickable {
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  padding: 4px 8px;
+  transition: color .15s, background .15s;
+}
+.dz-clickable:hover {
+  color: var(--t2);
+  background: rgba(255,255,255,.04);
+}
+.dz-icon { font-size: 13px; }
 
 .seq-label {
   font-family: var(--mono);
@@ -666,10 +681,16 @@ html, body {
     <div class="input-row" id="inputRow">
       <!-- Text mode -->
       <textarea id="textInput" rows="1" placeholder="Describe a stimulus&#x2026;" oninput="autoResize(this); debouncedUpdate();"></textarea>
-      <!-- Image drop zone msg (hidden when text active) -->
-      <div class="dz-msg" id="dzImage" style="display:none;">Drop an image file here</div>
-      <!-- Audio drop zone msg -->
-      <div class="dz-msg" id="dzAudio" style="display:none;">Drop an audio file here</div>
+      <!-- Image drop zone — click or drag -->
+      <label class="dz-msg dz-clickable" id="dzImage" style="display:none;" for="fileInputImage">
+        <input type="file" id="fileInputImage" accept="image/*" style="display:none;" onchange="handleFile(this,'image')">
+        <span class="dz-icon">&#x1F4F7;</span> Drop or <u>click</u> to upload image
+      </label>
+      <!-- Audio drop zone — click or drag -->
+      <label class="dz-msg dz-clickable" id="dzAudio" style="display:none;" for="fileInputAudio">
+        <input type="file" id="fileInputAudio" accept="audio/*" style="display:none;" onchange="handleFile(this,'audio')">
+        <span class="dz-icon">&#x1F3A7;</span> Drop or <u>click</u> to upload audio
+      </label>
 
       <!-- Seq control -->
       <div class="seq-label" id="seqLabel" onclick="cycleSeq()">seq 1</div>
