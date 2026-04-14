@@ -133,6 +133,60 @@ html, body {
   height: 100%;
 }
 
+/* ── 3-D Region labels floating on brain ── */
+.rlabel-3d {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: opacity .25s;
+  text-align: center;
+  white-space: nowrap;
+}
+.rl-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+}
+.rl-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.rl-name {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .06em;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,.9);
+}
+.rl-bar-wrap {
+  width: 52px; height: 3px;
+  background: rgba(255,255,255,.12);
+  border-radius: 2px;
+  margin: 3px auto 1px;
+}
+.rl-bar-fill {
+  height: 100%; width: 0%;
+  border-radius: 2px;
+  transition: width .4s;
+}
+.rl-val {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--t3);
+  text-shadow: 0 1px 3px rgba(0,0,0,.8);
+}
+.rl-val.pos { color: #6ef09a; }
+.rl-val.neg { color: #f07878; }
+.rl-detail {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: rgba(255,255,255,.35);
+  text-shadow: 0 1px 3px rgba(0,0,0,.8);
+  margin-top: 1px;
+}
+
 /* Loading overlay */
 #loadingOverlay {
   position: absolute;
