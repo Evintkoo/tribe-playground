@@ -259,26 +259,30 @@ async fn serve_brain_mesh(
     axum::extract::State(st): axum::extract::State<Arc<AppState>>,
 ) -> axum::response::Response {
     use axum::{body::Body, http::StatusCode, response::IntoResponse};
-    let gz_path = st.root.join("brain-surface.obj.gz");
-    match tokio::fs::read(&gz_path).await {
-        Ok(bytes) => axum::response::Response::builder()
-            .header("content-type", "text/plain; charset=utf-8")
-            .header("content-encoding", "gzip")
-            .header("cache-control", "public, max-age=86400")
-            .body(Body::from(bytes))
-            .unwrap(),
-        Err(_) => {
-            warn!("brain-surface.obj.gz not found — trying brain.obj");
-            let obj_path = st.root.join("brain.obj");
-            match tokio::fs::read(&obj_path).await {
-                Ok(bytes) => axum::response::Response::builder()
-                    .header("content-type", "text/plain; charset=utf-8")
-                    .body(Body::from(bytes))
-                    .unwrap(),
-                Err(_) => (StatusCode::NOT_FOUND, "brain mesh not found").into_response(),
+
+    // Priority: brain.obj.gz > brain.obj (both standard Wavefront OBJ)
+    // brain-surface.obj.gz is BrainVISA format — not parseable by Three.js OBJLoader
+    let candidates: &[(&str, bool)] = &[
+        ("brain.obj.gz", true),   // gzip-compressed standard OBJ
+        ("brain.obj",   false),   // uncompressed standard OBJ
+    ];
+
+    for (name, is_gz) in candidates {
+        let path = st.root.join(name);
+        if let Ok(bytes) = tokio::fs::read(&path).await {
+            info!("serving brain mesh from {name}");
+            let mut builder = axum::response::Response::builder()
+                .header("content-type", "text/plain; charset=utf-8")
+                .header("cache-control", "public, max-age=86400");
+            if *is_gz {
+                builder = builder.header("content-encoding", "gzip");
             }
+            return builder.body(Body::from(bytes)).unwrap();
         }
     }
+
+    warn!("no brain mesh found — tried brain.obj.gz, brain.obj");
+    (StatusCode::NOT_FOUND, "brain mesh not found").into_response()
 }
 
 // ── / ─────────────────────────────────────────────────────────────────────────

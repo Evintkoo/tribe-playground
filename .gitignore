@@ -2,14 +2,19 @@
 target/
 tribe-downloader/target/
 
-# Large model weights (download separately)
+# Large model weights (download separately via POST /api/download/*)
 tribe-v2-weights/*.ckpt
 tribe-v2-weights/*.safetensors
 tribe-v2-weights/llama/
+tribe-v2-weights/clip/
 
-# Large mesh files — brain.obj is 11 MB (too large), gz variants are tracked
+# Brain mesh — raw uncompressed (too large for git)
 brain.obj
 brain-surface.obj
+# brain-surface.obj.gz and left-mesh.obj.gz are BrainVISA format — not used
+brain-surface.obj.gz
+left-mesh.obj.gz
+# brain.obj.gz is standard Wavefront OBJ compressed — tracked in git
 
 # macOS
 .DS_Store
