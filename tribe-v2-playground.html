@@ -2168,45 +2168,51 @@ function setRegionTarget(r,active){
   });
 }
 
+// Smoothed label positions: lerp target each frame to avoid jitter
+const _lblPos={};
+ALL_R.forEach(r=>{ _lblPos[r]={x:0,y:0,init:false}; });
+
 function updateLabels(active){
   if(!brain)return;
   const v3=new THREE.Vector3();
   const rect=canvas.getBoundingClientRect();
 
-  // 1. Compute anchor positions from 3-D projection
+  // 1. Project each active region centroid to screen space
   const visible=[];
   ALL_R.forEach(r=>{
     const el=labelEls[r];
-    const on=active.includes(r);
-    if(!on){el.style.opacity='0';return;}
+    if(!active.includes(r)){el.style.opacity='0';_lblPos[r].init=false;return;}
     v3.copy(regionCentroids[r]).applyMatrix4(brain.matrixWorld);
     const pr=v3.clone().project(camera);
-    if(pr.z>=1){el.style.opacity='0';return;}
+    if(pr.z>=1){el.style.opacity='0';_lblPos[r].init=false;return;}
     const ax=(pr.x*.5+.5)*rect.width;
     const ay=(-pr.y*.5+.5)*rect.height;
     el.style.opacity='1';
-    const w=el.offsetWidth||72, h=el.offsetHeight||44;
-    visible.push({r, el, x:ax, y:ay, ax, ay, w, h});
+    const w=el.offsetWidth||76, h=el.offsetHeight||46;
+    visible.push({r, el, x:ax, y:ay, w, h});
   });
 
-  // 2. Iterative repulsion — push overlapping labels apart (keep anchored)
-  const PAD=6;
-  for(let iter=0;iter<20;iter++){
+  // 2. Sort top-to-bottom so repulsion resolution is deterministic each frame
+  visible.sort((a,b)=>a.y-b.y);
+
+  // 3. Iterative repulsion — push overlapping labels apart
+  const PAD=8;
+  for(let iter=0;iter<30;iter++){
     let moved=false;
     for(let i=0;i<visible.length;i++){
       for(let j=i+1;j<visible.length;j++){
         const a=visible[i], b=visible[j];
         const ox=Math.abs(a.x-b.x)-(a.w/2+b.w/2+PAD);
         const oy=Math.abs(a.y-b.y)-(a.h/2+b.h/2+PAD);
-        if(ox>=0||oy>=0)continue; // no overlap
-        // Push apart along the shallower axis
-        const dx=a.x-b.x, dy=a.y-b.y;
+        if(ox>=0||oy>=0)continue;
+        // Push along the axis of least overlap
         if(Math.abs(ox)<=Math.abs(oy)){
-          const push=(ox-PAD)/2*(dx<0?-1:1);
-          a.x+=push; b.x-=push;
+          const half=(-(ox-PAD))/2;
+          if(a.x<=b.x){a.x-=half;b.x+=half;}else{a.x+=half;b.x-=half;}
         } else {
-          const push=(oy-PAD)/2*(dy<0?-1:1);
-          a.y+=push; b.y-=push;
+          const half=(-(oy-PAD))/2;
+          // Always push the lower-indexed (higher on screen) up, lower one down
+          a.y-=half; b.y+=half;
         }
         moved=true;
       }
@@ -2214,10 +2220,14 @@ function updateLabels(active){
     if(!moved)break;
   }
 
-  // 3. Apply resolved positions
-  visible.forEach(({el,x,y})=>{
-    el.style.left=x+'px';
-    el.style.top =y+'px';
+  // 4. Lerp toward resolved target — smooths out frame-to-frame jitter
+  const ALPHA=0.18;
+  visible.forEach(({r, el, x, y})=>{
+    const s=_lblPos[r];
+    if(!s.init){s.x=x;s.y=y;s.init=true;}
+    else{s.x+=( x-s.x)*ALPHA; s.y+=(y-s.y)*ALPHA;}
+    el.style.left=s.x+'px';
+    el.style.top =s.y+'px';
   });
 }
 
