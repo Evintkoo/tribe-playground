@@ -1,3 +1,53 @@
 {
-  "status": "done"
+  "status": "done",
+  "nodes": {
+    "llama-3-2-3b-text-encoder": {
+      "status": "done"
+    },
+    "wav2vec-bert-2-0-audio-encoder": {
+      "status": "done"
+    },
+    "clip-vit-l-14-image-encoder": {
+      "status": "done"
+    },
+    "on-demand-weight-downloader": {
+      "status": "done"
+    },
+    "video-v-jepa2-encoder": {
+      "status": "planned"
+    },
+    "candle-transformer-architecture": {
+      "status": "done"
+    },
+    "checkpoint-conversion-pipeline": {
+      "status": "done"
+    },
+    "per-vertex-bold-prediction": {
+      "status": "done"
+    },
+    "metal-cpu-device-selection": {
+      "status": "done"
+    },
+    "per-vertex-cortical-coloring": {
+      "status": "done"
+    },
+    "region-label-overlays": {
+      "status": "done"
+    },
+    "temporal-tr-by-tr-playback": {
+      "status": "done"
+    },
+    "websocket-streamed-prediction": {
+      "status": "done"
+    },
+    "multi-modal-stimulus-picker": {
+      "status": "done"
+    },
+    "drag-and-drop-file-upload": {
+      "status": "done"
+    },
+    "model-download-ui": {
+      "status": "done"
+    }
+  }
 }
