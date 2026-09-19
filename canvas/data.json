@@ -1,53 +1,87 @@
 {
   "status": "done",
+  "title": "TRIBE v2",
+  "description": "A from-scratch Rust/candle inference server predicting per-vertex cortical BOLD activation from text, audio, and image stimuli, visualized live in 3D.",
   "nodes": {
     "llama-3-2-3b-text-encoder": {
-      "status": "done"
+      "status": "done",
+      "title": "LLaMA-3.2-3B Text Encoder",
+      "description": "Encodes free-text stimuli into 6144-dim features on CPU via candle, with an in-memory cache keyed on (text, sequence length) to skip re-running the model on repeats."
     },
     "wav2vec-bert-2-0-audio-encoder": {
-      "status": "done"
+      "status": "done",
+      "title": "Wav2Vec-BERT 2.0 Audio Encoder",
+      "description": "Decodes uploaded audio and pools three hierarchical transformer layers into 2048-dim temporal features."
     },
     "clip-vit-l-14-image-encoder": {
-      "status": "done"
+      "status": "done",
+      "title": "CLIP ViT-L/14 Image Encoder",
+      "description": "Encodes uploaded images through a CLIP vision transformer, routed through the model's otherwise-unused video-projector input slot."
     },
     "on-demand-weight-downloader": {
-      "status": "done"
+      "status": "done",
+      "title": "On-Demand Weight Downloader",
+      "description": "Background job queue streams each encoder's weights from Hugging Face with byte-level progress and hot-swaps the loaded model into the running server with no restart."
     },
     "video-v-jepa2-encoder": {
-      "status": "planned"
+      "status": "planned",
+      "title": "Video / V-JEPA2 Encoder",
+      "description": "Video input is accepted end-to-end but the V-JEPA2 encoder is not implemented \u2014 the server reports it as not loaded and substitutes zeroed demo features."
     },
     "candle-transformer-architecture": {
-      "status": "done"
+      "status": "done",
+      "title": "Candle Transformer Architecture",
+      "description": "16-layer, 1152-dim, 8-head transformer with partial rotary position embeddings and ScaleNorm, hand-ported to match the exact trained PyTorch checkpoint."
     },
     "checkpoint-conversion-pipeline": {
-      "status": "done"
+      "status": "done",
+      "title": "Checkpoint Conversion Pipeline",
+      "description": "Converts the original PyTorch checkpoint into safetensors, which the Rust server auto-triggers and loads on first run if missing."
     },
     "per-vertex-bold-prediction": {
-      "status": "done"
+      "status": "done",
+      "title": "Per-Vertex BOLD Prediction",
+      "description": "Produces activation values for all 20,484 fsaverage5 cortical surface vertices per timepoint from any combination of text/audio/image inputs."
     },
     "metal-cpu-device-selection": {
-      "status": "done"
+      "status": "done",
+      "title": "Metal/CPU Device Selection",
+      "description": "Auto-detects and uses Apple Metal GPU (falling back to CPU), with a warmup pass at startup."
     },
     "per-vertex-cortical-coloring": {
-      "status": "done"
+      "status": "done",
+      "title": "Per-Vertex Cortical Coloring",
+      "description": "Colors a Wavefront OBJ brain mesh using the real per-vertex activation values returned by the model."
     },
     "region-label-overlays": {
-      "status": "done"
+      "status": "done",
+      "title": "Region Label Overlays",
+      "description": "Floating 3D region labels with frosted-glass styling and collision avoidance so overlapping labels reposition automatically."
     },
     "temporal-tr-by-tr-playback": {
-      "status": "done"
+      "status": "done",
+      "title": "Temporal (TR-by-TR) Playback",
+      "description": "A scrubber control steps through per-timepoint regional activation data to animate the prediction over the stimulus duration."
     },
     "websocket-streamed-prediction": {
-      "status": "done"
+      "status": "done",
+      "title": "WebSocket-Streamed Prediction",
+      "description": "Predictions stream live progress over a WebSocket connection, with automatic fallback to a plain HTTP request if the socket isn't available."
     },
     "multi-modal-stimulus-picker": {
-      "status": "done"
+      "status": "done",
+      "title": "Multi-Modal Stimulus Picker",
+      "description": "Text, image, audio, and video input modes each have curated example stimuli per neuroscience category."
     },
     "drag-and-drop-file-upload": {
-      "status": "done"
+      "status": "done",
+      "title": "Drag-and-Drop File Upload",
+      "description": "Clickable/drag image and audio drop zones handle file selection and clear/reset state per stimulus-mode switch."
     },
     "model-download-ui": {
-      "status": "done"
+      "status": "done",
+      "title": "Model Download UI",
+      "description": "UI buttons trigger the background encoder-download jobs and show live byte/percentage progress for each optional encoder."
     }
   }
 }
